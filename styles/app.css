@@ -180,13 +180,19 @@ input:focus-visible {
   grid-template-columns: 1fr 1fr minmax(280px, 340px);
 }
 
+.presenter-layout--custom {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: start;
+}
+
 .presentation-layout,
 .lint-panel,
 .panel,
 .slide-card,
 .presentation-frame,
 .preview-frame,
-.presenter-sidebar {
+.presenter-sidebar,
+.presenter-panel {
   border: 1px solid var(--border);
   background: var(--panel);
   backdrop-filter: blur(16px);
@@ -197,7 +203,8 @@ input:focus-visible {
 .panel,
 .lint-panel,
 .presentation-layout,
-.presenter-sidebar {
+.presenter-sidebar,
+.presenter-panel {
   padding: 1rem;
 }
 
@@ -360,6 +367,30 @@ input:focus-visible {
 
 .preview-frame--compact {
   min-height: 38vh;
+}
+
+.presenter-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.presenter-panel__controls {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.presenter-panel__controls button {
+  padding: 0.4rem 0.7rem;
+  min-width: 2.4rem;
+}
+
+.presenter-panel__body {
+  display: grid;
+  gap: 0.85rem;
 }
 
 .slide-card {
@@ -633,6 +664,10 @@ input:focus-visible {
 
   .preview-layout {
     grid-template-columns: 1fr;
+  }
+
+  .presenter-layout--custom .presenter-panel {
+    grid-column: span 12 !important;
   }
 }
 

@@ -5,6 +5,12 @@ import {
   getPreviousPosition,
   getSlideTitle,
 } from "../presentation-state.js";
+import {
+  loadPresenterLayout,
+  movePresenterPanel,
+  resizePresenterPanel,
+  savePresenterLayout,
+} from "../presenter-layout.js";
 import { applyDeckTheme } from "../theme.js";
 import { compileSource, createButton, createDeckFrame, mountSlideInto } from "./shared.js";
 
@@ -22,41 +28,87 @@ export function createPresenterView(root, initialSource) {
   const startedAt = Date.now();
   const sync = createSyncChannel();
   const frame = createDeckFrame("Presenter View");
+  let panelLayout = loadPresenterLayout();
 
   frame.innerHTML += `
-    <main class="presenter-layout">
-      <section class="presenter-column">
-        <p class="panel__label">Current slide</p>
+    <main class="presenter-layout presenter-layout--custom" id="presenter-layout-grid">
+      <section class="presenter-panel" data-panel-id="current">
+        <div class="presenter-panel__header">
+          <p class="panel__label">Current slide</p>
+          <div class="presenter-panel__controls">
+            <button type="button" data-action="shrink" data-panel-id="current" aria-label="Make current slide narrower">-</button>
+            <button type="button" data-action="grow" data-panel-id="current" aria-label="Make current slide wider">+</button>
+            <button type="button" data-action="left" data-panel-id="current" aria-label="Move current slide left">←</button>
+            <button type="button" data-action="right" data-panel-id="current" aria-label="Move current slide right">→</button>
+          </div>
+        </div>
         <div id="presenter-current" class="preview-frame preview-frame--compact"></div>
       </section>
-      <section class="presenter-column">
-        <p class="panel__label">Next slide</p>
+      <section class="presenter-panel" data-panel-id="next">
+        <div class="presenter-panel__header">
+          <p class="panel__label">Next slide</p>
+          <div class="presenter-panel__controls">
+            <button type="button" data-action="shrink" data-panel-id="next" aria-label="Make next slide narrower">-</button>
+            <button type="button" data-action="grow" data-panel-id="next" aria-label="Make next slide wider">+</button>
+            <button type="button" data-action="left" data-panel-id="next" aria-label="Move next slide left">←</button>
+            <button type="button" data-action="right" data-panel-id="next" aria-label="Move next slide right">→</button>
+          </div>
+        </div>
         <div id="presenter-next" class="preview-frame preview-frame--compact"></div>
       </section>
-      <aside class="presenter-sidebar">
-        <div class="presenter-sidebar__block">
+      <section class="presenter-panel" data-panel-id="timer">
+        <div class="presenter-panel__header">
           <p class="panel__label">Timer</p>
+          <div class="presenter-panel__controls">
+            <button type="button" data-action="shrink" data-panel-id="timer" aria-label="Make timer panel narrower">-</button>
+            <button type="button" data-action="grow" data-panel-id="timer" aria-label="Make timer panel wider">+</button>
+            <button type="button" data-action="left" data-panel-id="timer" aria-label="Move timer panel left">←</button>
+            <button type="button" data-action="right" data-panel-id="timer" aria-label="Move timer panel right">→</button>
+          </div>
+        </div>
+        <div class="presenter-panel__body">
           <p id="presenter-timer" class="timer">00:00</p>
           <p id="presenter-remaining" class="meta-text"></p>
           <div class="presenter-timer-controls">
             <button type="button" id="presenter-reset-timer">Reset</button>
           </div>
         </div>
-        <div class="presenter-sidebar__block">
-          <p class="panel__label">Outline</p>
-          <ol id="presenter-outline" class="outline-list"></ol>
-        </div>
-        <div class="presenter-sidebar__block">
+      </section>
+      <section class="presenter-panel" data-panel-id="notes">
+        <div class="presenter-panel__header">
           <p class="panel__label">Notes</p>
+          <div class="presenter-panel__controls">
+            <button type="button" data-action="shrink" data-panel-id="notes" aria-label="Make notes panel narrower">-</button>
+            <button type="button" data-action="grow" data-panel-id="notes" aria-label="Make notes panel wider">+</button>
+            <button type="button" data-action="left" data-panel-id="notes" aria-label="Move notes panel left">←</button>
+            <button type="button" data-action="right" data-panel-id="notes" aria-label="Move notes panel right">→</button>
+          </div>
+        </div>
+        <div class="presenter-panel__body">
           <div id="presenter-notes" class="notes-content"></div>
         </div>
-      </aside>
+      </section>
+      <section class="presenter-panel" data-panel-id="outline">
+        <div class="presenter-panel__header">
+          <p class="panel__label">Outline</p>
+          <div class="presenter-panel__controls">
+            <button type="button" data-action="shrink" data-panel-id="outline" aria-label="Make outline panel narrower">-</button>
+            <button type="button" data-action="grow" data-panel-id="outline" aria-label="Make outline panel wider">+</button>
+            <button type="button" data-action="left" data-panel-id="outline" aria-label="Move outline panel left">←</button>
+            <button type="button" data-action="right" data-panel-id="outline" aria-label="Move outline panel right">→</button>
+          </div>
+        </div>
+        <div class="presenter-panel__body">
+          <ol id="presenter-outline" class="outline-list"></ol>
+        </div>
+      </section>
     </main>
   `;
 
   root.replaceChildren(frame);
 
   const actions = frame.querySelector(".topbar__actions");
+  const layoutGrid = frame.querySelector("#presenter-layout-grid");
   const currentFrame = frame.querySelector("#presenter-current");
   const nextFrame = frame.querySelector("#presenter-next");
   const notesNode = frame.querySelector("#presenter-notes");
@@ -81,6 +133,16 @@ export function createPresenterView(root, initialSource) {
     });
   }
 
+  function applyLayout() {
+    const panelsById = new Map(panelLayout.map((panel) => [panel.id, panel]));
+    [...layoutGrid.querySelectorAll(".presenter-panel")].forEach((panelNode, index) => {
+      const panelId = panelNode.dataset.panelId;
+      const panel = panelsById.get(panelId);
+      panelNode.style.gridColumn = `span ${panel?.span || 4}`;
+      panelNode.style.order = String(index);
+    });
+  }
+
   function render() {
     compiled = compileSource(source);
     applyDeckTheme(compiled.metadata);
@@ -102,6 +164,7 @@ export function createPresenterView(root, initialSource) {
     const elapsedSeconds = Math.floor((Date.now() - timerStart) / 1000);
     const remainingSeconds = Math.max(0, lastDurationMinutes * 60 - elapsedSeconds);
     remainingNode.textContent = `Remaining ${String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:${String(remainingSeconds % 60).padStart(2, "0")}`;
+    applyLayout();
   }
 
   function move(delta) {
@@ -148,6 +211,26 @@ export function createPresenterView(root, initialSource) {
     revealStep = 0;
     render();
     publishState();
+  });
+
+  layoutGrid.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-action][data-panel-id]");
+    if (!button) return;
+    const { action, panelId } = button.dataset;
+    if (action === "grow") {
+      panelLayout = resizePresenterPanel(panelLayout, panelId, 1);
+    }
+    if (action === "shrink") {
+      panelLayout = resizePresenterPanel(panelLayout, panelId, -1);
+    }
+    if (action === "left") {
+      panelLayout = movePresenterPanel(panelLayout, panelId, -1);
+    }
+    if (action === "right") {
+      panelLayout = movePresenterPanel(panelLayout, panelId, 1);
+    }
+    savePresenterLayout(panelLayout);
+    applyLayout();
   });
 
   document.addEventListener("keydown", (event) => {
