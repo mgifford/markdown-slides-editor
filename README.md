@@ -36,6 +36,7 @@ Then open `http://localhost:4173`.
 
 - `ACCESSIBILITY.md`: accessibility posture, validation expectations, and contributor guidance
 - `AGENTS.md`: repository instructions for coding agents and automation tools
+- `STYLES.md`: writing, design, and styling standards for the app and repository docs
 - `.github/copilot-instructions.md`: onboarding notes for GitHub Copilot coding agent
 - `TODO.md`: future roadmap and integration ideas
 - `docs/accessibility-checklist.md`: project accessibility checklist

@@ -1,12 +1,11 @@
 import { createSyncChannel } from "../sync.js";
 import {
   getNextPosition,
-  getPresentationDurationMinutes,
   getPreviousPosition,
   getSlideTitle,
 } from "../presentation-state.js";
 import { applyDeckTheme } from "../theme.js";
-import { compileSource, createButton, createDeckFrame, mountSlideInto } from "./shared.js";
+import { compileSource, mountSlideInto } from "./shared.js";
 
 export function createPresentationView(root, initialSource) {
   let source = initialSource;
@@ -14,16 +13,13 @@ export function createPresentationView(root, initialSource) {
   let revealStep = 0;
   let compiled = compileSource(source);
   const sync = createSyncChannel();
-  const frame = createDeckFrame("Audience View");
-  const startedAt = Date.now();
   let tocOpen = false;
+  const frame = document.createElement("div");
+  frame.className = "audience-shell";
 
-  frame.innerHTML += `
+  frame.innerHTML = `
     <main class="presentation-layout">
-      <div class="presentation-toolbar">
-        <p id="presentation-status" class="meta-text"></p>
-        <p id="presentation-timer" class="meta-text"></p>
-      </div>
+      <p id="presentation-status" class="sr-only" aria-live="polite"></p>
       <dialog id="presentation-toc" class="toc-dialog">
         <form method="dialog" class="toc-dialog__inner">
           <div class="toc-dialog__header">
@@ -39,27 +35,10 @@ export function createPresentationView(root, initialSource) {
 
   root.replaceChildren(frame);
 
-  const actions = frame.querySelector(".topbar__actions");
   const frameNode = frame.querySelector("#presentation-frame");
   const statusNode = frame.querySelector("#presentation-status");
-  const timerNode = frame.querySelector("#presentation-timer");
   const tocNode = frame.querySelector("#presentation-toc");
   const outlineNode = frame.querySelector("#presentation-outline");
-  const prevButton = createButton("Previous");
-  const nextButton = createButton("Next");
-  const tocButton = createButton("Outline");
-  actions.append(prevButton, nextButton, tocButton);
-
-  function updateTimer() {
-    const totalMinutes = getPresentationDurationMinutes(compiled.metadata);
-    const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
-    const remainingSeconds = Math.max(0, totalMinutes * 60 - elapsedSeconds);
-    const elapsedMinutes = String(Math.floor(elapsedSeconds / 60)).padStart(2, "0");
-    const elapsedRemainder = String(elapsedSeconds % 60).padStart(2, "0");
-    const remainingMinutes = String(Math.floor(remainingSeconds / 60)).padStart(2, "0");
-    const remainingRemainder = String(remainingSeconds % 60).padStart(2, "0");
-    timerNode.textContent = `Elapsed ${elapsedMinutes}:${elapsedRemainder} · Remaining ${remainingMinutes}:${remainingRemainder}`;
-  }
 
   function render() {
     compiled = compileSource(source);
@@ -90,16 +69,14 @@ export function createPresentationView(root, initialSource) {
     render();
   }
 
-  prevButton.addEventListener("click", () => move(-1));
-  nextButton.addEventListener("click", () => move(1));
-  tocButton.addEventListener("click", () => {
+  function toggleOutline() {
     tocOpen = !tocOpen;
     if (tocOpen) {
       tocNode.showModal();
     } else {
       tocNode.close();
     }
-  });
+  }
 
   outlineNode.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-slide-index]");
@@ -140,7 +117,7 @@ export function createPresentationView(root, initialSource) {
 
     if (event.key.toLowerCase() === "c") {
       event.preventDefault();
-      tocButton.click();
+      toggleOutline();
     }
   });
 
@@ -153,7 +130,5 @@ export function createPresentationView(root, initialSource) {
     }
   });
 
-  window.setInterval(updateTimer, 1000);
-  updateTimer();
   render();
 }

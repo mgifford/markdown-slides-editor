@@ -30,13 +30,21 @@ export function createAppView(root, { initialSource, onSourceChange }) {
   let source = initialSource;
   let activeSlideIndex = 0;
   let lastCompiled = null;
+  let sa11yRunToken = 0;
+  let editorCollapsed = false;
+  let outlineCollapsed = false;
+  let lintCollapsed = true;
   const sync = createSyncChannel();
   const frame = createDeckFrame("Editor");
 
   frame.innerHTML += `
-    <main class="editor-layout">
+    <main class="editor-layout" data-editor-collapsed="false">
       <section class="panel panel--editor">
-        <label class="panel__label" for="source-editor">Markdown source</label>
+        <div class="panel-heading">
+          <label class="panel__label" for="source-editor">Markdown source</label>
+          <button type="button" id="toggle-editor-panel">Minimize Editor</button>
+        </div>
+        <p class="local-save-status">Saved locally in this browser on this device. Export to keep a copy elsewhere.</p>
         <textarea id="source-editor" class="editor" spellcheck="false"></textarea>
       </section>
       <section class="panel panel--preview" aria-live="polite">
@@ -54,14 +62,18 @@ export function createAppView(root, { initialSource, onSourceChange }) {
               <span>External CSS</span>
               <input id="theme-stylesheet-input" type="url" placeholder="https://example.com/theme.css" />
             </label>
+            <button type="button" id="toggle-outline-panel-header">Hide Outline</button>
             <button type="button" id="prev-slide">Previous</button>
             <button type="button" id="next-slide">Next</button>
           </div>
         </div>
-        <div class="preview-layout">
+        <div class="preview-layout" data-outline-collapsed="false">
           <div id="preview-frame" class="preview-frame"></div>
-          <aside class="outline-panel">
-            <p class="panel__label">Slide outline</p>
+          <aside class="outline-panel" data-collapsed="false">
+            <div class="panel-heading">
+              <p class="panel__label">Slide outline</p>
+              <button type="button" id="toggle-outline-panel">Hide Outline</button>
+            </div>
             <ol id="slide-outline" class="outline-list"></ol>
           </aside>
         </div>
@@ -71,26 +83,28 @@ export function createAppView(root, { initialSource, onSourceChange }) {
         </aside>
       </section>
     </main>
-    <section class="lint-panel">
+    <section class="lint-panel" data-collapsed="true">
       <div class="lint-panel__header">
         <div>
           <p class="panel__label">Accessibility check</p>
           <p class="meta-text">Editor linting for slide structure, links, image alt text, and note coverage.</p>
         </div>
         <div class="lint-panel__actions">
+          <button type="button" id="toggle-lint-panel">Expand Accessibility</button>
           <button type="button" id="run-a11y-check">Run Accessibility Check</button>
-          <button type="button" id="run-sa11y-check">Run Sa11y</button>
         </div>
         <ul id="lint-summary" class="lint-summary"></ul>
       </div>
-      <div class="resource-links" aria-label="Accessibility resources">
-        <a href="https://intopia.digital/articles/how-to-create-more-accessible-presentations/" target="_blank" rel="noreferrer">Intopia presentation guidance</a>
-        <a href="https://inklusiv.ca/" target="_blank" rel="noreferrer">Inklusiv</a>
-        <a href="https://www.w3.org/WAI/presentations/" target="_blank" rel="noreferrer">WAI presentations</a>
-        <a href="https://sa11y.netlify.app/bookmarklet/" target="_blank" rel="noreferrer">Sa11y bookmarklet</a>
+      <div class="lint-panel__body">
+        <div class="resource-links" aria-label="Accessibility resources">
+          <a href="https://intopia.digital/articles/how-to-create-more-accessible-presentations/" target="_blank" rel="noreferrer">Intopia presentation guidance</a>
+          <a href="https://inklusiv.ca/" target="_blank" rel="noreferrer">Inklusiv</a>
+          <a href="https://www.w3.org/WAI/presentations/" target="_blank" rel="noreferrer">WAI presentations</a>
+          <a href="https://sa11y.netlify.app/bookmarklet/" target="_blank" rel="noreferrer">Sa11y bookmarklet</a>
+        </div>
+        <p id="sa11y-status" class="meta-text"></p>
+        <ul id="lint-issues" class="issues-list"></ul>
       </div>
-      <p id="sa11y-status" class="meta-text"></p>
-      <ul id="lint-issues" class="issues-list"></ul>
     </section>
   `;
 
@@ -104,11 +118,18 @@ export function createAppView(root, { initialSource, onSourceChange }) {
   const lintSummary = frame.querySelector("#lint-summary");
   const deckMeta = frame.querySelector("#deck-meta");
   const runA11yCheckButton = frame.querySelector("#run-a11y-check");
-  const runSa11yCheckButton = frame.querySelector("#run-sa11y-check");
   const sa11yStatus = frame.querySelector("#sa11y-status");
   const outlineNode = frame.querySelector("#slide-outline");
   const themeSelect = frame.querySelector("#theme-select");
   const themeStylesheetInput = frame.querySelector("#theme-stylesheet-input");
+  const editorLayout = frame.querySelector(".editor-layout");
+  const previewLayout = frame.querySelector(".preview-layout");
+  const outlinePanel = frame.querySelector(".outline-panel");
+  const lintPanel = frame.querySelector(".lint-panel");
+  const toggleEditorPanelButton = frame.querySelector("#toggle-editor-panel");
+  const toggleOutlinePanelButton = frame.querySelector("#toggle-outline-panel");
+  const toggleOutlinePanelHeaderButton = frame.querySelector("#toggle-outline-panel-header");
+  const toggleLintPanelButton = frame.querySelector("#toggle-lint-panel");
 
   const importInput = document.createElement("input");
   importInput.type = "file";
@@ -118,21 +139,36 @@ export function createAppView(root, { initialSource, onSourceChange }) {
   const presentButton = createButton("Audience View");
   const presenterButton = createButton("Presenter View");
   const helpButton = createButton("Help");
-  const exportSourceButton = createButton("Export Source");
-  const exportJsonButton = createButton("Export JSON");
-  const exportSnapshotButton = createButton("Export Snapshot");
-  const importButton = createButton("Import Source");
+  const exportSourceButton = createButton("Export Markdown");
+  const exportJsonButton = createButton("Export Deck JSON");
+  const exportSnapshotButton = createButton("Export Presentation HTML");
+  const advancedToggle = createButton("Advanced");
+  advancedToggle.setAttribute("aria-haspopup", "true");
+  advancedToggle.setAttribute("aria-expanded", "false");
+
+  const advancedMenu = document.createElement("div");
+  advancedMenu.className = "advanced-menu";
+  advancedMenu.hidden = true;
+  advancedMenu.innerHTML = `
+    <div class="advanced-menu__panel">
+      <button type="button" id="advanced-import-source">Import Source</button>
+      <button type="button" id="advanced-export-json">Export Deck JSON</button>
+    </div>
+  `;
 
   actions.append(
     presentButton,
     presenterButton,
     helpButton,
-    importButton,
     exportSourceButton,
-    exportJsonButton,
     exportSnapshotButton,
+    advancedToggle,
+    advancedMenu,
     importInput,
   );
+
+  const advancedImportButton = advancedMenu.querySelector("#advanced-import-source");
+  const advancedExportJsonButton = advancedMenu.querySelector("#advanced-export-json");
 
   const helpDialog = document.createElement("dialog");
   helpDialog.className = "help-dialog";
@@ -148,8 +184,8 @@ export function createAppView(root, { initialSource, onSourceChange }) {
       <div class="help-dialog__content">
         <p>This editor is local-first. Your deck is automatically saved in this browser on this device as you work.</p>
         <p>That means your work is not saved to a Google-style cloud account by default. If you switch browsers, clear browser storage, or move to another device, your local saved deck will not come with you unless you export it.</p>
-        <p>Use <strong>Export Source</strong> to save your Markdown deck for future editing. Use <strong>Export JSON</strong> if you want a machine-readable version of the same deck. Use <strong>Export Snapshot</strong> to save a portable HTML presentation for sharing or presenting offline.</p>
-        <p>Use <strong>Import Source</strong> to reopen a previously exported Markdown or JSON deck in this editor.</p>
+        <p>Use <strong>Export Markdown</strong> to save your deck for future editing. Use <strong>Export Presentation HTML</strong> to save a portable presentation for sharing or presenting offline.</p>
+        <p>Use <strong>Import Source</strong> to reopen a previously exported Markdown or JSON deck in this editor. Lower-frequency tools such as import and JSON export are grouped under <strong>Advanced</strong>.</p>
         <p>Audience View opens the presentation view. Presenter View opens notes, timing, and next-slide support in a second window.</p>
       </div>
     </form>
@@ -180,6 +216,31 @@ export function createAppView(root, { initialSource, onSourceChange }) {
     `;
   }
 
+  function applyPanelState() {
+    editorLayout.dataset.editorCollapsed = String(editorCollapsed);
+    previewLayout.dataset.outlineCollapsed = String(outlineCollapsed);
+    outlinePanel.dataset.collapsed = String(outlineCollapsed);
+    lintPanel.dataset.collapsed = String(lintCollapsed);
+    outlinePanel.hidden = outlineCollapsed;
+    toggleEditorPanelButton.textContent = editorCollapsed ? "Expand Editor" : "Minimize Editor";
+    toggleOutlinePanelButton.textContent = outlineCollapsed ? "Show Outline" : "Hide Outline";
+    toggleOutlinePanelHeaderButton.textContent = outlineCollapsed ? "Show Outline" : "Hide Outline";
+    toggleLintPanelButton.textContent = lintCollapsed ? "Expand Accessibility" : "Collapse Accessibility";
+  }
+
+  async function refreshSa11y() {
+    const runToken = ++sa11yRunToken;
+    sa11yStatus.textContent = "Sa11y is enabled for the current slide preview.";
+    try {
+      await runSa11y("#preview-frame");
+      if (runToken !== sa11yRunToken) return;
+      sa11yStatus.textContent = "Sa11y is enabled for the current slide preview.";
+    } catch (error) {
+      if (runToken !== sa11yRunToken) return;
+      sa11yStatus.textContent = `Sa11y could not be loaded here. You can still use the Sa11y bookmarklet or site directly. ${error.message}`;
+    }
+  }
+
   function publishState(compiled) {
     applyDeckTheme(compiled.metadata);
     sync.postMessage({
@@ -207,6 +268,7 @@ export function createAppView(root, { initialSource, onSourceChange }) {
       .join("");
     lintIssues.innerHTML = createIssuesMarkup(compiled.issues);
     updateSummary(compiled.issues);
+    void refreshSa11y();
   }
 
   function render() {
@@ -215,6 +277,7 @@ export function createAppView(root, { initialSource, onSourceChange }) {
   }
 
   editor.value = source;
+  applyPanelState();
   render();
 
   editor.addEventListener("input", () => {
@@ -234,6 +297,26 @@ export function createAppView(root, { initialSource, onSourceChange }) {
       ? updateFrontMatterValue(source, "themeStylesheet", value)
       : removeFrontMatterValue(source, "themeStylesheet");
     setSource(nextSource);
+  });
+
+  toggleEditorPanelButton.addEventListener("click", () => {
+    editorCollapsed = !editorCollapsed;
+    applyPanelState();
+  });
+
+  toggleOutlinePanelButton.addEventListener("click", () => {
+    outlineCollapsed = !outlineCollapsed;
+    applyPanelState();
+  });
+
+  toggleOutlinePanelHeaderButton.addEventListener("click", () => {
+    outlineCollapsed = !outlineCollapsed;
+    applyPanelState();
+  });
+
+  toggleLintPanelButton.addEventListener("click", () => {
+    lintCollapsed = !lintCollapsed;
+    applyPanelState();
   });
 
   frame.querySelector("#prev-slide").addEventListener("click", () => {
@@ -285,6 +368,11 @@ export function createAppView(root, { initialSource, onSourceChange }) {
       "application/json;charset=utf-8",
     );
   });
+  advancedExportJsonButton.addEventListener("click", () => {
+    advancedMenu.hidden = true;
+    advancedToggle.setAttribute("aria-expanded", "false");
+    exportJsonButton.click();
+  });
 
   exportSnapshotButton.addEventListener("click", async () => {
     const cssText = await readCss();
@@ -298,7 +386,17 @@ export function createAppView(root, { initialSource, onSourceChange }) {
     downloadFile("deck-snapshot.html", html, "text/html;charset=utf-8");
   });
 
-  importButton.addEventListener("click", () => importInput.click());
+  advancedImportButton.addEventListener("click", () => {
+    advancedMenu.hidden = true;
+    advancedToggle.setAttribute("aria-expanded", "false");
+    importInput.click();
+  });
+
+  advancedToggle.addEventListener("click", () => {
+    const isOpening = advancedMenu.hidden;
+    advancedMenu.hidden = !isOpening;
+    advancedToggle.setAttribute("aria-expanded", String(isOpening));
+  });
 
   importInput.addEventListener("change", async () => {
     const file = importInput.files?.[0];
@@ -321,13 +419,10 @@ export function createAppView(root, { initialSource, onSourceChange }) {
     updateSummary(lastCompiled.issues);
   });
 
-  runSa11yCheckButton.addEventListener("click", async () => {
-    sa11yStatus.textContent = "Loading Sa11y for the current preview…";
-    try {
-      await runSa11y("#preview-frame");
-      sa11yStatus.textContent = "Sa11y loaded. Use its checker controls to review the current slide preview.";
-    } catch (error) {
-      sa11yStatus.textContent = `Sa11y could not be loaded here. You can still use the Sa11y bookmarklet or site directly. ${error.message}`;
-    }
+  document.addEventListener("click", (event) => {
+    if (advancedMenu.hidden) return;
+    if (advancedMenu.contains(event.target) || advancedToggle.contains(event.target)) return;
+    advancedMenu.hidden = true;
+    advancedToggle.setAttribute("aria-expanded", "false");
   });
 }

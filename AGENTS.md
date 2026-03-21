@@ -7,6 +7,7 @@
 - The long-term direction is to align the generated presentation runtime with `whisper-slides`, preserve strong W3C-style accessible slide markup, and expose Whisper speech-to-text only when local or API-backed AI is actually available.
 - GitHub Pages static hosting is a core constraint. Do not introduce a server requirement for the default experience.
 - Leveraging local browser persistence is important. Prefer browser-side caching and storage over network-dependent state when adding features for the default static workflow.
+- Read `STYLES.md` alongside this file when making UI, wording, or presentation-style changes.
 
 ## Setup Commands
 
