@@ -1,3 +1,5 @@
+import { buildThemeLinkTag } from "./theme.js";
+
 function escapeScriptText(value) {
   return value.replaceAll("</script>", "<\\/script>");
 }
@@ -16,7 +18,7 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
   const slidesMarkup = renderedSlides
     .map(
       (slide, index) => `
-        <section class="slide${index === 0 ? " is-active" : ""}" data-slide-index="${index}" aria-label="Slide ${index + 1}">
+        <section class="slide${index === 0 ? " is-active" : ""}" data-slide-index="${index}" data-step-count="${slide.stepCount || 0}" aria-label="Slide ${index + 1}">
           <div class="slide__content">
             ${slide.html}
           </div>
@@ -38,9 +40,10 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>
+    ${buildThemeLinkTag(metadata)}
     <style>${cssText}</style>
   </head>
-  <body class="snapshot-body">
+  <body class="snapshot-body" data-theme="${metadata.theme || "default-high-contrast"}">
     <main class="presentation-shell" aria-live="polite">
       ${slidesMarkup}
       <nav class="snapshot-controls" aria-label="Presentation controls">
@@ -54,17 +57,38 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
       const slides = [...document.querySelectorAll(".slide")];
       const status = document.querySelector("#snapshot-status");
       let activeIndex = 0;
+      let revealStep = 0;
+
+      function applyRevealState(slide) {
+        const items = [...slide.querySelectorAll("li.next")];
+        items.forEach((item, index) => {
+          const isVisible = index < revealStep;
+          const isCurrent = index === revealStep - 1;
+          item.hidden = !isVisible;
+          item.classList.toggle("visited", index < revealStep - 1);
+          item.classList.toggle("active", isCurrent);
+        });
+      }
 
       function render() {
         slides.forEach((slide, index) => {
           slide.classList.toggle("is-active", index === activeIndex);
           slide.hidden = index !== activeIndex;
+          if (index === activeIndex) applyRevealState(slide);
         });
-        status.textContent = \`\${activeIndex + 1} / \${slides.length}\`;
+        status.textContent = \`\${activeIndex + 1} / \${slides.length} · \${revealStep} / \${Number(slides[activeIndex]?.dataset.stepCount || 0)} reveals\`;
       }
 
       function move(delta) {
-        activeIndex = Math.max(0, Math.min(slides.length - 1, activeIndex + delta));
+        const stepCount = Number(slides[activeIndex]?.dataset.stepCount || 0);
+        if (delta > 0 && revealStep < stepCount) {
+          revealStep += 1;
+        } else if (delta < 0 && revealStep > 0) {
+          revealStep -= 1;
+        } else {
+          activeIndex = Math.max(0, Math.min(slides.length - 1, activeIndex + delta));
+          revealStep = delta > 0 ? 0 : Number(slides[activeIndex]?.dataset.stepCount || 0);
+        }
         render();
       }
 

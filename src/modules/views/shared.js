@@ -1,6 +1,7 @@
 import { parseSource } from "../parser.js";
 import { renderDeck } from "../render.js";
 import { lintDeck } from "../a11y.js";
+import { createRevealState } from "../presentation-state.js";
 
 export function compileSource(source) {
   const deck = parseSource(source);
@@ -35,7 +36,22 @@ export function createButton(label, title) {
   return button;
 }
 
-export function mountSlideInto(container, renderedSlide) {
+function escapeAttribute(value) {
+  return String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
+}
+
+function applyRevealState(container, revealStep) {
+  const progressiveItems = [...container.querySelectorAll("li.next")];
+  progressiveItems.forEach((item, index) => {
+    const isVisible = index < revealStep;
+    const isCurrent = index === revealStep - 1;
+    item.hidden = !isVisible;
+    item.classList.toggle("visited", index < revealStep - 1);
+    item.classList.toggle("active", isCurrent);
+  });
+}
+
+export function mountSlideInto(container, renderedSlide, options = {}) {
   if (!renderedSlide) {
     container.innerHTML = `
       <article class="slide-card empty-state">
@@ -48,11 +64,17 @@ export function mountSlideInto(container, renderedSlide) {
     return;
   }
 
+  const { revealStep = renderedSlide.stepCount || 0, includeLabel = true } = options;
+  const title = renderedSlide.headings.find((heading) => heading.level === 1)?.text || "Slide preview";
+
   container.innerHTML = `
-    <article class="slide-card">
+    <article class="slide-card"${includeLabel ? ` aria-label="${escapeAttribute(title)}"` : ""}>
       <div class="slide-card__content">
         ${renderedSlide.html}
       </div>
     </article>
   `;
+
+  const revealState = createRevealState(renderedSlide, revealStep);
+  applyRevealState(container, revealState.revealStep);
 }

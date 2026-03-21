@@ -21,15 +21,19 @@ export function renderMarkdown(markdown) {
   const htmlParts = [];
   const headings = [];
   let listItems = [];
+  let listType = null;
+  let stepCount = 0;
 
   function flushList() {
     if (listItems.length === 0) return;
-    htmlParts.push("<ul>");
+    htmlParts.push(`<${listType}>`);
     for (const item of listItems) {
-      htmlParts.push(`<li>${renderInline(item)}</li>`);
+      const classes = item.isProgressive ? ' class="next"' : "";
+      htmlParts.push(`<li${classes}>${renderInline(item.text)}</li>`);
     }
-    htmlParts.push("</ul>");
+    htmlParts.push(`</${listType}>`);
     listItems = [];
+    listType = null;
   }
 
   for (const rawLine of lines) {
@@ -50,9 +54,33 @@ export function renderMarkdown(markdown) {
       continue;
     }
 
-    const listMatch = /^-\s+(.+)$/.exec(line);
-    if (listMatch) {
-      listItems.push(listMatch[1].trim());
+    const unorderedListMatch = /^-\s+(.+)$/.exec(line);
+    if (unorderedListMatch) {
+      const text = unorderedListMatch[1].trim();
+      const isProgressive = text.startsWith("[>] ");
+      if (!listType) listType = "ul";
+      if (listType !== "ul") flushList();
+      listType = "ul";
+      listItems.push({
+        text: isProgressive ? text.slice(4).trim() : text,
+        isProgressive,
+      });
+      if (isProgressive) stepCount += 1;
+      continue;
+    }
+
+    const orderedListMatch = /^(\d+)\.\s+(.+)$/.exec(line);
+    if (orderedListMatch) {
+      const text = orderedListMatch[2].trim();
+      const isProgressive = text.startsWith("[>] ");
+      if (!listType) listType = "ol";
+      if (listType !== "ol") flushList();
+      listType = "ol";
+      listItems.push({
+        text: isProgressive ? text.slice(4).trim() : text,
+        isProgressive,
+      });
+      if (isProgressive) stepCount += 1;
       continue;
     }
 
@@ -65,5 +93,6 @@ export function renderMarkdown(markdown) {
   return {
     html: htmlParts.join(""),
     headings,
+    stepCount,
   };
 }

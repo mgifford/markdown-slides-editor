@@ -4,7 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "test": "node --test",
+    "test": "npm run test:all",
+    "test:all": "npm run test:unit && npm run test:semantics",
+    "test:unit": "node --test",
+    "test:semantics": "node ./scripts/check-semantic-output.js",
     "serve": "python3 -m http.server 4173"
   }
 }

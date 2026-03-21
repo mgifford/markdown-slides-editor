@@ -4,6 +4,8 @@ export const DEFAULT_SOURCE = `---
 title: Accessible slide deck
 lang: en
 theme: default-high-contrast
+durationMinutes: 20
+themeStylesheet:
 ---
 
 # Welcome
@@ -11,8 +13,8 @@ theme: default-high-contrast
 Build accessible slides in Markdown and preview them instantly.
 
 - Static hosting
-- Presenter notes
-- Snapshot export
+- [>] Presenter notes
+- [>] Snapshot export
 
 Note:
 Open Presenter View to see notes, timer, and next-slide preview.

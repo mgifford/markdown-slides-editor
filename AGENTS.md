@@ -79,6 +79,7 @@
 ## Editing Guidance
 
 - Prefer small, direct edits in the existing modules over introducing new abstractions.
+- If you use AI to materially change the repository, update `README.md` to disclose that use accurately and specifically.
 - If you add a new feature, decide first whether it belongs in:
   - the static baseline, or
   - the optional AI/local-runtime layer

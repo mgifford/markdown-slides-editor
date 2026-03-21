@@ -4,6 +4,8 @@ This document describes the accessibility posture, contributor expectations, and
 
 It is inspired by the open `ACCESSIBILITY.md` framework published at [mgifford.github.io/ACCESSIBILITY.md](https://mgifford.github.io/ACCESSIBILITY.md/), adapted here for a static Markdown-driven slide editor and presentation runtime.
 
+This project is meant for production use. Accessibility guidance here should be treated as operational product requirements, not training material or aspirational sample text.
+
 ## Conformance Target
 
 - Target: WCAG 2.2 AA for both:
@@ -33,6 +35,11 @@ Accessibility work is incomplete unless both surfaces are considered.
 - Require meaningful text alternatives for informative images.
 - Encourage descriptive link text and clear heading structure.
 - Prefer browser-native, resilient patterns over complex client-side behavior.
+- Encourage concise slides with one main idea per slide and meaningful slide titles.
+- Encourage plain, inclusive language and avoid unnecessary jargon or unexplained acronyms.
+- Encourage authors to describe meaningful visuals in notes and spoken delivery, not only in static text alternatives.
+- Treat speaker notes as supporting detail, not the sole location of critical audience information.
+- Keep motion disciplined and minimal by default.
 
 ## Current Guardrails
 
@@ -43,6 +50,14 @@ Current automated checks live in the editor lint flow and test suite:
 - warnings for generic link text
 - errors for missing image alt text
 - note presence awareness
+
+Current semantic expectations for rendered output:
+
+- logical heading hierarchy in the final HTML
+- semantic lists instead of list-looking paragraphs
+- no layout tables in author content
+- minimal and justified ARIA usage
+- avoid generic container-only output when semantic elements are appropriate
 
 Current related files:
 
@@ -60,8 +75,13 @@ A change that affects UI, rendering, navigation, or export is not done until:
 - keyboard-only use is verified for the changed flow
 - focus visibility remains intact
 - generated slide output remains readable in DOM order
+- generated slide output uses sensible semantic HTML, not container-only markup
+- heading and list semantics remain intact after rendering
+- ARIA use is justified and not decorative or redundant
 - any new images, controls, or interactive patterns have accessible names and instructions
 - any new motion respects reduced-motion preferences
+- notes do not hide essential content required to understand the presentation
+- transitions and timed behavior do not create cognitive or vestibular burden
 
 If a feature affects exported slides, validate the exported HTML as well as the in-app preview.
 
@@ -75,11 +95,21 @@ Always review, when relevant:
 - visible focus styles
 - screen reader naming of buttons, links, and landmarks
 - heading hierarchy on each slide
+- whether list content is rendered as actual lists
+- whether any table usage is truly tabular rather than visual layout
+- whether ARIA roles are necessary and correct
+- whether rendered slides use semantic elements rather than "div soup"
 - descriptive link text
 - notes separation from visible content
+- whether the slide itself contains the essential audience-facing idea
+- whether notes are adding detail rather than hiding key meaning
+- slide density and readability from a distance
+- whether charts, diagrams, and other visuals are summarized clearly
 - contrast in the chosen theme
 - presenter view behavior without a mouse
 - exported snapshot behavior offline
+- whether spoken delivery guidance in notes supports an equivalent experience for people who cannot see the slide content
+- whether transitions, animation, or timed movement are unnecessary or distracting
 
 ## AI And Speech-To-Text
 
@@ -92,6 +122,7 @@ Always review, when relevant:
 
 The project should grow toward stronger shift-left accessibility enforcement:
 
+- Sa11y review of rendered decks as part of the manual validation workflow
 - CI checks with `axe` and `pa11y`
 - export validation for generated HTML
 - stronger theme contrast checks
@@ -103,6 +134,7 @@ These are planned expectations even where automation is not implemented yet.
 ## Trusted References
 
 - [Intopia guidance](https://intopia.digital/)
+- [How To Create More Accessible Presentations](https://intopia.digital/articles/how-to-create-more-accessible-presentations/)
 - [Inklusiv resources](https://inklusiv.ca/)
 - [WCAG 2.2](https://www.w3.org/TR/WCAG22/)
 - [WAI presentations guidance](https://www.w3.org/WAI/presentations/)

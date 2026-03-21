@@ -1,9 +1,5 @@
 const GENERIC_LINK_PATTERNS = [/^click here$/i, /^read more$/i, /^more$/i, /^link$/i];
 
-function getHeadingLevel(htmlTag) {
-  return Number.parseInt(htmlTag.slice(1), 10);
-}
-
 export function lintDeck(deck, renderedSlides) {
   const issues = [];
 
@@ -62,12 +58,6 @@ export function lintDeck(deck, renderedSlides) {
         message: `Slide ${slideNumber} has no speaker notes.`,
       });
     }
-  });
-
-  issues.push({
-    level: "info",
-    slide: null,
-    message: "Contrast, focus styling, and exported HTML should also be verified in-browser against Intopia and WCAG guidance.",
   });
 
   return issues;

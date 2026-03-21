@@ -2,6 +2,12 @@
 
 Future ideas and follow-up work for the final project.
 
+## Product direction
+
+- Build for production use, not training or demo-only scenarios.
+- Help presenters improve clarity, confidence, and credibility when presenting.
+- Favor reusable patterns that other teams such as CivicActions and W3C could adopt, without making their adoption a dependency for success.
+
 ## Runtime and integration
 
 - Integrate the `whisper-slides` runtime instead of the temporary in-repo presentation shell.
@@ -13,10 +19,18 @@ Future ideas and follow-up work for the final project.
 
 - Turn the accessibility checklist into enforceable validation rules in the editor.
 - Add stronger heading structure checks, including repeated headings and empty headings.
+- Add checks for semantic list usage and suspicious fake-list patterns.
+- Add checks that discourage or reject layout tables in authored content.
+- Add checks that flag slides whose essential meaning appears to exist only in notes.
 - Add link-quality checks beyond generic phrases such as context-free URLs.
 - Add image guidance for decorative images versus informative images.
 - Add theme-level contrast validation instead of relying on manual review.
 - Add automated accessibility regression checks for exported presentations.
+- Add rendered-output validation to ensure semantic HTML instead of container-heavy markup.
+- Add guardrails against unnecessary or incorrect ARIA role usage.
+- Add Sa11y to the manual accessibility review workflow for browser-accessible decks.
+- Make motion-reduction defaults explicit in themes and presentation runtime behavior.
+- Disable auto-advance by default and avoid decorative transition effects.
 - Compare output markup with the accessible patterns used in W3C presentation examples.
 
 ## AI and speech-to-text
@@ -28,13 +42,26 @@ Future ideas and follow-up work for the final project.
 - Keep GitHub Pages mode explicit: no local Whisper execution, no misleading AI controls.
 - Add capability detection so captioning controls appear only for valid local or API-backed configurations.
 - Document the privacy tradeoffs between local transcription and API-based transcription.
+- Add an AI-assisted deck review workflow for improving clarity, accessibility, pacing, and slide density.
+- Prioritize local-first LLM integrations such as Ollama for private review and editing support.
+- Allow deck-level review prompts so an author can ask for feedback on the whole presentation, not just one slide.
+- Add slide-level and deck-level rewrite suggestions that can be accepted, rejected, or partially applied.
+- Explore an integrated AI chat panel for discussing edits without leaving the editor.
+- Support copy-and-paste workflows so authors can move deck content into external LLM tools when preferred.
+- Add comment-style AI suggestions so feedback can appear alongside slides instead of replacing content immediately.
+- Keep AI suggestions non-destructive by default and require explicit author approval before applying changes.
 
 ## Editor and authoring
 
+- Aim for a "Google Slides, but with Markdown" experience for authoring speed, responsiveness, and review workflows.
 - Add a better slide outline and slide sorter in the editor.
 - Add template insertion for title slides, section slides, and resource slides.
 - Add a dedicated notes editor rather than relying only on `Note:` separators in raw Markdown.
 - Add autosave status, undo-friendly editing, and deck version history in-browser.
+- Add explicit undo and redo support for editor changes, AI-assisted edits, and slide-structure operations.
+- Preserve a full edit history so authors can confidently experiment with AI-assisted revisions.
+- Add comment and suggestion modes so edits can be reviewed before they are merged into source.
+- Add richer copy/paste support between slides, notes, comments, and external tools.
 - Add stricter JSON import/export for machine-readable deck workflows.
 
 ## Presentation workflow
