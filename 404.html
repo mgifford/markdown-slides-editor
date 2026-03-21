@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="refresh" content="0; url=./?redirect=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirecting</title>
+  </head>
+  <body>
+    <script>
+      const url = new URL(window.location.href);
+      const redirectUrl = new URL("./", window.location.href);
+      redirectUrl.searchParams.set("redirect", "1");
+      redirectUrl.searchParams.set("pathname", url.pathname);
+      redirectUrl.searchParams.set("search", url.search);
+      redirectUrl.searchParams.set("hash", url.hash);
+      window.location.replace(redirectUrl.toString());
+    </script>
+  </body>
+</html>
