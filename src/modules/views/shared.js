@@ -3,6 +3,7 @@ import { renderDeck } from "../render.js";
 import { lintDeck } from "../a11y.js";
 import { attachColorModeToggle } from "../color-mode.js";
 import { createRevealState } from "../presentation-state.js";
+import { fitSlideBodyText } from "../slide-layout.js";
 
 export function compileSource(source) {
   const deck = parseSource(source);
@@ -105,4 +106,5 @@ export function mountSlideInto(container, renderedSlide, options = {}) {
 
   const revealState = createRevealState(renderedSlide, revealStep);
   applyRevealState(container, revealState.revealStep);
+  return fitSlideBodyText(container, renderedSlide);
 }

@@ -1,5 +1,18 @@
 const GENERIC_LINK_PATTERNS = [/^click here$/i, /^read more$/i, /^more$/i, /^link$/i];
 
+function countWords(value) {
+  return String(value)
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, " ")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1")
+    .replace(/[`*_>#]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean).length;
+}
+
+function countMatches(value, pattern) {
+  return (String(value).match(pattern) || []).length;
+}
+
 export function lintDeck(deck, renderedSlides) {
   const issues = [];
 
@@ -56,6 +69,20 @@ export function lintDeck(deck, renderedSlides) {
         level: "info",
         slide: slideNumber,
         message: `Slide ${slideNumber} has no speaker notes.`,
+      });
+    }
+
+    const sourceSlide = deck.slides[index];
+    const wordCount = countWords(sourceSlide.body);
+    const bulletCount = countMatches(sourceSlide.body, /^\s*(?:-|\d+\.)\s+/gm);
+    const paragraphCount = countMatches(sourceSlide.body, /^(?!#|\s*(?:-|\d+\.)\s+|Note:|Resources:|Script:).+\S.*$/gm);
+
+    if (wordCount > 90 || bulletCount > 6 || paragraphCount > 4) {
+      issues.push({
+        level: "warning",
+        slide: slideNumber,
+        category: "layout",
+        message: `Slide ${slideNumber} may contain too much text for a presentation slide. Aim for fewer bullets and shorter visible copy.`,
       });
     }
   });

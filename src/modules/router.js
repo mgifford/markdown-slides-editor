@@ -1,3 +1,8 @@
+function normalizePathname(pathname) {
+  if (!pathname || pathname === "/") return "/";
+  return pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+}
+
 export function restoreRedirectPath() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("redirect") !== "1") {
@@ -12,11 +17,13 @@ export function restoreRedirectPath() {
 }
 
 export function getCurrentRoute(pathname) {
-  if (pathname.endsWith("/presenter")) {
+  const normalized = normalizePathname(pathname);
+
+  if (normalized.endsWith("/presenter")) {
     return "presenter";
   }
 
-  if (pathname.endsWith("/present")) {
+  if (normalized.endsWith("/present")) {
     return "present";
   }
 

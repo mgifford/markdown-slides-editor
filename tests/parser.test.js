@@ -70,6 +70,26 @@ test("lintDeck flags missing alt text and generic links", () => {
   assert.equal(issues.some((issue) => issue.message.includes("without alt text")), true);
 });
 
+test("lintDeck warns when visible slide copy is too dense", () => {
+  const source = `# Dense slide
+
+- Point one with explanatory text that keeps going for the audience.
+- Point two with explanatory text that keeps going for the audience.
+- Point three with explanatory text that keeps going for the audience.
+- Point four with explanatory text that keeps going for the audience.
+- Point five with explanatory text that keeps going for the audience.
+- Point six with explanatory text that keeps going for the audience.
+- Point seven with explanatory text that keeps going for the audience.
+
+Note:
+Speaker notes.`;
+
+  const deck = parseSource(source);
+  const rendered = renderDeck(deck);
+  const issues = lintDeck(deck, rendered.renderedSlides);
+  assert.equal(issues.some((issue) => issue.category === "layout"), true);
+});
+
 test("renderMarkdown supports ordered lists and progressive disclosure markers", () => {
   const rendered = renderMarkdown(`# Slide
 
@@ -79,6 +99,44 @@ test("renderMarkdown supports ordered lists and progressive disclosure markers",
   assert.equal(rendered.html.includes("<ol>"), true);
   assert.equal(rendered.html.includes('class="next"'), true);
   assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown supports centered blocks, columns, media, callouts, and quotes", () => {
+  const rendered = renderMarkdown(`# Slide
+
+::center
+![Alt text](https://example.com/image.jpg)
+::
+
+::column-left-75%
+- Left bullet
+::
+
+::column-right-300px
+Right column text.
+::
+
+::media-right
+![Alt text](https://example.com/media.jpg)
+---
+Text beside the image.
+::
+
+::callout
+Important point.
+::
+
+::quote
+Memorable quote.
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-center"'), true);
+  assert.equal(rendered.html.includes('class="layout-columns"'), true);
+  assert.equal(rendered.html.includes('class="layout-media layout-media--right"'), true);
+  assert.equal(rendered.html.includes('class="layout-callout"'), true);
+  assert.equal(rendered.html.includes('class="layout-quote"'), true);
+  assert.equal(rendered.html.includes("--column-basis:75%"), true);
+  assert.equal(rendered.html.includes("--column-basis:300px"), true);
 });
 
 test("renderDeck renders title-slide metadata into semantic HTML", () => {

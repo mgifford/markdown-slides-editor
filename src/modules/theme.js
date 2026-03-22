@@ -1,3 +1,5 @@
+import { applySlideDimensions, buildSlideDimensionStyle } from "./slide-layout.js";
+
 const THEME_LINK_ID = "deck-theme-stylesheet";
 
 export const BUILT_IN_THEMES = [
@@ -33,6 +35,7 @@ function ensureThemeLink() {
 export function applyDeckTheme(metadata = {}) {
   const theme = metadata.theme || "default-high-contrast";
   document.documentElement.dataset.theme = theme;
+  applySlideDimensions(metadata);
 
   const link = ensureThemeLink();
   if (metadata.themeStylesheet) {
@@ -50,4 +53,8 @@ export function buildThemeLinkTag(metadata = {}) {
   }
 
   return `<link rel="stylesheet" href="${metadata.themeStylesheet}" />`;
+}
+
+export function buildDeckStyleAttribute(metadata = {}) {
+  return buildSlideDimensionStyle(metadata);
 }

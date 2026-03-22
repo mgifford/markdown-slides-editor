@@ -33,6 +33,7 @@ test("buildSnapshotHtml includes theme data, step counts, and embedded source pa
   assert.equal(html.includes('data-step-count="2"'), true);
   assert.equal(html.includes('<script id="deck-source" type="application/json">'), true);
   assert.equal(html.includes('"slideCount":2'), true);
+  assert.equal(html.includes('data-action="print"'), true);
 });
 
 test("buildSnapshotHtml escapes closing script tags inside embedded source", () => {
@@ -51,12 +52,28 @@ test("buildSnapshotHtml escapes closing script tags inside embedded source", () 
 test("buildExportBundle includes markdown and html files in the zip payload", () => {
   const bundle = buildExportBundle({
     markdownSource: "# Deck",
+    deckJson: "{\"title\":\"Deck\"}",
     snapshotHtml: "<!doctype html><html><body>Deck</body></html>",
   });
 
   const text = new TextDecoder().decode(bundle);
   assert.equal(text.includes("deck.md"), true);
+  assert.equal(text.includes("deck.json"), true);
   assert.equal(text.includes("presentation.html"), true);
   assert.equal(bundle[0], 0x50);
   assert.equal(bundle[1], 0x4b);
+});
+
+test("buildSnapshotHtml can request auto print for save-as-pdf workflows", () => {
+  const html = buildSnapshotHtml({
+    title: "Printable snapshot",
+    cssText: "",
+    renderedSlides: [{ html: "<h1>One</h1>", stepCount: 0 }],
+    metadata: {},
+    source: "# One",
+    autoPrint: true,
+  });
+
+  assert.equal(html.includes('window.print()'), true);
+  assert.equal(html.includes('data-action="print"'), true);
 });

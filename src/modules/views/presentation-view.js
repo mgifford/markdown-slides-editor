@@ -12,6 +12,7 @@ export function createPresentationView(root, initialSource) {
   let source = initialSource;
   let activeSlideIndex = 0;
   let revealStep = 0;
+  let textZoom = 1;
   let compiled = compileSource(source);
   const sync = createSyncChannel();
   let tocOpen = false;
@@ -47,6 +48,7 @@ export function createPresentationView(root, initialSource) {
     const slide = compiled.renderedSlides[activeSlideIndex] || compiled.renderedSlides[0];
     activeSlideIndex = slide?.index || 0;
     mountSlideInto(frameNode, slide, { revealStep });
+    frameNode.style.setProperty("--presentation-text-zoom", String(textZoom));
     statusNode.textContent = compiled.renderedSlides.length
       ? `${compiled.metadata.title || "Untitled deck"} · ${activeSlideIndex + 1} / ${compiled.renderedSlides.length} · ${revealStep}/${slide?.stepCount || 0} reveals`
       : `${compiled.metadata.title || "Untitled deck"} · No slides`;
@@ -56,7 +58,7 @@ export function createPresentationView(root, initialSource) {
         return `<li${currentClass}><button type="button" data-slide-index="${index}">${getSlideTitle(renderedSlide, index)}</button></li>`;
       })
       .join("");
-    sync.postMessage({ type: "slide-changed", activeSlideIndex, revealStep, source, timestamp: Date.now() });
+    sync.postMessage({ type: "slide-changed", activeSlideIndex, revealStep, source, textZoom, timestamp: Date.now() });
   }
 
   function move(delta) {
@@ -132,6 +134,9 @@ export function createPresentationView(root, initialSource) {
       source = message.source || source;
       activeSlideIndex = message.activeSlideIndex ?? activeSlideIndex;
       revealStep = message.type === "slide-changed" ? message.revealStep ?? revealStep : 0;
+      if (typeof message.textZoom === "number") {
+        textZoom = message.textZoom;
+      }
       render();
     }
   });

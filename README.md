@@ -16,9 +16,13 @@ This is intended for real production presentations. It is not a training product
 - Audience view and presenter view with same-origin sync
 - Slide outline and presenter timing support
 - Progressive disclosure for lists
+- Fixed slide geometry with auto-fit body text and compact density warnings
+- Better small-screen support for editor and audience view
 - IndexedDB-backed local storage
+- In-editor AI prompt generator for briefing Ollama or another LLM
 - Source import plus bundled ZIP export for Markdown and presentation HTML
 - Portable HTML snapshot export
+- Print / Save PDF workflow with print-friendly slide pages
 - Built-in theme presets plus optional external CSS override
 - Accessible light/dark mode that respects system preference and supports manual override
 - Presenter panel layout controls and countdown timer
@@ -44,7 +48,12 @@ Then open `http://localhost:4173`.
 - `TODO.md`: future roadmap and integration ideas
 - `docs/accessibility-checklist.md`: project accessibility checklist
 - `docs/ai-authoring-workflow.md`: recommended workflow and prompt template for AI-assisted deck drafting
+- `docs/layout-syntax.md`: layout directives for centered content, columns, media blocks, callouts, and quotes
 - `docs/resources.md`: accessibility references and source material
+
+The editor also includes an `AI Prompt` button that builds a structured briefing prompt from the current deck metadata, slide topics, and references. Use that to brief an LLM, then paste the returned Markdown back into the editor for review and refinement.
+
+On smaller screens, the editor provides `Edit`, `Preview`, and `Support` pane tabs so you can work in a pinch without trying to keep every panel visible at once.
 
 ## AI disclosure
 
@@ -88,6 +97,7 @@ The repository includes `404.html` so GitHub Pages can redirect deep links back 
 - `src/modules/export.js` generates the standalone snapshot HTML
 - `src/modules/presentation-state.js` manages reveal-step navigation and duration metadata
 - `src/modules/presenter-timer.js` manages presenter countdown timer state
+- `src/modules/slide-layout.js` manages slide dimensions and body-text fitting
 - `src/modules/theme.js` applies built-in themes and optional external stylesheet overrides
 - `src/modules/color-mode.js` manages accessible light/dark mode
 - `src/modules/storage.js` handles IndexedDB-first persistence
@@ -113,6 +123,8 @@ title: My presentation
 lang: en
 theme: default-high-contrast
 durationMinutes: 20
+slideWidth: 1280
+slideHeight: 720
 themeStylesheet: https://example.com/presentation-theme.css
 titleSlide: true
 subtitle: A better slide workflow
@@ -152,6 +164,8 @@ Optional full script text can go here for delivery support or to share with atte
 
 Use `- [>]` inside a list item to mark content for progressive disclosure in audience and snapshot presentation modes.
 
+By default, slides target a 1280x720 presentation surface. Set `slideWidth` and `slideHeight` in front matter if you need a different fixed presentation size.
+
 Set `titleSlide: true` in front matter to generate an optional opening title slide from front matter fields like `title`, `subtitle`, `date`, `location`, and `speakers`.
 
 Set `titleSlideQr: true` to show the published-deck QR code on the title slide when `presentationUrl` or `publishedUrl` is available. Use `titleSlideQrUrl` if you want the title-slide QR to point somewhere else.
@@ -160,16 +174,25 @@ Set `closingSlide: true` to generate an optional final slide for questions and f
 
 Inside a slide, you can also add optional `Resources:` and `Script:` sections after the visible content. These do not appear on the audience slide, but they are available in the editor and presenter support panels so references, URLs, and a fuller written script can travel with the deck source.
 
+The editor warns when a slide looks too dense for the target presentation frame, and the slide body text will shrink before the heading does to help keep content on-screen without scrolling.
+
+The editor also supports layout directives such as `::center`, `::column-left`, `::column-right`, `::media-left`, `::media-right`, `::callout`, and `::quote`. See `docs/layout-syntax.md` for examples.
+
 ## Export
 
 The primary export action downloads a ZIP bundle containing:
 
 - `deck.md` for future editing
+- `deck.json` for machine-readable workflows and integrations
 - `presentation.html` for presenting or sharing
 
-`Export Deck JSON` remains available in the Advanced menu for machine-readable workflows.
+`Advanced` also includes `Email Deck`, which opens a mail draft with the editor URL and, when the deck is short enough, the Markdown source. This is intended as a practical mobile-to-desktop handoff aid and may be limited by mail client body-size limits.
 
 The exported HTML is portable, but it is not always fully self-contained. If you use `themeStylesheet` or QR-code features that depend on remote resources, the exported presentation still needs network access to load those external assets.
+
+For PDF output, use `Print / Save PDF`. That opens a printable snapshot and triggers the browser print dialog so you can print or save the deck as PDF. This project prefers HTML as the primary accessible format, but the print stylesheet aims to produce a cleaner one-slide-per-page PDF workflow when people need it.
+
+Browser-generated PDFs vary in how much accessibility structure they preserve, so HTML should remain the canonical presentation format whenever possible.
 
 ## Theming
 
@@ -202,3 +225,12 @@ Presenter view includes:
 - `-1 min`, `+1 min`, `Pause`, and `Reset` controls
 - a bottom progress line that shifts from green to red as time runs down
 - presenter support content from `Note:`, `Resources:`, and `Script:`
+
+## Audience view
+
+Audience view keeps the slide surface clean for the audience. Text zoom is controlled from presenter view so the presenter can adjust readability without putting extra controls on the audience screen.
+
+- `A-` in presenter view makes the slide text smaller in both presenter and audience views
+- `A` in presenter view resets the zoom in both views
+- `A+` in presenter view makes the slide text larger in both views
+- keyboard shortcuts `-`, `0`, and `+` do the same from presenter view

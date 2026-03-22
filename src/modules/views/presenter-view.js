@@ -29,6 +29,7 @@ export function createPresenterView(root, initialSource) {
   let source = initialSource;
   let activeSlideIndex = 0;
   let revealStep = 0;
+  let textZoom = 1;
   const sync = createSyncChannel();
   const frame = createDeckFrame("Presenter View");
   let panelLayout = loadPresenterLayout();
@@ -130,7 +131,10 @@ export function createPresenterView(root, initialSource) {
   const progressNode = frame.querySelector("#presenter-timer-progress");
   const previousButton = createButton("Previous");
   const nextButton = createButton("Next");
-  actions.append(previousButton, nextButton);
+  const zoomOutButton = createButton("A-", "Make slide text smaller in presenter and audience views");
+  const zoomResetButton = createButton("A", "Reset slide text size in presenter and audience views");
+  const zoomInButton = createButton("A+", "Make slide text larger in presenter and audience views");
+  actions.append(previousButton, nextButton, zoomOutButton, zoomResetButton, zoomInButton);
   addColorModeToggle(actions);
   let compiled = compileSource(source);
 
@@ -140,6 +144,7 @@ export function createPresenterView(root, initialSource) {
       activeSlideIndex,
       revealStep,
       source,
+      textZoom,
       timestamp: Date.now(),
     });
   }
@@ -164,9 +169,11 @@ export function createPresenterView(root, initialSource) {
       timerState = createPresenterTimerState(metadataDuration);
     }
     mountSlideInto(currentFrame, currentSlide, { revealStep });
+    currentFrame.style.setProperty("--presentation-text-zoom", String(textZoom));
     nextFrame.innerHTML = nextSlide
       ? `<article class="slide-card slide-card--next"><div class="slide-card__content">${nextSlide.html}</div></article>`
       : `<article class="slide-card slide-card--next empty-state"><p>No next slide.</p></article>`;
+    nextFrame.style.setProperty("--presentation-text-zoom", String(textZoom));
     notesNode.innerHTML = buildSupplementalHtml(currentSlide);
     outlineNode.innerHTML = compiled.renderedSlides
       .map((renderedSlide, index) => {
@@ -196,6 +203,12 @@ export function createPresenterView(root, initialSource) {
     publishState();
   }
 
+  function updateZoom(delta) {
+    textZoom = Math.max(0.85, Math.min(1.6, Number((textZoom + delta).toFixed(2))));
+    render();
+    publishState();
+  }
+
   sync.subscribe((message) => {
     if (message.source) {
       source = message.source;
@@ -206,11 +219,21 @@ export function createPresenterView(root, initialSource) {
     if (typeof message.revealStep === "number") {
       revealStep = message.revealStep;
     }
+    if (typeof message.textZoom === "number") {
+      textZoom = message.textZoom;
+    }
     render();
   });
 
   previousButton.addEventListener("click", () => move(-1));
   nextButton.addEventListener("click", () => move(1));
+  zoomOutButton.addEventListener("click", () => updateZoom(-0.1));
+  zoomResetButton.addEventListener("click", () => {
+    textZoom = 1;
+    render();
+    publishState();
+  });
+  zoomInButton.addEventListener("click", () => updateZoom(0.1));
 
   nextFrame.addEventListener("click", () => {
     if (compiled.renderedSlides[activeSlideIndex + 1]) {
@@ -264,6 +287,23 @@ export function createPresenterView(root, initialSource) {
     if (event.key.toLowerCase() === "d") {
       event.preventDefault();
       toggleColorMode();
+    }
+
+    if (event.key === "+" || event.key === "=") {
+      event.preventDefault();
+      updateZoom(0.1);
+    }
+
+    if (event.key === "-") {
+      event.preventDefault();
+      updateZoom(-0.1);
+    }
+
+    if (event.key === "0") {
+      event.preventDefault();
+      textZoom = 1;
+      render();
+      publishState();
     }
   });
 

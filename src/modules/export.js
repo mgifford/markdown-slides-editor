@@ -1,4 +1,4 @@
-import { buildThemeLinkTag } from "./theme.js";
+import { buildDeckStyleAttribute, buildThemeLinkTag } from "./theme.js";
 
 const textEncoder = new TextEncoder();
 
@@ -14,6 +14,14 @@ export function downloadFile(filename, contents, type) {
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+export function openHtmlInNewWindow(contents) {
+  const blob = new Blob([contents], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const opened = window.open(url, "_blank", "noopener,noreferrer");
+  window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+  return opened;
 }
 
 function encodeText(value) {
@@ -128,18 +136,19 @@ export function buildZipArchive(files) {
   return concatUint8Arrays([localSection, centralDirectory, endOfCentralDirectory]);
 }
 
-export function buildExportBundle({ markdownSource, snapshotHtml }) {
+export function buildExportBundle({ markdownSource, snapshotHtml, deckJson }) {
   return buildZipArchive([
     { name: "deck.md", contents: markdownSource },
+    { name: "deck.json", contents: deckJson },
     { name: "presentation.html", contents: snapshotHtml },
   ]);
 }
 
-export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, source }) {
+export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, source, autoPrint = false }) {
   const slidesMarkup = renderedSlides
     .map(
       (slide, index) => `
-        <section class="slide${index === 0 ? " is-active" : ""}" data-slide-index="${index}" data-step-count="${slide.stepCount || 0}" aria-label="Slide ${index + 1}">
+        <section class="slide${index === 0 ? " is-active" : ""}" data-slide-index="${index}" data-step-count="${slide.stepCount || 0}" data-kind="${slide.kind || "content"}" aria-label="Slide ${index + 1}">
           <div class="slide__content">
             ${slide.html}
           </div>
@@ -164,13 +173,14 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
     ${buildThemeLinkTag(metadata)}
     <style>${cssText}</style>
   </head>
-  <body class="snapshot-body" data-theme="${metadata.theme || "default-high-contrast"}">
+  <body class="snapshot-body" data-theme="${metadata.theme || "default-high-contrast"}" style="${buildDeckStyleAttribute(metadata)}">
     <main class="presentation-shell" aria-live="polite">
       ${slidesMarkup}
       <nav class="snapshot-controls" aria-label="Presentation controls">
         <button type="button" data-action="prev">Previous</button>
         <span id="snapshot-status">1 / ${renderedSlides.length}</span>
         <button type="button" data-action="next">Next</button>
+        <button type="button" data-action="print">Print / Save PDF</button>
       </nav>
     </main>
     <script id="deck-source" type="application/json">${payload}</script>
@@ -179,6 +189,30 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
       const status = document.querySelector("#snapshot-status");
       let activeIndex = 0;
       let revealStep = 0;
+
+      function contentOverflows(content) {
+        return content.scrollHeight > content.clientHeight + 1 || content.scrollWidth > content.clientWidth + 1;
+      }
+
+      function prepareSlide(slide) {
+        const content = slide.querySelector(".slide__content");
+        if (!content || slide.dataset.kind === "title" || slide.dataset.kind === "closing") return;
+        let body = content.querySelector(":scope > .slide-card__body");
+        if (!body) {
+          body = document.createElement("div");
+          body.className = "slide-card__body";
+          const children = [...content.children].filter((node) => node.tagName !== "H1");
+          const anchor = content.querySelector(":scope > h1");
+          content.insertBefore(body, anchor ? anchor.nextSibling : content.firstChild);
+          children.forEach((child) => body.append(child));
+        }
+        let scale = 1;
+        body.style.setProperty("--slide-body-scale", scale);
+        while (scale > 0.72 && contentOverflows(content)) {
+          scale = Math.max(0.72, Number((scale - 0.04).toFixed(2)));
+          body.style.setProperty("--slide-body-scale", scale);
+        }
+      }
 
       function applyRevealState(slide) {
         const items = [...slide.querySelectorAll("li.next")];
@@ -195,7 +229,10 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
         slides.forEach((slide, index) => {
           slide.classList.toggle("is-active", index === activeIndex);
           slide.hidden = index !== activeIndex;
-          if (index === activeIndex) applyRevealState(slide);
+          if (index === activeIndex) {
+            prepareSlide(slide);
+            applyRevealState(slide);
+          }
         });
         status.textContent = \`\${activeIndex + 1} / \${slides.length} · \${revealStep} / \${Number(slides[activeIndex]?.dataset.stepCount || 0)} reveals\`;
       }
@@ -222,9 +259,13 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
         const action = event.target.dataset.action;
         if (action === "prev") move(-1);
         if (action === "next") move(1);
+        if (action === "print") window.print();
       });
 
+      window.addEventListener("resize", render);
+
       render();
+      ${autoPrint ? 'window.addEventListener("load", () => window.setTimeout(() => window.print(), 200));' : ""}
     </script>
   </body>
 </html>`;
