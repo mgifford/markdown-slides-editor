@@ -1,4 +1,4 @@
-import { buildExportBundle, buildSnapshotHtml, downloadFile, openHtmlInNewWindow } from "../export.js";
+import { buildExportBundle, buildOnePageHtml, buildSnapshotHtml, downloadFile } from "../export.js";
 import { buildAiAuthoringPrompt, createAiPromptDefaults } from "../ai-prompt.js";
 import { updateFrontMatterValue, removeFrontMatterValue } from "../source-format.js";
 import { createSyncChannel } from "../sync.js";
@@ -105,7 +105,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   const aiPromptButton = createButton("AI Prompt");
   const helpButton = createButton("Help");
   const exportBundleButton = createButton("Export");
-  const printPdfButton = createButton("Print / Save PDF");
+  const onePageButton = createButton("1 Page View");
   const advancedToggle = createButton("Advanced");
   advancedToggle.setAttribute("aria-haspopup", "true");
   advancedToggle.setAttribute("aria-expanded", "false");
@@ -128,7 +128,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     aiPromptButton,
     helpButton,
     exportBundleButton,
-    printPdfButton,
+    onePageButton,
     advancedToggle,
     advancedMenu,
     importInput,
@@ -489,17 +489,15 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     downloadFile("deck-export.zip", bundle, "application/zip");
   });
 
-  printPdfButton.addEventListener("click", async () => {
+  onePageButton.addEventListener("click", async () => {
     const cssText = await readCss();
-    const html = buildSnapshotHtml({
+    const html = buildOnePageHtml({
       title: lastCompiled?.metadata.title || "Slide deck snapshot",
       cssText,
       renderedSlides: lastCompiled?.renderedSlides || [],
       metadata: lastCompiled?.metadata || {},
-      source,
-      autoPrint: true,
     });
-    openHtmlInNewWindow(html);
+    downloadFile("deck-one-page.html", html, "text/html;charset=utf-8");
   });
 
   advancedImportButton.addEventListener("click", () => {

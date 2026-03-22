@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildExportBundle, buildSnapshotHtml } from "../src/modules/export.js";
+import { buildExportBundle, buildOnePageHtml, buildSnapshotHtml } from "../src/modules/export.js";
 import { buildThemeLinkTag } from "../src/modules/theme.js";
 
 test("buildThemeLinkTag includes an external stylesheet only when configured", () => {
@@ -33,7 +33,6 @@ test("buildSnapshotHtml includes theme data, step counts, and embedded source pa
   assert.equal(html.includes('data-step-count="2"'), true);
   assert.equal(html.includes('<script id="deck-source" type="application/json">'), true);
   assert.equal(html.includes('"slideCount":2'), true);
-  assert.equal(html.includes('data-action="print"'), true);
 });
 
 test("buildSnapshotHtml escapes closing script tags inside embedded source", () => {
@@ -64,16 +63,25 @@ test("buildExportBundle includes markdown and html files in the zip payload", ()
   assert.equal(bundle[1], 0x4b);
 });
 
-test("buildSnapshotHtml can request auto print for save-as-pdf workflows", () => {
-  const html = buildSnapshotHtml({
-    title: "Printable snapshot",
-    cssText: "",
-    renderedSlides: [{ html: "<h1>One</h1>", stepCount: 0 }],
-    metadata: {},
-    source: "# One",
-    autoPrint: true,
+test("buildOnePageHtml renders all slides visible without navigation controls", () => {
+  const html = buildOnePageHtml({
+    title: "One page deck",
+    cssText: ".slide{color:black;}",
+    renderedSlides: [
+      { html: "<h1>One</h1>", kind: "title" },
+      { html: "<h1>Two</h1>", kind: "content" },
+    ],
+    metadata: {
+      lang: "en-CA",
+      theme: "night-slate",
+    },
   });
 
-  assert.equal(html.includes('window.print()'), true);
-  assert.equal(html.includes('data-action="print"'), true);
+  assert.equal(html.includes('<html lang="en-CA">'), true);
+  assert.equal(html.includes('data-theme="night-slate"'), true);
+  assert.equal(html.includes("one-page-body"), true);
+  assert.equal(html.includes('aria-label="Slide 1"'), true);
+  assert.equal(html.includes('aria-label="Slide 2"'), true);
+  assert.equal(html.includes("snapshot-controls"), false);
+  assert.equal(html.includes("window.print()"), false);
 });

@@ -144,7 +144,42 @@ export function buildExportBundle({ markdownSource, snapshotHtml, deckJson }) {
   ]);
 }
 
-export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, source, autoPrint = false }) {
+export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
+  const slidesMarkup = renderedSlides
+    .map(
+      (slide, index) => `
+        <section class="slide" data-slide-index="${index}" data-kind="${slide.kind || "content"}" aria-label="Slide ${index + 1}">
+          <div class="slide__content">
+            ${slide.html}
+          </div>
+        </section>`,
+    )
+    .join("");
+
+  return `<!doctype html>
+<html lang="${metadata.lang || "en"}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${title}</title>
+    ${buildThemeLinkTag(metadata)}
+    <style>${cssText}</style>
+    <style>
+      .one-page-body .slide {
+        display: grid !important;
+        visibility: visible !important;
+      }
+    </style>
+  </head>
+  <body class="snapshot-body one-page-body" data-theme="${metadata.theme || "default-high-contrast"}" style="${buildDeckStyleAttribute(metadata)}">
+    <main class="presentation-shell" aria-label="All slides">
+      ${slidesMarkup}
+    </main>
+  </body>
+</html>`;
+}
+
+export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, source }) {
   const slidesMarkup = renderedSlides
     .map(
       (slide, index) => `
@@ -180,7 +215,6 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
         <button type="button" data-action="prev">Previous</button>
         <span id="snapshot-status">1 / ${renderedSlides.length}</span>
         <button type="button" data-action="next">Next</button>
-        <button type="button" data-action="print">Print / Save PDF</button>
       </nav>
     </main>
     <script id="deck-source" type="application/json">${payload}</script>
@@ -259,13 +293,11 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
         const action = event.target.dataset.action;
         if (action === "prev") move(-1);
         if (action === "next") move(1);
-        if (action === "print") window.print();
       });
 
       window.addEventListener("resize", render);
 
       render();
-      ${autoPrint ? 'window.addEventListener("load", () => window.setTimeout(() => window.print(), 200));' : ""}
     </script>
   </body>
 </html>`;
