@@ -1,9 +1,19 @@
 import { buildDeckStyleAttribute, buildThemeLinkTag } from "./theme.js";
 
 const textEncoder = new TextEncoder();
+const ODP_MIMETYPE = "application/vnd.oasis.opendocument.presentation";
 
 function escapeScriptText(value) {
   return value.replaceAll("</script>", "<\\/script>");
+}
+
+function escapeXml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
 }
 
 export function downloadFile(filename, contents, type) {
@@ -26,6 +36,10 @@ export function openHtmlInNewWindow(contents) {
 
 function encodeText(value) {
   return textEncoder.encode(value);
+}
+
+function encodeContents(value) {
+  return value instanceof Uint8Array ? value : encodeText(value);
 }
 
 function createCrcTable() {
@@ -76,7 +90,7 @@ export function buildZipArchive(files) {
 
   for (const file of files) {
     const filenameBytes = encodeText(file.name);
-    const contentBytes = encodeText(file.contents);
+    const contentBytes = encodeContents(file.contents);
     const checksum = crc32(contentBytes);
 
     const localHeader = concatUint8Arrays([
@@ -136,11 +150,250 @@ export function buildZipArchive(files) {
   return concatUint8Arrays([localSection, centralDirectory, endOfCentralDirectory]);
 }
 
-export function buildExportBundle({ markdownSource, snapshotHtml, deckJson }) {
+function base64Encode(value) {
+  const bytes = encodeText(value);
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(bytes).toString("base64");
+  }
+
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
+}
+
+function decodeHtmlEntities(value) {
+  return String(value)
+    .replaceAll("&nbsp;", " ")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&amp;", "&");
+}
+
+function htmlToTextLines(value) {
+  return decodeHtmlEntities(
+    String(value)
+      .replace(/<li[^>]*>/gi, "\n• ")
+      .replace(/<(?:br|br\/)\s*>/gi, "\n")
+      .replace(/<\/(?:p|div|section|article|blockquote|ul|ol|li|h1|h2|h3|h4|h5|h6)>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+  )
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function getDeckPageSize(metadata = {}) {
+  const width = Number(metadata.slideWidth) > 0 ? Number(metadata.slideWidth) : 1280;
+  const height = Number(metadata.slideHeight) > 0 ? Number(metadata.slideHeight) : 720;
+  const pageWidthCm = 28;
+  const pageHeightCm = Number((pageWidthCm * (height / width)).toFixed(2));
+  return {
+    widthCm: pageWidthCm,
+    heightCm: pageHeightCm,
+  };
+}
+
+function buildOdpStylesXml(metadata = {}) {
+  const { widthCm, heightCm } = getDeckPageSize(metadata);
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<office:document-styles
+  xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+  xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+  xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+  xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+  xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
+  xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
+  xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0"
+  xmlns:presentation="urn:oasis:names:tc:opendocument:xmlns:presentation:1.0"
+  xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+  office:version="1.2">
+  <office:styles>
+    <style:default-style style:family="graphic">
+      <style:graphic-properties draw:stroke="none" draw:fill="none"/>
+    </style:default-style>
+    <style:default-style style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0cm" fo:margin-bottom="0.2cm"/>
+      <style:text-properties fo:font-size="16pt"/>
+    </style:default-style>
+    <style:style style:name="dp1" style:family="drawing-page">
+      <style:drawing-page-properties presentation:background-visible="true" presentation:background-objects-visible="true"/>
+    </style:style>
+  </office:styles>
+  <office:automatic-styles>
+    <style:page-layout style:name="PM1">
+      <style:page-layout-properties fo:page-width="${widthCm}cm" fo:page-height="${heightCm}cm" style:print-orientation="landscape" presentation:display-header="false" presentation:display-footer="false" presentation:display-page-number="false" presentation:display-date-time="false"/>
+    </style:page-layout>
+    <style:presentation-page-layout style:name="AL1T0">
+      <presentation:placeholder presentation:object="title" svg:x="1cm" svg:y="0.9cm" svg:width="${Number((widthCm - 2).toFixed(2))}cm" svg:height="2.8cm"/>
+      <presentation:placeholder presentation:object="outline" svg:x="1cm" svg:y="4.2cm" svg:width="${Number((widthCm - 2).toFixed(2))}cm" svg:height="${Number((heightCm - 5.2).toFixed(2))}cm"/>
+    </style:presentation-page-layout>
+  </office:automatic-styles>
+  <office:master-styles>
+    <style:master-page style:name="Default" style:page-layout-name="PM1" draw:style-name="dp1" presentation:presentation-page-layout-name="AL1T0"/>
+  </office:master-styles>
+</office:document-styles>`;
+}
+
+function buildOdpContentXml({ title, renderedSlides, metadata = {} }) {
+  const { widthCm, heightCm } = getDeckPageSize(metadata);
+  const titleWidth = Number((widthCm - 2).toFixed(2));
+  const bodyWidth = titleWidth;
+  const bodyHeight = Number((heightCm - 5.2).toFixed(2));
+
+  const pagesMarkup = renderedSlides
+    .map((slide, index) => {
+      const titleText = slide.headings?.find((heading) => heading.level === 1)?.text || `Slide ${index + 1}`;
+      const bodyHtml = slide.html.replace(/<h1[^>]*>[\s\S]*?<\/h1>/i, "");
+      const bodyLines = htmlToTextLines(bodyHtml);
+      const bodyParagraphs = bodyLines.length
+        ? bodyLines.map((line) => `<text:p text:style-name="PBody">${escapeXml(line)}</text:p>`).join("")
+        : '<text:p text:style-name="PBody"></text:p>';
+
+      return `
+    <draw:page draw:name="page${index + 1}" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
+      <draw:frame draw:style-name="gr-title" presentation:class="title" svg:x="1cm" svg:y="0.9cm" svg:width="${titleWidth}cm" svg:height="2.8cm">
+        <draw:text-box>
+          <text:p text:style-name="PTitle">${escapeXml(titleText)}</text:p>
+        </draw:text-box>
+      </draw:frame>
+      <draw:frame draw:style-name="gr-body" presentation:class="outline" svg:x="1cm" svg:y="4.2cm" svg:width="${bodyWidth}cm" svg:height="${bodyHeight}cm">
+        <draw:text-box>
+          ${bodyParagraphs}
+        </draw:text-box>
+      </draw:frame>
+    </draw:page>`;
+    })
+    .join("");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content
+  xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+  xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+  xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+  xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+  xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
+  xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
+  xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0"
+  xmlns:presentation="urn:oasis:names:tc:opendocument:xmlns:presentation:1.0"
+  xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+  office:version="1.2">
+  <office:scripts/>
+  <office:automatic-styles>
+    <style:style style:name="gr-title" style:family="graphic">
+      <style:graphic-properties draw:stroke="none" draw:fill="none" draw:auto-grow-height="true" draw:auto-grow-width="false"/>
+    </style:style>
+    <style:style style:name="gr-body" style:family="graphic">
+      <style:graphic-properties draw:stroke="none" draw:fill="none" draw:auto-grow-height="true" draw:auto-grow-width="false"/>
+    </style:style>
+    <style:style style:name="PTitle" style:family="paragraph">
+      <style:text-properties fo:font-size="24pt" fo:font-weight="bold"/>
+    </style:style>
+    <style:style style:name="PBody" style:family="paragraph">
+      <style:paragraph-properties fo:margin-bottom="0.22cm"/>
+      <style:text-properties fo:font-size="16pt"/>
+    </style:style>
+  </office:automatic-styles>
+  <office:body>
+    <office:presentation>
+      <presentation:settings presentation:show="true" presentation:pause="PT0S"/>
+      ${pagesMarkup}
+    </office:presentation>
+  </office:body>
+</office:document-content>`;
+}
+
+function buildOdpMetaXml(title) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<office:document-meta
+  xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
+  office:version="1.2">
+  <office:meta>
+    <dc:title>${escapeXml(title)}</dc:title>
+    <meta:generator>Markdown Slides Editor</meta:generator>
+  </office:meta>
+</office:document-meta>`;
+}
+
+function buildOdpSettingsXml() {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<office:document-settings
+  xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+  xmlns:config="urn:oasis:names:tc:opendocument:xmlns:config:1.0"
+  office:version="1.2">
+  <office:settings>
+    <config:config-item-set config:name="ooo:view-settings"/>
+  </office:settings>
+</office:document-settings>`;
+}
+
+function buildOdpManifestXml() {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<manifest:manifest
+  xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0"
+  manifest:version="1.2">
+  <manifest:file-entry manifest:media-type="${ODP_MIMETYPE}" manifest:full-path="/"/>
+  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="content.xml"/>
+  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="meta.xml"/>
+  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="settings.xml"/>
+  <manifest:file-entry manifest:media-type="text/xml" manifest:full-path="styles.xml"/>
+</manifest:manifest>`;
+}
+
+export function buildOdpPresentation({ title, renderedSlides, metadata }) {
+  return buildZipArchive([
+    { name: "mimetype", contents: ODP_MIMETYPE },
+    { name: "content.xml", contents: buildOdpContentXml({ title, renderedSlides, metadata }) },
+    { name: "meta.xml", contents: buildOdpMetaXml(title) },
+    { name: "settings.xml", contents: buildOdpSettingsXml() },
+    { name: "styles.xml", contents: buildOdpStylesXml(metadata) },
+    { name: "META-INF/manifest.xml", contents: buildOdpManifestXml() },
+  ]);
+}
+
+export function buildMhtmlDocument({ title, html }) {
+  const boundary = `----=_NextPart_${Date.now().toString(16)}_${Math.random().toString(16).slice(2, 10)}`;
+  const encodedHtml = base64Encode(html);
+
+  return [
+    "From: <Saved by Markdown Slides Editor>",
+    `Subject: ${title}`,
+    `Date: ${new Date().toUTCString()}`,
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/related; type=\"text/html\"; boundary=\"${boundary}\"`,
+    "",
+    `--${boundary}`,
+    "Content-Type: text/html; charset=\"utf-8\"",
+    "Content-Transfer-Encoding: base64",
+    "Content-Location: file:///index.html",
+    "",
+    encodedHtml,
+    "",
+    `--${boundary}--`,
+    "",
+  ].join("\r\n");
+}
+
+export function buildExportBundle({ markdownSource, snapshotHtml, deckJson, odpBytes, onePageMhtml }) {
   return buildZipArchive([
     { name: "deck.md", contents: markdownSource },
     { name: "deck.json", contents: deckJson },
     { name: "presentation.html", contents: snapshotHtml },
+    { name: "presentation.odp", contents: odpBytes },
+    { name: "presentation-one-page.mhtml", contents: onePageMhtml },
   ]);
 }
 

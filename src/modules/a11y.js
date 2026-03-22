@@ -13,6 +13,41 @@ function countMatches(value, pattern) {
   return (String(value).match(pattern) || []).length;
 }
 
+export function assessSlideDensity(sourceSlide = {}) {
+  const body = sourceSlide.body || "";
+  const wordCount = countWords(body);
+  const bulletCount = countMatches(body, /^\s*(?:-|\d+\.)\s+/gm);
+  const paragraphCount = countMatches(body, /^(?!#|\s*(?:-|\d+\.)\s+|Note:|Resources:|Script:).+\S.*$/gm);
+
+  if (wordCount > 90 || bulletCount > 6 || paragraphCount > 4) {
+    return {
+      level: "dense",
+      label: "Dense",
+      wordCount,
+      bulletCount,
+      paragraphCount,
+    };
+  }
+
+  if (wordCount > 65 || bulletCount > 4 || paragraphCount > 3) {
+    return {
+      level: "full",
+      label: "Full",
+      wordCount,
+      bulletCount,
+      paragraphCount,
+    };
+  }
+
+  return {
+    level: "comfortable",
+    label: "",
+    wordCount,
+    bulletCount,
+    paragraphCount,
+  };
+}
+
 export function lintDeck(deck, renderedSlides) {
   const issues = [];
 
@@ -73,11 +108,9 @@ export function lintDeck(deck, renderedSlides) {
     }
 
     const sourceSlide = deck.slides[index];
-    const wordCount = countWords(sourceSlide.body);
-    const bulletCount = countMatches(sourceSlide.body, /^\s*(?:-|\d+\.)\s+/gm);
-    const paragraphCount = countMatches(sourceSlide.body, /^(?!#|\s*(?:-|\d+\.)\s+|Note:|Resources:|Script:).+\S.*$/gm);
+    const density = assessSlideDensity(sourceSlide);
 
-    if (wordCount > 90 || bulletCount > 6 || paragraphCount > 4) {
+    if (density.level === "dense") {
       issues.push({
         level: "warning",
         slide: slideNumber,

@@ -48,7 +48,9 @@ Then open `http://localhost:4173`.
 - `TODO.md`: future roadmap and integration ideas
 - `docs/accessibility-checklist.md`: project accessibility checklist
 - `docs/ai-authoring-workflow.md`: recommended workflow and prompt template for AI-assisted deck drafting
+- `docs/editor-vision.md`: longer-term product direction for the editor and runtime
 - `docs/layout-syntax.md`: layout directives for centered content, columns, media blocks, callouts, and quotes
+- `docs/manual-a11y-testing.md`: Sa11y-assisted and manual accessibility review workflow
 - `docs/resources.md`: accessibility references and source material
 
 The editor also includes an `AI Prompt` button that builds a structured briefing prompt from the current deck metadata, slide topics, and references. Use that to brief an LLM, then paste the returned Markdown back into the editor for review and refinement.
@@ -185,6 +187,8 @@ The primary export action downloads a ZIP bundle containing:
 - `deck.md` for future editing
 - `deck.json` for machine-readable workflows and integrations
 - `presentation.html` for presenting or sharing
+- `presentation.odp` for OpenDocument Presentation workflows, including PowerPoint import
+- `presentation-one-page.mhtml` for a single-file one-page deck handoff
 
 `Advanced` also includes `Email Deck`, which opens a mail draft with the editor URL and, when the deck is short enough, the Markdown source. This is intended as a practical mobile-to-desktop handoff aid and may be limited by mail client body-size limits.
 

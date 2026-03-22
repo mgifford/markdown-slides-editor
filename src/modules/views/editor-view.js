@@ -1,5 +1,13 @@
-import { buildExportBundle, buildOnePageHtml, buildSnapshotHtml, downloadFile } from "../export.js";
+import {
+  buildExportBundle,
+  buildMhtmlDocument,
+  buildOdpPresentation,
+  buildOnePageHtml,
+  buildSnapshotHtml,
+  downloadFile,
+} from "../export.js";
 import { buildAiAuthoringPrompt, createAiPromptDefaults } from "../ai-prompt.js";
+import { assessSlideDensity } from "../a11y.js";
 import { updateFrontMatterValue, removeFrontMatterValue } from "../source-format.js";
 import { createSyncChannel } from "../sync.js";
 import { getSlideTitle } from "../presentation-state.js";
@@ -9,6 +17,14 @@ import { addColorModeToggle, buildSupplementalHtml, compileSource, createButton,
 async function readCss() {
   const response = await fetch(new URL("../../styles/app.css", import.meta.url));
   return response.text();
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
 export function createAppView(root, { initialSource, onSourceChange, onResetDeck, onClearLocalData }) {
@@ -315,7 +331,14 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     outlineNode.innerHTML = compiled.renderedSlides
       .map((renderedSlide, index) => {
         const currentClass = index === activeSlideIndex ? ' class="is-current"' : "";
-        return `<li${currentClass}><button type="button" data-slide-index="${index}">${getSlideTitle(renderedSlide, index)}</button></li>`;
+        const density = assessSlideDensity(compiled.deck.slides[index]);
+        const densityBadge = density.level === "comfortable"
+          ? ""
+          : `<span class="outline-density outline-density--${density.level}" aria-hidden="true">${density.label}</span>`;
+        const densitySummary = density.level === "comfortable"
+          ? ""
+          : ` · ${density.label} slide`;
+        return `<li${currentClass}><button type="button" data-slide-index="${index}" aria-label="${escapeHtml(`${getSlideTitle(renderedSlide, index)}${densitySummary}`)}"><span class="outline-title">${escapeHtml(getSlideTitle(renderedSlide, index))}</span>${densityBadge}</button></li>`;
       })
       .join("");
   }
@@ -481,10 +504,25 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
       null,
       2,
     );
+    const onePageHtml = buildOnePageHtml({
+      title: lastCompiled?.metadata.title || "Slide deck one-page view",
+      cssText,
+      renderedSlides: lastCompiled?.renderedSlides || [],
+      metadata: lastCompiled?.metadata || {},
+    });
     const bundle = buildExportBundle({
       markdownSource: source,
       snapshotHtml: html,
       deckJson,
+      odpBytes: buildOdpPresentation({
+        title: lastCompiled?.metadata.title || "Slide deck",
+        renderedSlides: lastCompiled?.renderedSlides || [],
+        metadata: lastCompiled?.metadata || {},
+      }),
+      onePageMhtml: buildMhtmlDocument({
+        title: lastCompiled?.metadata.title || "Slide deck one-page view",
+        html: onePageHtml,
+      }),
     });
     downloadFile("deck-export.zip", bundle, "application/zip");
   });

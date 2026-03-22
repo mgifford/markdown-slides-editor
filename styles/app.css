@@ -687,8 +687,38 @@ input:focus-visible {
 }
 
 .outline-list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   border-radius: 14px;
   padding: 0.65rem 0.8rem;
+}
+
+.outline-title {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.outline-density {
+  width: auto;
+  flex: 0 0 auto;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.outline-density--full {
+  background: color-mix(in srgb, var(--warning) 16%, var(--panel-strong));
+  color: var(--warning);
+}
+
+.outline-density--dense {
+  background: color-mix(in srgb, var(--error) 16%, var(--panel-strong));
+  color: var(--error);
 }
 
 .advanced-menu {
