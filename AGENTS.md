@@ -8,6 +8,7 @@
 - GitHub Pages static hosting is a core constraint. Do not introduce a server requirement for the default experience.
 - Leveraging local browser persistence is important. Prefer browser-side caching and storage over network-dependent state when adding features for the default static workflow.
 - Read `STYLES.md` alongside this file when making UI, wording, or presentation-style changes.
+- Keep `README.md` and disclosure/accessibility docs current when behavior changes materially, especially around AI, exports, presenter controls, accessibility affordances, and keyboard shortcuts.
 
 ## Setup Commands
 
@@ -33,6 +34,7 @@
   - `/` editor
   - `/present/` audience view
   - `/presenter/` presenter view
+- If you touch editor/source syncing, verify that moving the caret in the Markdown source updates the preview to the matching slide.
 - If you touch export, verify that the main `Export` ZIP still contains the expected bundle files.
 - If you touch accessibility rules or rendering, compare behavior against `docs/accessibility-checklist.md` and `docs/manual-a11y-testing.md`.
 
@@ -53,7 +55,7 @@
 - App entry:
   - `src/main.js`: loads stored source, resolves route, and mounts editor, audience, or presenter views
 - Core modules:
-  - `src/modules/parser.js`: front matter parsing, slide splitting on `---`, and speaker note extraction using `Note:`
+  - `src/modules/parser.js`: front matter parsing, slide splitting on `---`, speaker note extraction using `Note:`, and source-offset mapping so the editor preview can follow the cursor position in Markdown source
   - `src/modules/markdown.js`: lightweight Markdown-to-HTML renderer
   - `src/modules/render.js`: applies Markdown rendering to each parsed slide
   - `src/modules/a11y.js`: current deck linting for H1 count, heading skips, generic links, missing alt text, note presence, and slide-density assessment
@@ -64,10 +66,12 @@
   - `src/modules/sync.js`: `BroadcastChannel` presenter/editor sync with a `localStorage` fallback
   - `src/modules/export.js`: bundle export helpers plus standalone HTML, ODP, and one-page MHTML generation
   - `src/modules/slide-layout.js`: slide-size normalization and body-text fitting
+  - `src/modules/presenter-layout.js`: presenter panel sizing, reordering, collapse, and fullscreen state
+  - `src/modules/presenter-timer.js`: presenter countdown timing, auto-start/reset state, and warning thresholds
 - Views:
-  - `src/modules/views/editor-view.js`: split-pane editor, preview, notes, AI prompt modal, one-page view, import/export, and route launchers
-  - `src/modules/views/presentation-view.js`: audience presentation shell and keyboard navigation
-  - `src/modules/views/presenter-view.js`: current slide, next slide, notes, timer, panel layout controls, and shared zoom controls
+  - `src/modules/views/editor-view.js`: split-pane editor, preview, notes, AI prompt modal, one-page view, import/export, theme-or-external-CSS controls, preview suggestion tooltip, source-cursor-to-slide syncing, and route launchers
+  - `src/modules/views/presentation-view.js`: audience presentation shell, deep-link hashes like `#4` / `#4.1`, and keyboard navigation
+  - `src/modules/views/presenter-view.js`: current slide, next slide, notes, timer, panel layout controls, collapse/fullscreen panel states, audience-window launcher, and shared zoom controls
   - `src/modules/views/shared.js`: compile pipeline and shared rendering helpers
 - Styling:
   - `styles/app.css`: full visual system and responsive layout
@@ -77,6 +81,8 @@
   - `tests/a11y.test.js`: density and lint-threshold coverage
   - `tests/ai-prompt.test.js`: AI prompt generation coverage
   - `tests/slide-layout.test.js`: slide-dimension and fitting coverage
+  - `tests/presenter-layout.test.js`: presenter panel sizing, collapse, and order coverage
+  - `tests/presenter-timer.test.js`: presenter countdown and warning-state coverage
 
 ## Architecture Notes
 
@@ -85,6 +91,8 @@
 - The current runtime is an in-repo placeholder. Planned `whisper-slides` alignment is tracked in `TODO.md`.
 - Whisper or other AI features must remain optional and should only surface in the UI when an actual AI capability is available.
 - Do not show speech-to-text status, buttons, transcript placeholders, or related help text when the transcript source is unavailable.
+- The editor preview theme controls are mutually exclusive in practice: if a valid `themeStylesheet` URL is present, the built-in `theme` selector is hidden until the external stylesheet value is cleared.
+- The main export action is a single ZIP bundle. Preserve that default rather than reintroducing multiple primary export buttons.
 - Keep the static baseline honest: GitHub Pages mode must work without server code, local binaries, or secret keys.
 - When adding offline-friendly behavior, prefer existing browser primitives such as IndexedDB, `localStorage`, and cache-aware static asset loading before inventing new infrastructure.
 
@@ -97,6 +105,7 @@
   - the optional AI/local-runtime layer
 - Do not blur those two modes.
 - Preserve keyboard access and visible focus states when editing UI.
+- Do not intercept standard browser editing and copy shortcuts such as `Cmd/Ctrl+C`. Presentation shortcuts must avoid conflicting with common browser and assistive technology shortcuts.
 - Preserve the source format contract:
   - front matter at the top
   - `---` for slide boundaries
@@ -105,6 +114,8 @@
   - `Script:` for fuller speaker script content
 - Optional caption settings should live in front matter, for example `captionsProvider` and `captionsSource`, and must degrade cleanly when the source is unavailable.
 - Preserve and extend local browser caching carefully. Changes to persistence or cached assets should degrade gracefully for returning users instead of wiping or bypassing local state.
+- Keep the audience route clean. Presentation controls belong in presenter view, not audience view.
+- Keep presenter view useful on a real second-screen workflow. Changes to navigation, timers, zoom, or panel layout should still support one-screen presenter control and a second-screen audience window.
 
 ## Validation and CI Reality
 
@@ -130,6 +141,7 @@
 - No `axe` or `pa11y` automation yet
 - No bundled local asset export yet
 - No real `whisper-slides` runtime integration yet
+- No first-class embedded video directive yet
 
 ## Search Policy
 

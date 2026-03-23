@@ -40,6 +40,8 @@ Accessibility work is incomplete unless both surfaces are considered.
 - Encourage authors to describe meaningful visuals in notes and spoken delivery, not only in static text alternatives.
 - Treat speaker notes as supporting detail, not the sole location of critical audience information.
 - Keep motion disciplined and minimal by default.
+- Avoid hijacking standard browser shortcuts needed for copy, selection, zoom, or assistive technology.
+- Keep help text, warnings, and suggestions concise in the UI, with fuller detail exposed through accessible disclosure patterns where needed.
 
 ## Current Guardrails
 
@@ -50,6 +52,7 @@ Current automated checks live in the editor lint flow and test suite:
 - warnings for generic link text
 - errors for missing image alt text
 - note presence awareness
+- slide-density assessment and layout-overflow awareness
 
 Current semantic expectations for rendered output:
 
@@ -58,6 +61,7 @@ Current semantic expectations for rendered output:
 - no layout tables in author content
 - minimal and justified ARIA usage
 - avoid generic container-only output when semantic elements are appropriate
+- tooltip-like guidance should be attached to a real control, available on focus as well as hover, and not be the sole way to understand a critical task
 
 Current related files:
 
@@ -74,6 +78,7 @@ A change that affects UI, rendering, navigation, or export is not done until:
 - the editor accessibility check still works
 - keyboard-only use is verified for the changed flow
 - focus visibility remains intact
+- standard browser copy shortcuts still work where text should be selectable
 - generated slide output remains readable in DOM order
 - generated slide output uses sensible semantic HTML, not container-only markup
 - heading and list semantics remain intact after rendering
@@ -93,6 +98,7 @@ Always review, when relevant:
 
 - tab order and keyboard reachability
 - visible focus styles
+- whether copy/paste and text selection still work in editor and presentation contexts
 - screen reader naming of buttons, links, and landmarks
 - heading hierarchy on each slide
 - whether list content is rendered as actual lists
@@ -101,12 +107,14 @@ Always review, when relevant:
 - whether rendered slides use semantic elements rather than "div soup"
 - descriptive link text
 - notes separation from visible content
+- whether tooltip, help, or suggestion text is available on focus and does not trap interaction
 - whether the slide itself contains the essential audience-facing idea
 - whether notes are adding detail rather than hiding key meaning
 - slide density and readability from a distance
 - whether charts, diagrams, and other visuals are summarized clearly
 - contrast in the chosen theme
 - presenter view behavior without a mouse
+- presenter view behavior with collapsed/fullscreen panels and the audience-window launcher
 - exported snapshot behavior offline
 - whether spoken delivery guidance in notes supports an equivalent experience for people who cannot see the slide content
 - whether transitions, animation, or timed movement are unnecessary or distracting
@@ -128,6 +136,7 @@ The project should grow toward stronger shift-left accessibility enforcement:
 - stronger theme contrast checks
 - broader lint coverage for content quality and structure
 - regression coverage for keyboard navigation and presenter workflows
+- broader regression coverage for editor-to-preview synchronization and accessible disclosure patterns
 
 These are planned expectations even where automation is not implemented yet.
 
@@ -147,6 +156,7 @@ These are planned expectations even where automation is not implemented yet.
 - Avoid introducing inaccessible custom widgets when native controls are sufficient.
 - Prefer progressive enhancement.
 - Prefer browser-side persistence and caching that do not break accessible workflows.
+- Prefer simple, accessible disclosure for secondary guidance. A short visible label with a focusable button and tooltip/popover is better than a long always-on warning block when space is limited.
 - Keep the static baseline honest: no required backend, no hidden AI dependency, no inaccessible fallback path.
 
 Trust this file and `docs/accessibility-checklist.md` when making accessibility decisions. Search for more context only if the guidance here is incomplete or outdated.

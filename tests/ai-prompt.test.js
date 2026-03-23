@@ -30,6 +30,7 @@ test("createAiPromptDefaults uses deck metadata, slide headings, and resources",
   assert.deepEqual(defaults.topics, ["Why this matters", "What to do next"]);
   assert.deepEqual(defaults.references, ["https://example.com/one", "https://example.com/two"]);
   assert.equal(defaults.includeTitleSlide, true);
+  assert.equal(defaults.includeScript, false);
 });
 
 test("buildAiAuthoringPrompt includes selected requirements and schema", () => {
@@ -55,4 +56,8 @@ test("buildAiAuthoringPrompt includes selected requirements and schema", () => {
   assert.equal(prompt.includes("Resources:"), true);
   assert.equal(prompt.includes("Script:"), true);
   assert.equal(prompt.includes("closingSlide: true"), true);
+  assert.equal(prompt.includes("Do not prefix the presentation title with labels like `Presentation:`"), true);
+  assert.equal(prompt.includes("Do not number slide headings unless the brief explicitly asks for numbered slides."), true);
+  assert.equal(prompt.includes("Do not return a generic outline format with headings like `Key Points` or `The Script`."), true);
+  assert.equal(prompt.includes("Carry the provided references forward into meaningful `Resources:` sections"), true);
 });

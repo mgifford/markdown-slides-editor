@@ -21,6 +21,13 @@ function extractResourceEntries(renderedSlides) {
     .filter(Boolean);
 }
 
+function getRecommendedSlideRange(durationMinutes) {
+  const duration = Math.max(1, Number.parseInt(durationMinutes, 10) || 20);
+  const minimum = Math.max(4, Math.round(duration / 4));
+  const maximum = Math.max(minimum + 2, Math.round(duration / 3));
+  return { minimum, maximum };
+}
+
 export function createAiPromptDefaults(compiled) {
   const metadata = compiled?.metadata || {};
   const renderedSlides = compiled?.renderedSlides || [];
@@ -47,7 +54,7 @@ export function createAiPromptDefaults(compiled) {
     includeClosingSlide: metadata.closingSlide !== false,
     includeNotes: true,
     includeResources: true,
-    includeScript: true,
+    includeScript: false,
   };
 }
 
@@ -89,16 +96,22 @@ function buildSchemaExample(options) {
 export function buildAiAuthoringPrompt(options) {
   const topics = normalizeLines(options.topics);
   const references = normalizeLines(options.references);
+  const slideRange = getRecommendedSlideRange(options.durationMinutes);
   const requirementLines = [
     "- Return valid Markdown for this slide editor.",
     "- Include front matter.",
     `- Set \`durationMinutes: ${options.durationMinutes || "[minutes]"}\`.`,
     options.includeTitleSlide ? "- Include `titleSlide: true` and `speakers`." : "- Do not include a generated title slide unless clearly needed.",
     options.includeClosingSlide ? "- Include `closingSlide: true` for questions and follow-up." : "- Do not include a generated closing slide unless clearly needed.",
+    `- For a ${options.durationMinutes || "[minutes]"} minute talk, aim for roughly ${slideRange.minimum} to ${slideRange.maximum} content slides unless the brief clearly calls for fewer or more.`,
     "- Keep visible slides concise and scannable.",
-    options.includeNotes ? "- Put delivery detail in `Note:`." : "- Do not add `Note:` sections unless necessary.",
-    options.includeResources ? "- Include `Resources:` where references or follow-up links are helpful." : "- Do not add `Resources:` sections unless necessary.",
-    options.includeScript ? "- Include `Script:` when a fuller spoken version is useful." : "- Do not add `Script:` sections unless necessary.",
+    "- Do not return a generic outline format with headings like `Key Points` or `The Script`.",
+    "- Return actual slide content in this editor's source format, with `---` between slides.",
+    "- Do not prefix the presentation title with labels like `Presentation:` unless the brief explicitly asks for that wording.",
+    "- Do not number slide headings unless the brief explicitly asks for numbered slides.",
+    options.includeNotes ? "- Put delivery detail in `Note:` rather than inventing section headings inside the visible slide." : "- Do not add `Note:` sections unless necessary.",
+    options.includeResources ? "- Carry the provided references forward into meaningful `Resources:` sections and a final follow-up/resources slide when helpful." : "- Do not add `Resources:` sections unless necessary.",
+    options.includeScript ? "- Include `Script:` only when a full spoken script is genuinely helpful beyond `Note:`." : "- Do not add `Script:` sections unless explicitly needed.",
     "- Use one H1 per slide.",
     "- Do not skip heading levels.",
     "- Use real Markdown lists.",
@@ -141,5 +154,6 @@ ${buildSchemaExample(options)}
 - Return only the deck Markdown unless I ask for commentary.
 - Make the deck suitable for review and revision in the editor.
 - If information is missing, make reasonable assumptions and label them in notes or resources.
+- If you use the supplied references, surface them explicitly in \`Resources:\` instead of hiding them only in prose.
 `;
 }
