@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  buildExportFilename,
   buildExportBundle,
   buildMhtmlDocument,
   buildOdpPresentation,
@@ -8,6 +9,13 @@ import {
   buildSnapshotHtml,
 } from "../src/modules/export.js";
 import { buildThemeLinkTag } from "../src/modules/theme.js";
+
+test("buildExportFilename uses a clean title slug and compact date", () => {
+  assert.equal(
+    buildExportFilename("Digital Independence & Open Source Ecosystems", "2025-03-23"),
+    "Digital-Independence-Open-Source-Ecosystems_23Mar2025.zip",
+  );
+});
 
 test("buildThemeLinkTag includes an external stylesheet only when configured", () => {
   assert.equal(buildThemeLinkTag({}), "");
@@ -73,13 +81,13 @@ test("buildExportBundle includes markdown, html, odp, and mhtml files in the zip
   assert.equal(bundle[1], 0x4b);
 });
 
-test("buildOnePageHtml renders all slides visible without navigation controls", () => {
+test("buildOnePageHtml opens as a readable handout with save controls and support cards", () => {
   const html = buildOnePageHtml({
     title: "One page deck",
     cssText: ".slide{color:black;}",
     renderedSlides: [
-      { html: "<h1>One</h1>", kind: "title" },
-      { html: "<h1>Two</h1>", kind: "content" },
+      { html: "<h1>One</h1>", kind: "title", notesHtml: "<p>Opening note</p>" },
+      { html: "<h1>Two</h1>", kind: "content", resourcesHtml: "<ul><li><a href=\"https://example.com\">Reference</a></li></ul>" },
     ],
     metadata: {
       lang: "en-CA",
@@ -90,10 +98,14 @@ test("buildOnePageHtml renders all slides visible without navigation controls", 
   assert.equal(html.includes('<html lang="en-CA">'), true);
   assert.equal(html.includes('data-theme="night-slate"'), true);
   assert.equal(html.includes("one-page-body"), true);
+  assert.equal(html.includes("one-page-slide-card"), true);
   assert.equal(html.includes('aria-label="Slide 1"'), true);
   assert.equal(html.includes('aria-label="Slide 2"'), true);
-  assert.equal(html.includes("snapshot-controls"), false);
-  assert.equal(html.includes("window.print()"), false);
+  assert.equal(html.includes("Save HTML"), true);
+  assert.equal(html.includes("Print / Save PDF"), true);
+  assert.equal(html.includes("Speaker notes"), true);
+  assert.equal(html.includes("References"), true);
+  assert.equal(html.includes("window.print()"), true);
 });
 
 test("buildOdpPresentation creates an OpenDocument Presentation archive", () => {

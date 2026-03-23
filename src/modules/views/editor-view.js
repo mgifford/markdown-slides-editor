@@ -1,10 +1,12 @@
 import {
+  buildExportFilename,
   buildExportBundle,
   buildMhtmlDocument,
   buildOdpPresentation,
   buildOnePageHtml,
   buildSnapshotHtml,
   downloadFile,
+  openHtmlInNewWindow,
 } from "../export.js";
 import { buildAiAuthoringPrompt, createAiPromptDefaults } from "../ai-prompt.js";
 import { assessSlideDensity } from "../a11y.js";
@@ -628,7 +630,11 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
         html: onePageHtml,
       }),
     });
-    downloadFile("deck-export.zip", bundle, "application/zip");
+    downloadFile(
+      buildExportFilename(lastCompiled?.metadata.title || "deck-export", lastCompiled?.metadata.date),
+      bundle,
+      "application/zip",
+    );
   });
 
   onePageButton.addEventListener("click", async () => {
@@ -639,7 +645,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
       renderedSlides: lastCompiled?.renderedSlides || [],
       metadata: lastCompiled?.metadata || {},
     });
-    downloadFile("deck-one-page.html", html, "text/html;charset=utf-8");
+    openHtmlInNewWindow(html);
   });
 
   advancedImportButton.addEventListener("click", () => {

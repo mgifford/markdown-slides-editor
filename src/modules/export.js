@@ -34,6 +34,61 @@ export function openHtmlInNewWindow(contents) {
   return opened;
 }
 
+function slugifyFilenamePart(value) {
+  return String(value)
+    .normalize("NFKD")
+    .replace(/[^\w\s-]/g, " ")
+    .replace(/_/g, " ")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function formatCompactDate(value) {
+  let date;
+  if (value instanceof Date) {
+    date = value;
+  } else if (typeof value === "string") {
+    const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    } else {
+      date = new Date(value);
+    }
+  } else {
+    date = new Date(value);
+  }
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = date.toLocaleString("en-CA", { month: "short" });
+  const year = date.getFullYear();
+  return `${day}${month}${year}`;
+}
+
+export function buildExportFilename(title, dateValue) {
+  const safeTitle = slugifyFilenamePart(title || "");
+  const safeDate = formatCompactDate(dateValue || new Date());
+
+  if (!safeTitle && !safeDate) {
+    return "deck-export.zip";
+  }
+
+  if (!safeTitle) {
+    return `${safeDate}.zip`;
+  }
+
+  if (!safeDate) {
+    return `${safeTitle}.zip`;
+  }
+
+  return `${safeTitle}_${safeDate}.zip`;
+}
+
 function encodeText(value) {
   return textEncoder.encode(value);
 }
@@ -397,14 +452,49 @@ export function buildExportBundle({ markdownSource, snapshotHtml, deckJson, odpB
   ]);
 }
 
+function buildOnePageSupportMarkup(slide) {
+  const sections = [
+    slide.notesHtml
+      ? `<section class="one-page-support__card" aria-label="Speaker notes">
+          <h2>Speaker notes</h2>
+          <div class="one-page-support__content">${slide.notesHtml}</div>
+        </section>`
+      : "",
+    slide.resourcesHtml
+      ? `<section class="one-page-support__card" aria-label="References and resources">
+          <h2>References</h2>
+          <div class="one-page-support__content">${slide.resourcesHtml}</div>
+        </section>`
+      : "",
+    slide.scriptHtml
+      ? `<section class="one-page-support__card" aria-label="Presentation script">
+          <h2>Script</h2>
+          <div class="one-page-support__content">${slide.scriptHtml}</div>
+        </section>`
+      : "",
+  ].filter(Boolean);
+
+  if (!sections.length) {
+    return "";
+  }
+
+  return `<div class="one-page-support" aria-label="Supporting material">${sections.join("")}</div>`;
+}
+
 export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
   const slidesMarkup = renderedSlides
     .map(
       (slide, index) => `
-        <section class="slide" data-slide-index="${index}" data-kind="${slide.kind || "content"}" aria-label="Slide ${index + 1}">
-          <div class="slide__content">
-            ${slide.html}
-          </div>
+        <section class="one-page-slide-card" aria-label="Slide ${index + 1}">
+          <header class="one-page-slide-card__header">
+            <p class="one-page-slide-card__eyebrow">Slide ${index + 1}</p>
+          </header>
+          <article class="slide" data-slide-index="${index}" data-kind="${slide.kind || "content"}" aria-label="Slide ${index + 1}">
+            <div class="slide__content">
+              ${slide.html}
+            </div>
+          </article>
+          ${buildOnePageSupportMarkup(slide)}
         </section>`,
     )
     .join("");
@@ -425,9 +515,28 @@ export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
     </style>
   </head>
   <body class="snapshot-body one-page-body" data-theme="${metadata.theme || "default-high-contrast"}" style="${buildDeckStyleAttribute(metadata)}">
-    <main class="presentation-shell" aria-label="All slides">
+    <nav class="snapshot-controls one-page-controls" aria-label="One-page view controls">
+      <button type="button" data-action="save-html">Save HTML</button>
+      <button type="button" data-action="print">Print / Save PDF</button>
+    </nav>
+    <main class="presentation-shell" aria-label="All slides and supporting material">
       ${slidesMarkup}
     </main>
+    <script>
+      function saveHtmlDocument() {
+        const html = "<!doctype html>\\n" + document.documentElement.outerHTML;
+        const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "deck-one-page.html";
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      document.querySelector('[data-action="save-html"]')?.addEventListener("click", saveHtmlDocument);
+      document.querySelector('[data-action="print"]')?.addEventListener("click", () => window.print());
+    </script>
   </body>
 </html>`;
 }
