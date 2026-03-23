@@ -419,6 +419,52 @@ input:focus-visible {
   min-height: 38vh;
 }
 
+.preview-frame--compact .slide-card {
+  width: 100%;
+  max-width: 100%;
+  padding: clamp(0.7rem, 1.6vw, 1.2rem);
+}
+
+.preview-frame--compact .slide-card__content {
+  max-width: none;
+  font-size: calc(clamp(0.48rem, 0.78vw, 0.82rem) * var(--presentation-text-zoom, 1));
+  line-height: 1.28;
+}
+
+.preview-frame--compact .slide-card__body {
+  gap: 0.45rem;
+}
+
+.preview-frame--compact .slide-card h1 {
+  font-size: clamp(1rem, 1.7vw, 1.55rem);
+  margin-bottom: 0.45rem;
+}
+
+.preview-frame--compact .slide-card h2 {
+  font-size: clamp(0.8rem, 1.2vw, 1.08rem);
+  margin-bottom: 0.35rem;
+}
+
+.preview-frame--compact .slide-card p,
+.preview-frame--compact .slide-card li,
+.preview-frame--compact .slide-card blockquote {
+  margin-top: 0.22rem;
+  margin-bottom: 0.22rem;
+}
+
+.preview-frame--compact .slide-card ul,
+.preview-frame--compact .slide-card ol {
+  padding-left: 1rem;
+}
+
+.preview-frame--compact .layout-callout,
+.preview-frame--compact .layout-quote,
+.preview-frame--compact .layout-columns__column,
+.preview-frame--compact .title-slide__meta div {
+  border-radius: 12px;
+  padding: 0.55rem 0.7rem;
+}
+
 .presenter-panel__header {
   display: flex;
   justify-content: space-between;
