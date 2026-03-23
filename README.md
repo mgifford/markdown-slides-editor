@@ -268,6 +268,21 @@ Available built-in themes:
 
 For custom branding, set `themeStylesheet` to a CSS URL. That stylesheet is loaded after the built-in theme so it can override colors, typography, spacing, and other presentation styles.
 
+A CivicActions-inspired external theme is available in this repository at:
+
+- `https://mgifford.github.io/markdown-slides-editor/styles/civicactions-ox.css`
+
+Example:
+
+```md
+---
+theme: default-high-contrast
+themeStylesheet: https://mgifford.github.io/markdown-slides-editor/styles/civicactions-ox.css
+---
+```
+
+That stylesheet is designed to match the visual direction of the `ox.ca` CivicActions presentations while staying compatible with this editor's own slide markup and export flow. It does not depend on the JavaScript from those decks.
+
 ## Color mode
 
 The editor and presenter interfaces support accessible light and dark modes.
