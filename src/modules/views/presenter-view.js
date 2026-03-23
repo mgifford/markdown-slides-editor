@@ -1,5 +1,6 @@
 import { createSyncChannel } from "../sync.js";
 import {
+  buildPresentationHash,
   getNextPosition,
   getPresentationDurationMinutes,
   getPreviousPosition,
@@ -163,13 +164,20 @@ export function createPresenterView(root, initialSource) {
   const minusMinuteButton = frame.querySelector("#presenter-minus-minute");
   const plusMinuteButton = frame.querySelector("#presenter-plus-minute");
   const progressNode = frame.querySelector("#presenter-timer-progress");
+  const openAudienceButton = createButton("Open Audience Window", "Open the audience presentation in a separate window or tab");
   const previousButton = createButton("Previous");
   const nextButton = createButton("Next");
   const zoomOutButton = createButton("A-", "Make slide text smaller in presenter and audience views");
   const zoomResetButton = createButton("A", "Reset slide text size in presenter and audience views");
   const zoomInButton = createButton("A+", "Make slide text larger in presenter and audience views");
-  actions.append(previousButton, nextButton, zoomOutButton, zoomResetButton, zoomInButton);
+  actions.append(openAudienceButton, previousButton, nextButton, zoomOutButton, zoomResetButton, zoomInButton);
   addColorModeToggle(actions);
+
+  function getAudiencePresentationUrl() {
+    const audienceUrl = new URL("../present/", window.location.href);
+    audienceUrl.hash = buildPresentationHash(activeSlideIndex, revealStep);
+    return audienceUrl.toString();
+  }
 
   function publishState() {
     sync.postMessage({
@@ -268,6 +276,9 @@ export function createPresenterView(root, initialSource) {
 
   previousButton.addEventListener("click", () => move(-1));
   nextButton.addEventListener("click", () => move(1));
+  openAudienceButton.addEventListener("click", () => {
+    window.open(getAudiencePresentationUrl(), "markdown-slides-audience", "noopener,noreferrer");
+  });
   zoomOutButton.addEventListener("click", () => updateZoom(-0.1));
   zoomResetButton.addEventListener("click", () => {
     textZoom = 1;
