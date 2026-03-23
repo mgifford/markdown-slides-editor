@@ -1,6 +1,8 @@
 const DEFAULT_SLIDE_WIDTH = 1280;
 const DEFAULT_SLIDE_HEIGHT = 720;
 const MIN_BODY_SCALE = 0.72;
+const MAX_BODY_SCALE = 1.56;
+const TARGET_BODY_FILL_RATIO = 0.82;
 const SCALE_STEP = 0.04;
 
 function parseDimension(value, fallback) {
@@ -50,6 +52,31 @@ function contentOverflows(contentNode) {
   return contentNode.scrollHeight > contentNode.clientHeight + 1 || contentNode.scrollWidth > contentNode.clientWidth + 1;
 }
 
+export function calculateSlideBodyScale(measure) {
+  let scale = 1;
+  let measurement = measure(scale);
+
+  if (measurement.overflow) {
+    while (scale > MIN_BODY_SCALE && measurement.overflow) {
+      scale = Math.max(MIN_BODY_SCALE, Number((scale - SCALE_STEP).toFixed(2)));
+      measurement = measure(scale);
+    }
+    return { scale, overflow: measurement.overflow };
+  }
+
+  while (scale < MAX_BODY_SCALE && measurement.fillRatio < TARGET_BODY_FILL_RATIO) {
+    const nextScale = Math.min(MAX_BODY_SCALE, Number((scale + SCALE_STEP).toFixed(2)));
+    const nextMeasurement = measure(nextScale);
+    if (nextMeasurement.overflow) {
+      break;
+    }
+    scale = nextScale;
+    measurement = nextMeasurement;
+  }
+
+  return { scale, overflow: measurement.overflow };
+}
+
 export function fitSlideBodyText(container, renderedSlide) {
   if (!container || !renderedSlide || renderedSlide.kind === "title" || renderedSlide.kind === "closing") {
     return { scale: 1, overflow: false };
@@ -61,15 +88,15 @@ export function fitSlideBodyText(container, renderedSlide) {
   const bodyNode = wrapSlideBody(contentNode);
   if (!bodyNode) return { scale: 1, overflow: false };
 
-  let scale = 1;
-  bodyNode.style.setProperty("--slide-body-scale", String(scale));
-
-  while (scale > MIN_BODY_SCALE && contentOverflows(contentNode)) {
-    scale = Math.max(MIN_BODY_SCALE, Number((scale - SCALE_STEP).toFixed(2)));
+  const result = calculateSlideBodyScale((scale) => {
     bodyNode.style.setProperty("--slide-body-scale", String(scale));
-  }
+    return {
+      overflow: contentOverflows(contentNode),
+      fillRatio: contentNode.scrollHeight / Math.max(1, contentNode.clientHeight),
+    };
+  });
 
-  const overflow = contentOverflows(contentNode);
+  const overflow = result.overflow;
   container.dataset.slideOverflow = overflow ? "true" : "false";
-  return { scale, overflow };
+  return result;
 }

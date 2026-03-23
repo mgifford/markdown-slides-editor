@@ -481,6 +481,31 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
         return content.scrollHeight > content.clientHeight + 1 || content.scrollWidth > content.clientWidth + 1;
       }
 
+      function calculateBodyScale(measure) {
+        let scale = 1;
+        let measurement = measure(scale);
+
+        if (measurement.overflow) {
+          while (scale > 0.72 && measurement.overflow) {
+            scale = Math.max(0.72, Number((scale - 0.04).toFixed(2)));
+            measurement = measure(scale);
+          }
+          return scale;
+        }
+
+        while (scale < 1.56 && measurement.fillRatio < 0.82) {
+          const nextScale = Math.min(1.56, Number((scale + 0.04).toFixed(2)));
+          const nextMeasurement = measure(nextScale);
+          if (nextMeasurement.overflow) {
+            break;
+          }
+          scale = nextScale;
+          measurement = nextMeasurement;
+        }
+
+        return scale;
+      }
+
       function prepareSlide(slide) {
         const content = slide.querySelector(".slide__content");
         if (!content || slide.dataset.kind === "title" || slide.dataset.kind === "closing") return;
@@ -493,12 +518,14 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
           content.insertBefore(body, anchor ? anchor.nextSibling : content.firstChild);
           children.forEach((child) => body.append(child));
         }
-        let scale = 1;
+        const scale = calculateBodyScale((nextScale) => {
+          body.style.setProperty("--slide-body-scale", nextScale);
+          return {
+            overflow: contentOverflows(content),
+            fillRatio: content.scrollHeight / Math.max(1, content.clientHeight),
+          };
+        });
         body.style.setProperty("--slide-body-scale", scale);
-        while (scale > 0.72 && contentOverflows(content)) {
-          scale = Math.max(0.72, Number((scale - 0.04).toFixed(2)));
-          body.style.setProperty("--slide-body-scale", scale);
-        }
       }
 
       function applyRevealState(slide) {

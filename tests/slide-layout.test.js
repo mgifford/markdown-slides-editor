@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { getSlideDimensions } from "../src/modules/slide-layout.js";
+import { calculateSlideBodyScale, getSlideDimensions } from "../src/modules/slide-layout.js";
 
 test("getSlideDimensions uses defaults and valid front matter overrides", () => {
   assert.deepEqual(getSlideDimensions({}), {
@@ -14,4 +14,24 @@ test("getSlideDimensions uses defaults and valid front matter overrides", () => 
     height: 768,
     aspectRatio: 1024 / 768,
   });
+});
+
+test("calculateSlideBodyScale grows body text when the slide has spare space", () => {
+  const result = calculateSlideBodyScale((scale) => ({
+    overflow: false,
+    fillRatio: 0.45 * scale,
+  }));
+
+  assert.equal(result.overflow, false);
+  assert.equal(result.scale > 1, true);
+});
+
+test("calculateSlideBodyScale shrinks body text when the slide overflows", () => {
+  const result = calculateSlideBodyScale((scale) => ({
+    overflow: scale > 0.84,
+    fillRatio: 1.05,
+  }));
+
+  assert.equal(result.overflow, false);
+  assert.equal(result.scale < 1, true);
 });
