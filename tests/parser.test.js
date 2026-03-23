@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseSource } from "../src/modules/parser.js";
+import { getSlideIndexForSourceOffset, parseSource } from "../src/modules/parser.js";
 import { renderMarkdown } from "../src/modules/markdown.js";
 import { renderDeck } from "../src/modules/render.js";
 import { removeFrontMatterValue, updateFrontMatterValue } from "../src/modules/source-format.js";
@@ -54,6 +54,28 @@ speakers: Alice Example; Bob Example
   assert.equal(deck.slides[0].kind, "title");
   assert.equal(deck.slides[0].title, "Demo deck");
   assert.equal(deck.slides[0].speakers, "Alice Example; Bob Example");
+});
+
+test("getSlideIndexForSourceOffset maps source positions to rendered slide indexes", () => {
+  const source = `---
+title: Demo deck
+titleSlide: true
+---
+
+# Slide one
+
+Body
+
+---
+
+# Slide two
+
+More body
+`;
+
+  assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide one")), 1);
+  assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide two")), 2);
+  assert.equal(getSlideIndexForSourceOffset(source, source.length), 2);
 });
 
 test("lintDeck flags missing alt text and generic links", () => {

@@ -5,6 +5,32 @@ function parseYamlValue(value) {
   return trimmed;
 }
 
+function normalizeSource(source) {
+  return String(source || "").replaceAll("\r\n", "\n");
+}
+
+function extractMetadataAndContent(source) {
+  let content = normalizeSource(source).trim();
+  const metadata = {};
+
+  if (content.startsWith("---\n")) {
+    const end = content.indexOf("\n---\n", 4);
+    if (end !== -1) {
+      const frontMatter = content.slice(4, end);
+      for (const line of frontMatter.split("\n")) {
+        const separator = line.indexOf(":");
+        if (separator === -1) continue;
+        const key = line.slice(0, separator).trim();
+        const value = line.slice(separator + 1);
+        metadata[key] = parseYamlValue(value);
+      }
+      content = content.slice(end + 5);
+    }
+  }
+
+  return { metadata, content };
+}
+
 function createTitleSlide(metadata) {
   if (!metadata.titleSlide) return null;
 
@@ -51,23 +77,7 @@ function createClosingSlide(metadata) {
 }
 
 export function parseSource(source) {
-  let content = source.trim();
-  const metadata = {};
-
-  if (content.startsWith("---\n")) {
-    const end = content.indexOf("\n---\n", 4);
-    if (end !== -1) {
-      const frontMatter = content.slice(4, end);
-      for (const line of frontMatter.split("\n")) {
-        const separator = line.indexOf(":");
-        if (separator === -1) continue;
-        const key = line.slice(0, separator).trim();
-        const value = line.slice(separator + 1);
-        metadata[key] = parseYamlValue(value);
-      }
-      content = content.slice(end + 5);
-    }
-  }
+  const { metadata, content } = extractMetadataAndContent(source);
 
   const rawSlides = content
     .split(/\n---\n/g)
@@ -128,4 +138,28 @@ export function parseSource(source) {
     metadata,
     slides,
   };
+}
+
+export function getSlideIndexForSourceOffset(source, offset = 0) {
+  const normalized = normalizeSource(source);
+  const safeOffset = Math.max(0, Math.min(offset, normalized.length));
+  const titleSlideOffset = /^\s*---\n[\s\S]*?\n---\n?/m.test(normalized) && /\btitleSlide:\s*true\b/i.test(normalized) ? 1 : 0;
+
+  const frontMatterMatch = normalized.match(/^---\n[\s\S]*?\n---\n?/);
+  const contentStart = frontMatterMatch ? frontMatterMatch[0].length : 0;
+  const content = normalized.slice(contentStart);
+  const relativeOffset = Math.max(0, safeOffset - contentStart);
+
+  if (!content.trim()) {
+    return titleSlideOffset;
+  }
+
+  const separatorPattern = /\n---\n/g;
+  let slideIndex = 0;
+  let match;
+  while ((match = separatorPattern.exec(content)) && match.index < relativeOffset) {
+    slideIndex += 1;
+  }
+
+  return titleSlideOffset + slideIndex;
 }

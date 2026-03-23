@@ -8,6 +8,7 @@ import {
 } from "../export.js";
 import { buildAiAuthoringPrompt, createAiPromptDefaults } from "../ai-prompt.js";
 import { assessSlideDensity } from "../a11y.js";
+import { getSlideIndexForSourceOffset } from "../parser.js";
 import { updateFrontMatterValue, removeFrontMatterValue } from "../source-format.js";
 import { createSyncChannel } from "../sync.js";
 import { getSlideTitle } from "../presentation-state.js";
@@ -361,6 +362,13 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     publishState(lastCompiled);
   }
 
+  function syncPreviewToEditorSelection() {
+    const nextSlideIndex = getSlideIndexForSourceOffset(source, editor.selectionStart || 0);
+    if (nextSlideIndex === activeSlideIndex) return;
+    activeSlideIndex = Math.max(0, nextSlideIndex);
+    render();
+  }
+
   function setAiPromptFormValues(values) {
     aiPromptFields.title.value = values.title || "";
     aiPromptFields.presenters.value = values.presenters || "";
@@ -409,8 +417,13 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   editor.addEventListener("input", () => {
     source = editor.value;
     onSourceChange(source);
+    activeSlideIndex = getSlideIndexForSourceOffset(source, editor.selectionStart || 0);
     render();
   });
+
+  editor.addEventListener("click", syncPreviewToEditorSelection);
+  editor.addEventListener("keyup", syncPreviewToEditorSelection);
+  editor.addEventListener("select", syncPreviewToEditorSelection);
 
   themeSelect.addEventListener("change", () => {
     const nextSource = updateFrontMatterValue(source, "theme", themeSelect.value);
