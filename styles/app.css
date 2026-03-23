@@ -176,6 +176,17 @@ input:focus-visible {
   position: relative;
 }
 
+.collapsed-panel-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.collapsed-panel-actions button {
+  padding-inline: 0.85rem;
+  border-style: dashed;
+}
+
 .eyebrow,
 .panel__label,
 .meta-text,
@@ -430,6 +441,10 @@ input:focus-visible {
 .presenter-panel__body {
   display: grid;
   gap: 0.85rem;
+}
+
+.presenter-panel--fullscreen {
+  grid-column: span 12 !important;
 }
 
 .captions-transcript {

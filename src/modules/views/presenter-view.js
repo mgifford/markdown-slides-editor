@@ -7,6 +7,7 @@ import {
   getSlideTitle,
 } from "../presentation-state.js";
 import {
+  expandPresenterPanel,
   getPresenterPanelLayoutMap,
   loadPresenterLayout,
   movePresenterPanel,
@@ -171,7 +172,9 @@ export function createPresenterView(root, initialSource) {
   const zoomOutButton = createButton("A-", "Make slide text smaller in presenter and audience views");
   const zoomResetButton = createButton("A", "Reset slide text size in presenter and audience views");
   const zoomInButton = createButton("A+", "Make slide text larger in presenter and audience views");
-  actions.append(openAudienceButton, previousButton, nextButton, zoomOutButton, zoomResetButton, zoomInButton);
+  const collapsedPanelsNode = document.createElement("div");
+  collapsedPanelsNode.className = "collapsed-panel-actions";
+  actions.append(openAudienceButton, previousButton, nextButton, collapsedPanelsNode, zoomOutButton, zoomResetButton, zoomInButton);
   addColorModeToggle(actions);
 
   function getAudiencePresentationUrl() {
@@ -198,6 +201,38 @@ export function createPresenterView(root, initialSource) {
       const panel = panelsById.get(panelId);
       panelNode.style.gridColumn = `span ${panel?.span || 4}`;
       panelNode.style.order = String(panel?.order ?? 0);
+      panelNode.hidden = panel?.mode === "collapsed";
+      panelNode.classList.toggle("presenter-panel--fullscreen", panel?.mode === "fullscreen");
+    });
+
+    collapsedPanelsNode.innerHTML = panelLayout
+      .filter((panel) => panel.mode === "collapsed")
+      .map(
+        (panel) =>
+          `<button type="button" data-expand-panel="${panel.id}" title="Restore ${panel.title}">${panel.title}</button>`,
+      )
+      .join("");
+
+    [...layoutGrid.querySelectorAll(".presenter-panel__controls")].forEach((controlsNode) => {
+      const panelId = controlsNode.querySelector("[data-panel-id]")?.dataset.panelId;
+      const panel = panelsById.get(panelId);
+      const shrinkButton = controlsNode.querySelector('[data-action="shrink"]');
+      const growButton = controlsNode.querySelector('[data-action="grow"]');
+      if (!panel || !shrinkButton || !growButton) return;
+      shrinkButton.textContent = panel.mode === "fullscreen" || panel.span <= 3 ? "_" : "-";
+      shrinkButton.title =
+        panel.mode === "fullscreen"
+          ? "Exit full screen"
+          : panel.span <= 3
+            ? "Minimize this panel"
+            : "Make this panel narrower";
+      growButton.textContent = panel.mode === "fullscreen" ? "+" : panel.span >= 12 ? "□" : "+";
+      growButton.title =
+        panel.mode === "fullscreen"
+          ? "Already full screen"
+          : panel.span >= 12
+            ? "Make this panel full screen"
+            : "Make this panel wider";
     });
   }
 
@@ -322,6 +357,14 @@ export function createPresenterView(root, initialSource) {
     if (action === "right") {
       panelLayout = movePresenterPanel(panelLayout, panelId, 1);
     }
+    savePresenterLayout(panelLayout);
+    applyLayout();
+  });
+
+  collapsedPanelsNode.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-expand-panel]");
+    if (!button) return;
+    panelLayout = expandPresenterPanel(panelLayout, button.dataset.expandPanel);
     savePresenterLayout(panelLayout);
     applyLayout();
   });

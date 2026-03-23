@@ -11,6 +11,9 @@ export const DEFAULT_PRESENTER_PANELS = [
 
 const MIN_SPAN = 3;
 const MAX_SPAN = 12;
+const MODE_NORMAL = "normal";
+const MODE_COLLAPSED = "collapsed";
+const MODE_FULLSCREEN = "fullscreen";
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -27,31 +30,110 @@ export function normalizePresenterPanels(panels) {
       continue;
     }
     const defaultPanel = defaultsById.get(panel.id);
+    const span = clamp(Number.parseInt(panel.span, 10) || defaultPanel.span, MIN_SPAN, MAX_SPAN);
     normalized.push({
       id: defaultPanel.id,
       title: defaultPanel.title,
-      span: clamp(Number.parseInt(panel.span, 10) || defaultPanel.span, MIN_SPAN, MAX_SPAN),
+      span,
+      restoreSpan: clamp(Number.parseInt(panel.restoreSpan, 10) || span, MIN_SPAN, MAX_SPAN),
+      mode:
+        panel.mode === MODE_COLLAPSED || panel.mode === MODE_FULLSCREEN
+          ? panel.mode
+          : MODE_NORMAL,
+      previousMode: panel.previousMode === MODE_COLLAPSED ? MODE_COLLAPSED : MODE_NORMAL,
     });
     seen.add(panel.id);
   }
 
   for (const defaultPanel of DEFAULT_PRESENTER_PANELS) {
     if (seen.has(defaultPanel.id)) continue;
-    normalized.push({ ...defaultPanel });
+    normalized.push({
+      ...defaultPanel,
+      restoreSpan: defaultPanel.span,
+      mode: MODE_NORMAL,
+      previousMode: MODE_NORMAL,
+    });
   }
 
   return normalized;
 }
 
 export function resizePresenterPanel(panels, panelId, delta) {
-  return normalizePresenterPanels(panels).map((panel) =>
-    panel.id === panelId
-      ? {
-          ...panel,
-          span: clamp(panel.span + delta, MIN_SPAN, MAX_SPAN),
-        }
-      : panel,
-  );
+  const normalized = normalizePresenterPanels(panels);
+  const target = normalized.find((panel) => panel.id === panelId);
+  if (!target) return normalized;
+
+  if (delta < 0) {
+    if (target.mode === MODE_FULLSCREEN) {
+      return normalized.map((panel) => ({
+        ...panel,
+        mode: panel.previousMode === MODE_COLLAPSED ? MODE_COLLAPSED : MODE_NORMAL,
+        previousMode: MODE_NORMAL,
+        span:
+          panel.id === panelId
+            ? clamp(panel.restoreSpan || MAX_SPAN, MIN_SPAN, MAX_SPAN)
+            : clamp(panel.restoreSpan || panel.span, MIN_SPAN, MAX_SPAN),
+      }));
+    }
+
+    return normalized.map((panel) => {
+      if (panel.id !== panelId) return panel;
+      if (panel.mode === MODE_COLLAPSED) return panel;
+      if (panel.span > MIN_SPAN) {
+        const span = clamp(panel.span + delta, MIN_SPAN, MAX_SPAN);
+        return { ...panel, span, restoreSpan: span };
+      }
+      return {
+        ...panel,
+        mode: MODE_COLLAPSED,
+        previousMode: MODE_NORMAL,
+        restoreSpan: panel.restoreSpan || panel.span,
+      };
+    });
+  }
+
+  if (target.mode === MODE_COLLAPSED) {
+    return normalized.map((panel) =>
+      panel.id === panelId
+        ? {
+            ...panel,
+            mode: MODE_NORMAL,
+            previousMode: MODE_NORMAL,
+            span: clamp(panel.restoreSpan || MIN_SPAN, MIN_SPAN, MAX_SPAN),
+          }
+        : panel,
+    );
+  }
+
+  if (target.mode === MODE_FULLSCREEN) {
+    return normalized;
+  }
+
+  if (target.span < MAX_SPAN) {
+    return normalized.map((panel) => {
+      if (panel.id !== panelId) return panel;
+      const span = clamp(panel.span + delta, MIN_SPAN, MAX_SPAN);
+      return { ...panel, span, restoreSpan: span };
+    });
+  }
+
+  return normalized.map((panel) => {
+    if (panel.id === panelId) {
+      return {
+        ...panel,
+        span: MAX_SPAN,
+        restoreSpan: panel.restoreSpan || panel.span,
+        mode: MODE_FULLSCREEN,
+        previousMode: panel.mode,
+      };
+    }
+    return {
+      ...panel,
+      mode: MODE_COLLAPSED,
+      previousMode: panel.mode,
+      restoreSpan: panel.restoreSpan || panel.span,
+    };
+  });
 }
 
 export function movePresenterPanel(panels, panelId, delta) {
@@ -72,8 +154,23 @@ export function getPresenterPanelLayoutMap(panels) {
       {
         span: panel.span,
         order: index,
+        mode: panel.mode,
+        title: panel.title,
       },
     ]),
+  );
+}
+
+export function expandPresenterPanel(panels, panelId) {
+  return normalizePresenterPanels(panels).map((panel) =>
+    panel.id === panelId
+      ? {
+          ...panel,
+          mode: MODE_NORMAL,
+          previousMode: MODE_NORMAL,
+          span: clamp(panel.restoreSpan || MIN_SPAN, MIN_SPAN, MAX_SPAN),
+        }
+      : panel,
   );
 }
 

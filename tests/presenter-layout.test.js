@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   DEFAULT_PRESENTER_PANELS,
+  expandPresenterPanel,
   getPresenterPanelLayoutMap,
   loadPresenterLayout,
   movePresenterPanel,
@@ -51,6 +52,42 @@ test("getPresenterPanelLayoutMap preserves reordered panel sequence for renderin
   const layoutMap = getPresenterPanelLayoutMap(moved);
   assert.equal(layoutMap.get("outline").order, 3);
   assert.equal(layoutMap.get("current").order, 0);
+});
+
+test("resizePresenterPanel collapses at minimum and restores from collapsed state", () => {
+  const collapsed = resizePresenterPanel(
+    [{ id: "timer", title: "Timer", span: 3, restoreSpan: 3, mode: "normal" }],
+    "timer",
+    -1,
+  );
+  assert.equal(collapsed[0].mode, "collapsed");
+
+  const restored = resizePresenterPanel(collapsed, "timer", 1);
+  assert.equal(restored[0].mode, "normal");
+  assert.equal(restored[0].span, 3);
+});
+
+test("resizePresenterPanel enters fullscreen from max width and shrink exits fullscreen", () => {
+  const layout = [
+    { id: "current", title: "Current slide", span: 12, restoreSpan: 12, mode: "normal" },
+    { id: "next", title: "Next slide", span: 4, restoreSpan: 4, mode: "normal" },
+  ];
+  const fullscreen = resizePresenterPanel(layout, "current", 1);
+  assert.equal(fullscreen[0].mode, "fullscreen");
+  assert.equal(fullscreen[1].mode, "collapsed");
+
+  const restored = resizePresenterPanel(fullscreen, "current", -1);
+  assert.equal(restored[0].mode, "normal");
+  assert.equal(restored[1].mode, "normal");
+  assert.equal(restored[1].span, 4);
+});
+
+test("expandPresenterPanel restores a collapsed panel using its saved span", () => {
+  const expanded = expandPresenterPanel([
+    { id: "notes", title: "Notes", span: 6, restoreSpan: 6, mode: "collapsed" },
+  ], "notes");
+  assert.equal(expanded[0].mode, "normal");
+  assert.equal(expanded[0].span, 6);
 });
 
 test("savePresenterLayout and loadPresenterLayout round-trip through storage", () => {
