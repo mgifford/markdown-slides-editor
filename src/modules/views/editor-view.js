@@ -59,7 +59,12 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
           <div>
             <p class="panel__label">Live preview</p>
             <p id="deck-meta" class="meta-text"></p>
-            <p id="layout-warning" class="layout-warning" hidden></p>
+            <div id="layout-warning" class="layout-warning" hidden>
+              <button type="button" id="layout-warning-button" class="layout-warning__button" aria-describedby="layout-warning-tooltip" aria-expanded="false">
+                Suggestion
+              </button>
+              <div id="layout-warning-tooltip" class="layout-warning__tooltip" role="tooltip" hidden></div>
+            </div>
           </div>
           <div class="preview-header__actions">
             <label class="theme-control">
@@ -101,6 +106,8 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   const notesPreview = frame.querySelector("#notes-preview");
   const deckMeta = frame.querySelector("#deck-meta");
   const layoutWarning = frame.querySelector("#layout-warning");
+  const layoutWarningButton = frame.querySelector("#layout-warning-button");
+  const layoutWarningTooltip = frame.querySelector("#layout-warning-tooltip");
   const outlineNode = frame.querySelector("#slide-outline");
   const themeSelect = frame.querySelector("#theme-select");
   const themeSelectControl = themeSelect.closest(".theme-control");
@@ -335,12 +342,14 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     );
     if (fitResult?.overflow || currentSlideWarnings.length) {
       layoutWarning.hidden = false;
-      layoutWarning.textContent = fitResult?.overflow
+      layoutWarningTooltip.textContent = fitResult?.overflow
         ? "This slide still overflows the target presentation frame. Shorten the visible copy or split it into more slides."
         : currentSlideWarnings[0].message;
+      hideLayoutWarningTooltip();
     } else {
       layoutWarning.hidden = true;
-      layoutWarning.textContent = "";
+      layoutWarningTooltip.textContent = "";
+      hideLayoutWarningTooltip();
     }
     outlineNode.innerHTML = compiled.renderedSlides
       .map((renderedSlide, index) => {
@@ -360,6 +369,17 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   function render() {
     lastCompiled = compileSource(source);
     publishState(lastCompiled);
+  }
+
+  function showLayoutWarningTooltip() {
+    if (layoutWarning.hidden || !layoutWarningTooltip.textContent.trim()) return;
+    layoutWarningTooltip.hidden = false;
+    layoutWarningButton.setAttribute("aria-expanded", "true");
+  }
+
+  function hideLayoutWarningTooltip() {
+    layoutWarningTooltip.hidden = true;
+    layoutWarningButton.setAttribute("aria-expanded", "false");
   }
 
   function syncPreviewToEditorSelection() {
@@ -424,6 +444,17 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   editor.addEventListener("click", syncPreviewToEditorSelection);
   editor.addEventListener("keyup", syncPreviewToEditorSelection);
   editor.addEventListener("select", syncPreviewToEditorSelection);
+
+  layoutWarningButton.addEventListener("mouseenter", showLayoutWarningTooltip);
+  layoutWarningButton.addEventListener("mouseleave", hideLayoutWarningTooltip);
+  layoutWarningButton.addEventListener("focus", showLayoutWarningTooltip);
+  layoutWarningButton.addEventListener("blur", hideLayoutWarningTooltip);
+  layoutWarningButton.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      hideLayoutWarningTooltip();
+      layoutWarningButton.blur();
+    }
+  });
 
   themeSelect.addEventListener("change", () => {
     const nextSource = updateFrontMatterValue(source, "theme", themeSelect.value);
