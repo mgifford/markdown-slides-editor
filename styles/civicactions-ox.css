@@ -217,6 +217,38 @@
   color: var(--accent);
 }
 
+.slide-card li.active {
+  background: color-mix(in srgb, rgba(250, 148, 65, 0.26) 78%, #ffffff);
+  color: #171717;
+  box-shadow: inset 0 0 0 1px rgba(22, 46, 81, 0.14);
+}
+
+.slide-card li.visited {
+  color: rgba(23, 23, 23, 0.82);
+}
+
+:root[data-color-mode="dark"] .slide-card li.active {
+  background: color-mix(in srgb, rgba(255, 188, 120, 0.24) 82%, #171717);
+  color: #f3f5f7;
+  box-shadow: inset 0 0 0 1px rgba(115, 179, 231, 0.22);
+}
+
+:root[data-color-mode="dark"] .slide-card li.visited {
+  color: rgba(243, 245, 247, 0.82);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-color-mode="light"]) .slide-card li.active {
+    background: color-mix(in srgb, rgba(255, 188, 120, 0.24) 82%, #171717);
+    color: #f3f5f7;
+    box-shadow: inset 0 0 0 1px rgba(115, 179, 231, 0.22);
+  }
+
+  :root:not([data-color-mode="light"]) .slide-card li.visited {
+    color: rgba(243, 245, 247, 0.82);
+  }
+}
+
 .slide-card img {
   border: 1px solid rgba(22, 46, 81, 0.12);
   border-radius: 20px;

@@ -653,12 +653,26 @@ input:focus-visible {
 }
 
 .slide-card li.active {
-  background: var(--accent-soft);
+  padding: 0.2rem 0.45rem;
   border-radius: 10px;
+  background: color-mix(in srgb, var(--accent-soft) 72%, var(--panel-strong));
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 .slide-card li.visited {
-  opacity: 0.82;
+  color: var(--muted);
+  opacity: 1;
+}
+
+.slide-card li.active::marker,
+.slide-card li.visited::marker {
+  color: var(--accent);
+}
+
+.slide-card li.active a,
+.slide-card li.visited a {
+  color: inherit;
 }
 
 .slide-card img {
