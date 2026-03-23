@@ -102,7 +102,9 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   const layoutWarning = frame.querySelector("#layout-warning");
   const outlineNode = frame.querySelector("#slide-outline");
   const themeSelect = frame.querySelector("#theme-select");
+  const themeSelectControl = themeSelect.closest(".theme-control");
   const themeStylesheetInput = frame.querySelector("#theme-stylesheet-input");
+  const themeStylesheetControl = themeStylesheetInput.closest(".theme-control");
   const editorLayout = frame.querySelector(".editor-layout");
   const previewLayout = frame.querySelector(".preview-layout");
   const outlinePanel = frame.querySelector(".outline-panel");
@@ -318,8 +320,13 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     deckMeta.textContent = compiled.renderedSlides.length
       ? `${compiled.metadata.title || "Untitled deck"} · Slide ${activeSlideIndex + 1} of ${compiled.renderedSlides.length}`
       : `${compiled.metadata.title || "Untitled deck"} · No slides`;
+    const stylesheetValue = compiled.metadata.themeStylesheet || "";
     themeSelect.value = compiled.metadata.theme || "default-high-contrast";
-    themeStylesheetInput.value = compiled.metadata.themeStylesheet || "";
+    themeStylesheetInput.dataset.fullValue = stylesheetValue;
+    themeStylesheetInput.value = shortenThemeStylesheetValue(stylesheetValue);
+    const hasExternalStylesheet = isValidStylesheetUrl(stylesheetValue);
+    themeSelectControl.hidden = hasExternalStylesheet;
+    themeStylesheetControl.classList.toggle("theme-control--active-external", hasExternalStylesheet);
     const fitResult = mountSlideInto(previewFrame, slide);
     notesPreview.innerHTML = buildSupplementalHtml(slide);
     const currentSlideWarnings = compiled.issues.filter(
@@ -410,12 +417,21 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     setSource(nextSource);
   });
 
+  themeStylesheetInput.addEventListener("focus", () => {
+    themeStylesheetInput.value = themeStylesheetInput.dataset.fullValue || "";
+  });
+
   themeStylesheetInput.addEventListener("change", () => {
     const value = themeStylesheetInput.value.trim();
+    themeStylesheetInput.dataset.fullValue = value;
     const nextSource = value
       ? updateFrontMatterValue(source, "themeStylesheet", value)
       : removeFrontMatterValue(source, "themeStylesheet");
     setSource(nextSource);
+  });
+
+  themeStylesheetInput.addEventListener("blur", () => {
+    themeStylesheetInput.value = shortenThemeStylesheetValue(themeStylesheetInput.dataset.fullValue || "");
   });
 
   toggleEditorPanelButton.addEventListener("click", () => {
@@ -623,4 +639,25 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     advancedMenu.hidden = true;
     advancedToggle.setAttribute("aria-expanded", "false");
   });
+}
+
+function isValidStylesheetUrl(value) {
+  if (!value) return false;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function shortenThemeStylesheetValue(value) {
+  if (!isValidStylesheetUrl(value)) return value;
+  try {
+    const parsed = new URL(value);
+    const shortPath = parsed.pathname.split("/").filter(Boolean).slice(-2).join("/");
+    return shortPath ? `.../${shortPath}` : value;
+  } catch {
+    return value;
+  }
 }

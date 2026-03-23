@@ -293,9 +293,10 @@ input:focus-visible {
 .presentation-toolbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
 .layout-warning {
@@ -348,12 +349,17 @@ input:focus-visible {
   gap: 0.75rem;
   list-style: none;
   padding: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: flex-end;
+  min-width: 0;
 }
 
 .theme-control {
   display: grid;
   gap: 0.35rem;
   font-size: 0.85rem;
+  min-width: 0;
 }
 
 .theme-control span {
@@ -364,7 +370,7 @@ input:focus-visible {
 
 .theme-control select,
 .theme-control input {
-  min-width: 180px;
+  min-width: 0;
   padding: 0.65rem 0.8rem;
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -372,8 +378,21 @@ input:focus-visible {
   color: var(--ink);
 }
 
+.theme-control select {
+  min-width: 180px;
+}
+
 .theme-control--wide input {
-  min-width: min(320px, 32vw);
+  width: min(250px, 26vw);
+  text-overflow: ellipsis;
+}
+
+.theme-control--active-external {
+  min-width: min(250px, 26vw);
+}
+
+.panel--preview .preview-header__actions > button {
+  white-space: nowrap;
 }
 
 .color-mode-toggle {
