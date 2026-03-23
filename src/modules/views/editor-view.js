@@ -67,14 +67,26 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
             </div>
           </div>
           <div class="preview-header__actions">
-            <label class="theme-control">
-              <span>Theme</span>
-              <select id="theme-select"></select>
-            </label>
-            <label class="theme-control theme-control--wide">
-              <span>External CSS</span>
-              <input id="theme-stylesheet-input" type="url" placeholder="https://example.com/theme.css" />
-            </label>
+            <div class="theme-menu">
+              <button type="button" id="theme-menu-toggle" aria-haspopup="true" aria-expanded="false">Theme</button>
+              <div id="theme-menu-panel" class="theme-menu__panel" hidden>
+                <label class="theme-control">
+                  <span>Theme source</span>
+                  <select id="theme-mode-select">
+                    <option value="built-in">Built-in theme</option>
+                    <option value="external">Custom CSS</option>
+                  </select>
+                </label>
+                <label class="theme-control" id="theme-select-control">
+                  <span>Built-in theme</span>
+                  <select id="theme-select"></select>
+                </label>
+                <label class="theme-control theme-control--wide" id="theme-stylesheet-control">
+                  <span>External CSS</span>
+                  <input id="theme-stylesheet-input" type="url" placeholder="https://example.com/theme.css" />
+                </label>
+              </div>
+            </div>
             <button type="button" id="toggle-outline-panel-header">Hide Outline</button>
             <button type="button" id="prev-slide">Previous</button>
             <button type="button" id="next-slide">Next</button>
@@ -109,10 +121,13 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   const layoutWarningButton = frame.querySelector("#layout-warning-button");
   const layoutWarningTooltip = frame.querySelector("#layout-warning-tooltip");
   const outlineNode = frame.querySelector("#slide-outline");
+  const themeMenuToggle = frame.querySelector("#theme-menu-toggle");
+  const themeMenuPanel = frame.querySelector("#theme-menu-panel");
+  const themeModeSelect = frame.querySelector("#theme-mode-select");
   const themeSelect = frame.querySelector("#theme-select");
-  const themeSelectControl = themeSelect.closest(".theme-control");
+  const themeSelectControl = frame.querySelector("#theme-select-control");
   const themeStylesheetInput = frame.querySelector("#theme-stylesheet-input");
-  const themeStylesheetControl = themeStylesheetInput.closest(".theme-control");
+  const themeStylesheetControl = frame.querySelector("#theme-stylesheet-control");
   const editorLayout = frame.querySelector(".editor-layout");
   const previewLayout = frame.querySelector(".preview-layout");
   const outlinePanel = frame.querySelector(".outline-panel");
@@ -333,8 +348,9 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     themeStylesheetInput.dataset.fullValue = stylesheetValue;
     themeStylesheetInput.value = shortenThemeStylesheetValue(stylesheetValue);
     const hasExternalStylesheet = isValidStylesheetUrl(stylesheetValue);
+    themeModeSelect.value = hasExternalStylesheet ? "external" : "built-in";
     themeSelectControl.hidden = hasExternalStylesheet;
-    themeStylesheetControl.classList.toggle("theme-control--active-external", hasExternalStylesheet);
+    themeStylesheetControl.hidden = !hasExternalStylesheet;
     const fitResult = mountSlideInto(previewFrame, slide);
     notesPreview.innerHTML = buildSupplementalHtml(slide);
     const currentSlideWarnings = compiled.issues.filter(
@@ -459,6 +475,28 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   themeSelect.addEventListener("change", () => {
     const nextSource = updateFrontMatterValue(source, "theme", themeSelect.value);
     setSource(nextSource);
+  });
+
+  themeMenuToggle.addEventListener("click", () => {
+    const isOpening = themeMenuPanel.hidden;
+    themeMenuPanel.hidden = !isOpening;
+    themeMenuToggle.setAttribute("aria-expanded", String(isOpening));
+    if (isOpening) {
+      (themeModeSelect.value === "external" ? themeStylesheetInput : themeSelect).focus();
+    }
+  });
+
+  themeModeSelect.addEventListener("change", () => {
+    const usingExternal = themeModeSelect.value === "external";
+    themeSelectControl.hidden = usingExternal;
+    themeStylesheetControl.hidden = !usingExternal;
+    if (!usingExternal) {
+      const nextSource = removeFrontMatterValue(source, "themeStylesheet");
+      setSource(nextSource);
+      themeSelect.focus();
+      return;
+    }
+    themeStylesheetInput.focus();
   });
 
   themeStylesheetInput.addEventListener("focus", () => {
@@ -682,6 +720,13 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     if (advancedMenu.contains(event.target) || advancedToggle.contains(event.target)) return;
     advancedMenu.hidden = true;
     advancedToggle.setAttribute("aria-expanded", "false");
+  });
+
+  document.addEventListener("click", (event) => {
+    if (themeMenuPanel.hidden) return;
+    if (themeMenuPanel.contains(event.target) || themeMenuToggle.contains(event.target)) return;
+    themeMenuPanel.hidden = true;
+    themeMenuToggle.setAttribute("aria-expanded", "false");
   });
 }
 
