@@ -7,6 +7,7 @@ import {
   getSlideTitle,
 } from "../presentation-state.js";
 import {
+  getPresenterPanelLayoutMap,
   loadPresenterLayout,
   movePresenterPanel,
   resizePresenterPanel,
@@ -191,12 +192,12 @@ export function createPresenterView(root, initialSource) {
   }
 
   function applyLayout() {
-    const panelsById = new Map(panelLayout.map((panel) => [panel.id, panel]));
-    [...layoutGrid.querySelectorAll(".presenter-panel")].forEach((panelNode, index) => {
+    const panelsById = getPresenterPanelLayoutMap(panelLayout);
+    [...layoutGrid.querySelectorAll(".presenter-panel")].forEach((panelNode) => {
       const panelId = panelNode.dataset.panelId;
       const panel = panelsById.get(panelId);
       panelNode.style.gridColumn = `span ${panel?.span || 4}`;
-      panelNode.style.order = String(index);
+      panelNode.style.order = String(panel?.order ?? 0);
     });
   }
 

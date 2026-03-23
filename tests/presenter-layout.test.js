@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   DEFAULT_PRESENTER_PANELS,
+  getPresenterPanelLayoutMap,
   loadPresenterLayout,
   movePresenterPanel,
   normalizePresenterPanels,
@@ -43,6 +44,13 @@ test("movePresenterPanel reorders panels without losing them", () => {
   const moved = movePresenterPanel(DEFAULT_PRESENTER_PANELS, "notes", -2);
   assert.equal(moved.length, DEFAULT_PRESENTER_PANELS.length);
   assert.equal(moved[1].id, "notes");
+});
+
+test("getPresenterPanelLayoutMap preserves reordered panel sequence for rendering", () => {
+  const moved = movePresenterPanel(DEFAULT_PRESENTER_PANELS, "outline", -2);
+  const layoutMap = getPresenterPanelLayoutMap(moved);
+  assert.equal(layoutMap.get("outline").order, 3);
+  assert.equal(layoutMap.get("current").order, 0);
 });
 
 test("savePresenterLayout and loadPresenterLayout round-trip through storage", () => {

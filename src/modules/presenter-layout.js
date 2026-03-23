@@ -65,6 +65,18 @@ export function movePresenterPanel(panels, panelId, delta) {
   return normalized;
 }
 
+export function getPresenterPanelLayoutMap(panels) {
+  return new Map(
+    normalizePresenterPanels(panels).map((panel, index) => [
+      panel.id,
+      {
+        span: panel.span,
+        order: index,
+      },
+    ]),
+  );
+}
+
 export function loadPresenterLayout(storage = globalThis.localStorage) {
   try {
     const raw = storage?.getItem(PRESENTER_LAYOUT_STORAGE_KEY);
