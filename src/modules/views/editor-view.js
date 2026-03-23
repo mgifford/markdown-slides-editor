@@ -174,6 +174,12 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
         <p>Lower-frequency tools such as import and <strong>Email Deck</strong> are grouped under <strong>Advanced</strong>. Email Deck is especially useful on a phone when you want to move a draft to a desktop quickly.</p>
         <p>On smaller screens, use the <strong>Edit</strong>, <strong>Preview</strong>, and <strong>Support</strong> tabs to switch panes without the editor feeling cramped.</p>
         <p>Audience View opens the clean presentation surface. Presenter View opens notes, timing, next-slide support, and shared text zoom controls in a second window.</p>
+        <div class="support-section">
+          <h2>Keyboard shortcuts</h2>
+          <p><strong>Audience View:</strong> <kbd>Right Arrow</kbd>, <kbd>Page Down</kbd>, or <kbd>Space</kbd> moves forward. <kbd>Left Arrow</kbd> or <kbd>Page Up</kbd> moves back. <kbd>Home</kbd> goes to the first slide. <kbd>End</kbd> goes to the last slide. <kbd>O</kbd> opens the outline. <kbd>D</kbd> toggles light and dark mode.</p>
+          <p><strong>Presenter View:</strong> the same navigation keys work there, plus <kbd>A-</kbd>/<kbd>-</kbd>, <kbd>A</kbd>/<kbd>0</kbd>, and <kbd>A+</kbd>/<kbd>+</kbd> to adjust text zoom for both presenter and audience screens.</p>
+          <p>Browser shortcuts like <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>C</kbd> should remain available for copying text.</p>
+        </div>
       </div>
     </form>
   `;

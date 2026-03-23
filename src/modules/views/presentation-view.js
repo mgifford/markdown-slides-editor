@@ -140,6 +140,8 @@ export function createPresentationView(root, initialSource) {
   });
 
   document.addEventListener("keydown", (event) => {
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+
     if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
       event.preventDefault();
       move(1);
@@ -162,7 +164,7 @@ export function createPresentationView(root, initialSource) {
       render();
     }
 
-    if (event.key.toLowerCase() === "c") {
+    if (event.key.toLowerCase() === "o") {
       event.preventDefault();
       toggleOutline();
     }

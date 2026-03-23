@@ -419,6 +419,8 @@ export function createPresenterView(root, initialSource) {
   });
 
   document.addEventListener("keydown", (event) => {
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+
     if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
       event.preventDefault();
       move(1);
