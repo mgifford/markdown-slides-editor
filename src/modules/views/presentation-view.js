@@ -1,7 +1,10 @@
 import { createSyncChannel } from "../sync.js";
 import { createCaptionMonitor, getCaptionConfig } from "../captions.js";
 import {
+  buildPresentationHash,
   getNextPosition,
+  normalizePresentationPosition,
+  parsePresentationHash,
   getPreviousPosition,
   getSlideTitle,
 } from "../presentation-state.js";
@@ -59,12 +62,30 @@ export function createPresentationView(root, initialSource) {
   const outlineNode = frame.querySelector("#presentation-outline");
   const captionNode = frame.querySelector("#live-caption-display");
 
+  function applyHashPosition() {
+    compiled = compileSource(source);
+    const position = parsePresentationHash(window.location.hash, compiled);
+    if (!position) return false;
+    activeSlideIndex = position.activeSlideIndex;
+    revealStep = position.revealStep;
+    return true;
+  }
+
+  function updateHash() {
+    const nextHash = buildPresentationHash(activeSlideIndex, revealStep);
+    if (window.location.hash === nextHash) return;
+    history.replaceState(null, "", nextHash);
+  }
+
   function render() {
     compiled = compileSource(source);
     applyDeckTheme(compiled.metadata);
     const nextCaptionConfig = getCaptionConfig(compiled.metadata);
     captionMonitor.update(nextCaptionConfig);
     captionConfig = nextCaptionConfig;
+    const position = normalizePresentationPosition(compiled, activeSlideIndex, revealStep);
+    activeSlideIndex = position.activeSlideIndex;
+    revealStep = position.revealStep;
     const slide = compiled.renderedSlides[activeSlideIndex] || compiled.renderedSlides[0];
     activeSlideIndex = slide?.index || 0;
     mountSlideInto(frameNode, slide, { revealStep });
@@ -80,6 +101,7 @@ export function createPresentationView(root, initialSource) {
       .join("");
     captionNode.hidden = !captionsState.available || !captionsState.text;
     captionNode.textContent = captionsState.text;
+    updateHash();
     sync.postMessage({ type: "slide-changed", activeSlideIndex, revealStep, source, textZoom, timestamp: Date.now() });
   }
 
@@ -151,6 +173,12 @@ export function createPresentationView(root, initialSource) {
     }
   });
 
+  window.addEventListener("hashchange", () => {
+    if (applyHashPosition()) {
+      render();
+    }
+  });
+
   sync.subscribe((message) => {
     if (message.type === "deck-updated" || message.type === "slide-changed") {
       source = message.source || source;
@@ -163,6 +191,7 @@ export function createPresentationView(root, initialSource) {
     }
   });
 
+  applyHashPosition();
   render();
   captionMonitor.start();
 }

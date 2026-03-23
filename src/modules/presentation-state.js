@@ -16,6 +16,37 @@ export function createRevealState(renderedSlide, revealStep = 0) {
   };
 }
 
+export function normalizePresentationPosition(deck, activeSlideIndex = 0, revealStep = 0) {
+  const slideCount = deck?.renderedSlides?.length || 0;
+  if (!slideCount) {
+    return { activeSlideIndex: 0, revealStep: 0 };
+  }
+
+  const safeSlideIndex = Math.max(0, Math.min(slideCount - 1, activeSlideIndex));
+  const safeRevealState = createRevealState(deck.renderedSlides[safeSlideIndex], revealStep);
+  return {
+    activeSlideIndex: safeSlideIndex,
+    revealStep: safeRevealState.revealStep,
+  };
+}
+
+export function parsePresentationHash(hash, deck) {
+  const match = /^#(\d+)(?:\.(\d+))?$/.exec(hash || "");
+  if (!match) return null;
+
+  const slideNumber = Number.parseInt(match[1], 10);
+  const revealNumber = match[2] ? Number.parseInt(match[2], 10) : 0;
+
+  if (!Number.isFinite(slideNumber) || slideNumber < 1) return null;
+
+  return normalizePresentationPosition(deck, slideNumber - 1, Math.max(0, revealNumber));
+}
+
+export function buildPresentationHash(activeSlideIndex, revealStep = 0) {
+  const slideNumber = Math.max(1, activeSlideIndex + 1);
+  return revealStep > 0 ? `#${slideNumber}.${revealStep}` : `#${slideNumber}`;
+}
+
 export function getNextPosition(deck, activeSlideIndex, revealStep) {
   const currentSlide = deck.renderedSlides[activeSlideIndex];
   const stepCount = currentSlide?.stepCount || 0;

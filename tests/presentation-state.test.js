@@ -1,11 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  buildPresentationHash,
   createRevealState,
   getNextPosition,
   getPresentationDurationMinutes,
   getPreviousPosition,
   getSlideTitle,
+  normalizePresentationPosition,
+  parsePresentationHash,
 } from "../src/modules/presentation-state.js";
 
 test("getSlideTitle prefers h1 text and falls back to slide number", () => {
@@ -45,4 +48,29 @@ test("getPreviousPosition rewinds reveal steps before moving slides", () => {
   assert.deepEqual(getPreviousPosition(deck, 2, 2), { activeSlideIndex: 2, revealStep: 1 });
   assert.deepEqual(getPreviousPosition(deck, 2, 0), { activeSlideIndex: 1, revealStep: 0 });
   assert.deepEqual(getPreviousPosition(deck, 1, 0), { activeSlideIndex: 0, revealStep: 2 });
+});
+
+test("normalizePresentationPosition clamps slide and reveal state safely", () => {
+  const deck = {
+    renderedSlides: [{ stepCount: 1 }, { stepCount: 3 }],
+  };
+
+  assert.deepEqual(normalizePresentationPosition(deck, -5, 9), { activeSlideIndex: 0, revealStep: 1 });
+  assert.deepEqual(normalizePresentationPosition(deck, 99, 9), { activeSlideIndex: 1, revealStep: 3 });
+});
+
+test("parsePresentationHash supports slide-only and slide-plus-reveal URLs", () => {
+  const deck = {
+    renderedSlides: [{ stepCount: 0 }, { stepCount: 3 }, { stepCount: 1 }],
+  };
+
+  assert.deepEqual(parsePresentationHash("#2", deck), { activeSlideIndex: 1, revealStep: 0 });
+  assert.deepEqual(parsePresentationHash("#2.3", deck), { activeSlideIndex: 1, revealStep: 3 });
+  assert.deepEqual(parsePresentationHash("#9.9", deck), { activeSlideIndex: 2, revealStep: 1 });
+  assert.equal(parsePresentationHash("#nope", deck), null);
+});
+
+test("buildPresentationHash serializes slide and reveal state as one-based fragments", () => {
+  assert.equal(buildPresentationHash(0, 0), "#1");
+  assert.equal(buildPresentationHash(3, 1), "#4.1");
 });
