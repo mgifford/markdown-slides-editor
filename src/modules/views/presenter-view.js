@@ -166,16 +166,24 @@ export function createPresenterView(root, initialSource) {
   const minusMinuteButton = frame.querySelector("#presenter-minus-minute");
   const plusMinuteButton = frame.querySelector("#presenter-plus-minute");
   const progressNode = frame.querySelector("#presenter-timer-progress");
+  const timerAutoStartToggle = document.createElement("label");
+  timerAutoStartToggle.className = "timer-autostart-toggle";
+  timerAutoStartToggle.innerHTML = `<input id="presenter-timer-autostart" type="checkbox" checked /> Auto-start after first slide`;
+  frame.querySelector('[data-panel-id="timer"] .presenter-panel__body').append(timerAutoStartToggle);
+  const timerAutoStartInput = timerAutoStartToggle.querySelector("input");
   const openAudienceButton = createButton("Open Audience Window", "Open the audience presentation in a separate window or tab");
   const previousButton = createButton("Previous");
   const nextButton = createButton("Next");
+  const timerStatusButton = createButton("Timer: 30", "Restore or focus the timer panel");
+  timerStatusButton.className = "timer-status-button";
   const zoomOutButton = createButton("A-", "Make slide text smaller in presenter and audience views");
   const zoomResetButton = createButton("A", "Reset slide text size in presenter and audience views");
   const zoomInButton = createButton("A+", "Make slide text larger in presenter and audience views");
   const collapsedPanelsNode = document.createElement("div");
   collapsedPanelsNode.className = "collapsed-panel-actions";
-  actions.append(openAudienceButton, previousButton, nextButton, collapsedPanelsNode, zoomOutButton, zoomResetButton, zoomInButton);
+  actions.append(openAudienceButton, previousButton, nextButton, timerStatusButton, collapsedPanelsNode, zoomOutButton, zoomResetButton, zoomInButton);
   addColorModeToggle(actions);
+  let timerAutoStart = true;
 
   function getAudiencePresentationUrl() {
     const audienceUrl = new URL("../present/", window.location.href);
@@ -194,6 +202,18 @@ export function createPresenterView(root, initialSource) {
     });
   }
 
+  function syncTimerForSlideChange(previousSlideIndex = activeSlideIndex) {
+    const durationMinutes = getPresentationDurationMinutes(compiled.metadata);
+    if (activeSlideIndex === 0) {
+      timerState = resetPresenterTimer(timerState, durationMinutes, Date.now());
+      return;
+    }
+
+    if (timerAutoStart && previousSlideIndex === 0 && activeSlideIndex > 0 && !timerState.started) {
+      timerState = setPresenterTimerPaused(timerState, false, Date.now());
+    }
+  }
+
   function applyLayout() {
     const panelsById = getPresenterPanelLayoutMap(panelLayout);
     [...layoutGrid.querySelectorAll(".presenter-panel")].forEach((panelNode) => {
@@ -206,7 +226,7 @@ export function createPresenterView(root, initialSource) {
     });
 
     collapsedPanelsNode.innerHTML = panelLayout
-      .filter((panel) => panel.mode === "collapsed")
+      .filter((panel) => panel.mode === "collapsed" && panel.id !== "timer")
       .map(
         (panel) =>
           `<button type="button" data-expand-panel="${panel.id}" title="Restore ${panel.title}">${panel.title}</button>`,
@@ -269,21 +289,33 @@ export function createPresenterView(root, initialSource) {
     const timerTone = getPresenterTimerTone(timerState);
     timerNode.textContent = formatPresenterTimerMinutes(timerState.remainingMs);
     timerNode.dataset.tone = timerTone;
-    remainingNode.textContent = `${timerState.paused ? "Paused" : "Time left"} · ${Math.ceil(timerState.remainingMs / 60000)} min of ${timerState.durationMinutes}`;
-    pauseTimerButton.textContent = timerState.paused ? "Resume" : "Pause";
+    remainingNode.textContent =
+      activeSlideIndex === 0 && !timerState.started
+        ? `Ready on slide 1 · ${timerState.durationMinutes} min total`
+        : `${timerState.paused ? "Paused" : "Time left"} · ${Math.ceil(timerState.remainingMs / 60000)} min of ${timerState.durationMinutes}`;
+    pauseTimerButton.textContent = timerState.started ? (timerState.paused ? "Resume" : "Pause") : "Start";
     progressNode.style.setProperty("--timer-progress", `${getPresenterTimerProgress(timerState) * 100}%`);
     progressNode.dataset.tone = timerTone;
+    timerStatusButton.textContent = `Timer: ${Math.ceil(timerState.remainingMs / 60000)}`;
+    timerStatusButton.dataset.tone = timerTone;
+    timerStatusButton.title =
+      panelLayout.find((panel) => panel.id === "timer")?.mode === "collapsed"
+        ? "Restore the timer panel"
+        : "Timer panel is open";
+    timerAutoStartInput.checked = timerAutoStart;
     applyLayout();
   }
 
   function move(delta) {
     compiled = compileSource(source);
+    const previousSlideIndex = activeSlideIndex;
     const nextPosition =
       delta > 0
         ? getNextPosition(compiled, activeSlideIndex, revealStep)
         : getPreviousPosition(compiled, activeSlideIndex, revealStep);
     activeSlideIndex = nextPosition.activeSlideIndex;
     revealStep = nextPosition.revealStep;
+    syncTimerForSlideChange(previousSlideIndex);
     render();
     publishState();
   }
@@ -295,6 +327,7 @@ export function createPresenterView(root, initialSource) {
   }
 
   sync.subscribe((message) => {
+    const previousSlideIndex = activeSlideIndex;
     if (message.source) {
       source = message.source;
     }
@@ -307,11 +340,23 @@ export function createPresenterView(root, initialSource) {
     if (typeof message.textZoom === "number") {
       textZoom = message.textZoom;
     }
+    syncTimerForSlideChange(previousSlideIndex);
     render();
   });
 
   previousButton.addEventListener("click", () => move(-1));
   nextButton.addEventListener("click", () => move(1));
+  timerStatusButton.addEventListener("click", () => {
+    const timerPanel = panelLayout.find((panel) => panel.id === "timer");
+    if (timerPanel?.mode === "collapsed") {
+      panelLayout = expandPresenterPanel(panelLayout, "timer");
+      savePresenterLayout(panelLayout);
+      applyLayout();
+      return;
+    }
+    const timerNode = layoutGrid.querySelector('[data-panel-id="timer"]');
+    timerNode?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  });
   openAudienceButton.addEventListener("click", () => {
     window.open(getAudiencePresentationUrl(), "markdown-slides-audience", "noopener,noreferrer");
   });
@@ -325,8 +370,10 @@ export function createPresenterView(root, initialSource) {
 
   nextFrame.addEventListener("click", () => {
     if (compiled.renderedSlides[activeSlideIndex + 1]) {
+      const previousSlideIndex = activeSlideIndex;
       activeSlideIndex += 1;
       revealStep = 0;
+      syncTimerForSlideChange(previousSlideIndex);
       render();
       publishState();
     }
@@ -335,8 +382,10 @@ export function createPresenterView(root, initialSource) {
   outlineNode.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-slide-index]");
     if (!button) return;
+    const previousSlideIndex = activeSlideIndex;
     activeSlideIndex = Number.parseInt(button.dataset.slideIndex, 10) || 0;
     revealStep = 0;
+    syncTimerForSlideChange(previousSlideIndex);
     render();
     publishState();
   });
@@ -426,6 +475,10 @@ export function createPresenterView(root, initialSource) {
   resetTimerButton.addEventListener("click", () => {
     timerState = resetPresenterTimer(timerState, getPresentationDurationMinutes(compiled.metadata), Date.now());
     render();
+  });
+
+  timerAutoStartInput.addEventListener("change", () => {
+    timerAutoStart = timerAutoStartInput.checked;
   });
 
   render();

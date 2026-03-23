@@ -3,16 +3,18 @@ function clamp(value, min, max) {
 }
 
 export function createPresenterTimerState(durationMinutes) {
+  const normalizedDuration = Math.max(1, Number.parseInt(durationMinutes, 10) || 30);
   return {
-    durationMinutes: Math.max(1, Number.parseInt(durationMinutes, 10) || 30),
-    remainingMs: Math.max(1, Number.parseInt(durationMinutes, 10) || 30) * 60 * 1000,
-    paused: false,
+    durationMinutes: normalizedDuration,
+    remainingMs: normalizedDuration * 60 * 1000,
+    paused: true,
+    started: false,
     lastTickAt: Date.now(),
   };
 }
 
 export function tickPresenterTimer(timerState, now = Date.now()) {
-  if (timerState.paused) {
+  if (timerState.paused || !timerState.started) {
     return {
       ...timerState,
       lastTickAt: now,
@@ -31,6 +33,7 @@ export function setPresenterTimerPaused(timerState, paused, now = Date.now()) {
   return {
     ...timerState,
     paused,
+    started: paused ? timerState.started : true,
     lastTickAt: now,
   };
 }
@@ -50,7 +53,8 @@ export function resetPresenterTimer(timerState, durationMinutes = timerState.dur
   return {
     durationMinutes: nextDuration,
     remainingMs: nextDuration * 60 * 1000,
-    paused: false,
+    paused: true,
+    started: false,
     lastTickAt: now,
   };
 }
@@ -67,7 +71,8 @@ export function getPresenterTimerProgress(timerState) {
 
 export function getPresenterTimerTone(timerState) {
   const progress = getPresenterTimerProgress(timerState);
-  if (progress <= 0.15) return "danger";
-  if (progress <= 0.35) return "warning";
+  if (progress <= 0.05) return "danger";
+  if (progress <= 0.1) return "warning";
+  if (progress <= 0.2) return "caution";
   return "safe";
 }

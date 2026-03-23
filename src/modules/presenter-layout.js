@@ -3,7 +3,7 @@ export const PRESENTER_LAYOUT_STORAGE_KEY = "markdown-slides-editor.presenter-la
 export const DEFAULT_PRESENTER_PANELS = [
   { id: "current", title: "Current slide", span: 5 },
   { id: "next", title: "Next slide", span: 4 },
-  { id: "timer", title: "Timer", span: 3 },
+  { id: "timer", title: "Timer", span: 3, mode: "collapsed" },
   { id: "notes", title: "Notes", span: 6 },
   { id: "captions", title: "Captions", span: 6 },
   { id: "outline", title: "Outline", span: 6 },
@@ -39,7 +39,9 @@ export function normalizePresenterPanels(panels) {
       mode:
         panel.mode === MODE_COLLAPSED || panel.mode === MODE_FULLSCREEN
           ? panel.mode
-          : MODE_NORMAL,
+          : defaultPanel.mode === MODE_COLLAPSED
+            ? MODE_COLLAPSED
+            : MODE_NORMAL,
       previousMode: panel.previousMode === MODE_COLLAPSED ? MODE_COLLAPSED : MODE_NORMAL,
     });
     seen.add(panel.id);

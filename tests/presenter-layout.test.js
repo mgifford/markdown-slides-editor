@@ -36,9 +36,9 @@ test("normalizePresenterPanels restores missing panels and clamps spans", () => 
 });
 
 test("resizePresenterPanel changes only the targeted panel span", () => {
-  const resized = resizePresenterPanel(DEFAULT_PRESENTER_PANELS, "timer", 2);
-  assert.equal(resized.find((panel) => panel.id === "timer").span, 5);
-  assert.equal(resized.find((panel) => panel.id === "current").span, 5);
+  const resized = resizePresenterPanel(DEFAULT_PRESENTER_PANELS, "current", 2);
+  assert.equal(resized.find((panel) => panel.id === "current").span, 7);
+  assert.equal(resized.find((panel) => panel.id === "next").span, 4);
 });
 
 test("movePresenterPanel reorders panels without losing them", () => {

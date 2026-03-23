@@ -15,7 +15,8 @@ test("createPresenterTimerState uses minute durations and milliseconds", () => {
   const state = createPresenterTimerState(30);
   assert.equal(state.durationMinutes, 30);
   assert.equal(state.remainingMs, 30 * 60 * 1000);
-  assert.equal(state.paused, false);
+  assert.equal(state.paused, true);
+  assert.equal(state.started, false);
 });
 
 test("tickPresenterTimer decreases remaining time when not paused", () => {
@@ -23,6 +24,7 @@ test("tickPresenterTimer decreases remaining time when not paused", () => {
     durationMinutes: 30,
     remainingMs: 30 * 60 * 1000,
     paused: false,
+    started: true,
     lastTickAt: 1000,
   };
   const next = tickPresenterTimer(base, 61000);
@@ -61,18 +63,24 @@ test("presenter timer tone reflects remaining progress", () => {
   const safe = createPresenterTimerState(30);
   assert.equal(getPresenterTimerTone(safe), "safe");
 
+  const caution = {
+    ...safe,
+    remainingMs: 6 * 60 * 1000,
+  };
+  assert.equal(getPresenterTimerTone(caution), "caution");
+
   const warning = {
     ...safe,
-    remainingMs: 9 * 60 * 1000,
+    remainingMs: 3 * 60 * 1000,
   };
   assert.equal(getPresenterTimerTone(warning), "warning");
 
   const danger = {
     ...safe,
-    remainingMs: 4 * 60 * 1000,
+    remainingMs: 1 * 60 * 1000,
   };
   assert.equal(getPresenterTimerTone(danger), "danger");
-  assert.equal(getPresenterTimerProgress(danger) <= 0.15, true);
+  assert.equal(getPresenterTimerProgress(danger) <= 0.05, true);
 });
 
 test("resetPresenterTimer restores the countdown and unpauses it", () => {
@@ -80,6 +88,7 @@ test("resetPresenterTimer restores the countdown and unpauses it", () => {
   const reset = resetPresenterTimer(paused, 25, 2000);
   assert.equal(reset.durationMinutes, 25);
   assert.equal(reset.remainingMs, 25 * 60 * 1000);
-  assert.equal(reset.paused, false);
+  assert.equal(reset.paused, true);
+  assert.equal(reset.started, false);
   assert.equal(reset.lastTickAt, 2000);
 });

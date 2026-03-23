@@ -863,6 +863,39 @@ input:focus-visible {
   gap: 0.5rem;
 }
 
+.timer-autostart-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.timer-status-button {
+  min-width: 7.2rem;
+  font-weight: 700;
+}
+
+.timer-status-button[data-tone="safe"] {
+  background: color-mix(in srgb, var(--ok) 10%, var(--panel-strong));
+  border-color: color-mix(in srgb, var(--ok) 24%, var(--border));
+}
+
+.timer-status-button[data-tone="caution"] {
+  background: color-mix(in srgb, var(--warning) 14%, var(--panel-strong));
+  border-color: color-mix(in srgb, var(--warning) 30%, var(--border));
+}
+
+.timer-status-button[data-tone="warning"] {
+  background: color-mix(in srgb, var(--accent) 18%, var(--panel-strong));
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+}
+
+.timer-status-button[data-tone="danger"] {
+  background: color-mix(in srgb, var(--error) 18%, var(--panel-strong));
+  border-color: color-mix(in srgb, var(--error) 34%, var(--border));
+}
+
 .slide-card--next {
   cursor: pointer;
 }
@@ -877,8 +910,12 @@ input:focus-visible {
   color: var(--ok);
 }
 
-.timer[data-tone="warning"] {
+.timer[data-tone="caution"] {
   color: var(--warning);
+}
+
+.timer[data-tone="warning"] {
+  color: var(--accent);
 }
 
 .timer[data-tone="danger"] {
@@ -904,6 +941,10 @@ input:focus-visible {
 }
 
 .presenter-timer-progress[data-tone="warning"]::after {
+  background: var(--accent);
+}
+
+.presenter-timer-progress[data-tone="caution"]::after {
   background: var(--warning);
 }
 
