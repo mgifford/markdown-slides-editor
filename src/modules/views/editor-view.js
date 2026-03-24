@@ -35,9 +35,12 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   let activeSlideIndex = 0;
   let lastCompiled = null;
   let editorCollapsed = false;
+  let previewCollapsed = false;
   let outlineCollapsed = true;
   let mobilePane = "editor";
   let aiPromptDefaults = null;
+  let splitRatio = 0.5;
+  let isResizingPanels = false;
   const sync = createSyncChannel();
   const frame = createDeckFrame("Editor");
 
@@ -53,9 +56,25 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
           <label class="panel__label" for="source-editor">Markdown source</label>
           <button type="button" id="toggle-editor-panel">Minimize Editor</button>
         </div>
+        <div class="editor-toolbar" role="toolbar" aria-label="Markdown editing tools">
+          <button type="button" data-insert-action="bold" title="Bold selected text">B</button>
+          <button type="button" data-insert-action="list" title="Turn selected lines into a list">List</button>
+          <button type="button" data-insert-action="new-slide" title="Insert a new slide">New slide</button>
+          <button type="button" data-insert-action="note" title="Insert a speaker notes section">Note</button>
+          <button type="button" data-insert-action="resources" title="Insert a references section">Resources</button>
+          <button type="button" data-insert-action="script" title="Insert a script section">Script</button>
+          <button type="button" data-insert-action="center" title="Insert a centered block">Center</button>
+          <button type="button" data-insert-action="columns" title="Insert a two-column layout">2 Col</button>
+          <button type="button" data-insert-action="media-right" title="Insert media with supporting text">Media</button>
+          <button type="button" data-insert-action="callout" title="Insert a callout">Callout</button>
+          <button type="button" data-insert-action="quote" title="Insert a quote block">Quote</button>
+          <button type="button" data-insert-action="mermaid" title="Insert a Mermaid diagram block">Mermaid</button>
+          <button type="button" data-insert-action="svg" title="Insert an SVG figure block">SVG</button>
+        </div>
         <p class="local-save-status">Saved locally in this browser on this device. Export to keep a copy elsewhere.</p>
         <textarea id="source-editor" class="editor" spellcheck="false"></textarea>
       </section>
+      <div class="editor-layout__divider" id="editor-layout-divider" role="separator" aria-orientation="vertical" aria-label="Resize editor and preview panels" tabindex="0"></div>
       <section class="panel panel--preview" aria-live="polite">
         <div class="preview-header">
           <div>
@@ -86,6 +105,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
                 </label>
               </div>
             </div>
+            <button type="button" id="toggle-preview-panel">Minimize Preview</button>
             <button type="button" id="toggle-outline-panel-header">Hide Outline</button>
             <button type="button" id="prev-slide">Previous</button>
             <button type="button" id="next-slide">Next</button>
@@ -128,10 +148,14 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   const themeStylesheetInput = frame.querySelector("#theme-stylesheet-input");
   const themeStylesheetControl = frame.querySelector("#theme-stylesheet-control");
   const editorLayout = frame.querySelector(".editor-layout");
+  const editorToolbar = frame.querySelector(".editor-toolbar");
+  const divider = frame.querySelector("#editor-layout-divider");
   const previewLayout = frame.querySelector(".preview-layout");
+  const previewPanel = frame.querySelector(".panel--preview");
   const outlinePanel = frame.querySelector(".outline-panel");
   const mobilePaneButtons = [...frame.querySelectorAll(".mobile-pane-tabs__button")];
   const toggleEditorPanelButton = frame.querySelector("#toggle-editor-panel");
+  const togglePreviewPanelButton = frame.querySelector("#toggle-preview-panel");
   const toggleOutlinePanelButton = frame.querySelector("#toggle-outline-panel");
   const toggleOutlinePanelHeaderButton = frame.querySelector("#toggle-outline-panel-header");
 
@@ -310,15 +334,120 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     render();
   }
 
+  function setEditorSelection(start, end = start) {
+    editor.focus();
+    editor.setSelectionRange(start, end);
+  }
+
+  function replaceEditorSelection(replacement, selectionStart = null, selectionEnd = null) {
+    const start = editor.selectionStart || 0;
+    const end = editor.selectionEnd || 0;
+    const nextSource = `${source.slice(0, start)}${replacement}${source.slice(end)}`;
+    setSource(nextSource);
+    const nextStart = selectionStart == null ? start + replacement.length : selectionStart;
+    const nextEnd = selectionEnd == null ? nextStart : selectionEnd;
+    setEditorSelection(nextStart, nextEnd);
+  }
+
+  function wrapEditorSelection(prefix, suffix = "") {
+    const start = editor.selectionStart || 0;
+    const end = editor.selectionEnd || 0;
+    const selected = source.slice(start, end) || "text";
+    const replacement = `${prefix}${selected}${suffix}`;
+    replaceEditorSelection(replacement, start + prefix.length, start + prefix.length + selected.length);
+  }
+
+  function insertBlock(block, selectOffset = null, selectLength = 0) {
+    const start = editor.selectionStart || 0;
+    const end = editor.selectionEnd || 0;
+    const before = source.slice(0, start);
+    const needsLeadingBreak = before && !before.endsWith("\n\n");
+    const prefix = needsLeadingBreak ? "\n\n" : "";
+    const replacement = `${prefix}${block}`;
+    const selectionStart = selectOffset == null ? start + replacement.length : start + prefix.length + selectOffset;
+    const selectionEnd = selectionStart + selectLength;
+    replaceEditorSelection(replacement, selectionStart, selectionEnd);
+  }
+
+  function turnSelectionIntoList() {
+    const start = editor.selectionStart || 0;
+    const end = editor.selectionEnd || 0;
+    const selected = source.slice(start, end) || "List item";
+    const lines = selected
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const replacement = lines.length
+      ? lines.map((line) => (line.startsWith("- ") ? line : `- ${line}`)).join("\n")
+      : "- List item";
+    replaceEditorSelection(replacement, start, start + replacement.length);
+  }
+
+  function handleToolbarAction(action) {
+    switch (action) {
+      case "bold":
+        wrapEditorSelection("**", "**");
+        return;
+      case "list":
+        turnSelectionIntoList();
+        return;
+      case "new-slide":
+        insertBlock("---\n\n# New slide\n\n");
+        return;
+      case "note":
+        insertBlock("Note:\nSpeaker notes go here.\n", 6, "Speaker notes go here.".length);
+        return;
+      case "resources":
+        insertBlock("Resources:\n- [Reference title](https://example.com)\n", 13, "Reference title".length);
+        return;
+      case "script":
+        insertBlock("Script:\nAdd fuller delivery text here.\n", 8, "Add fuller delivery text here.".length);
+        return;
+      case "center":
+        insertBlock("::center\nCentered text.\n::\n", 9, "Centered text.".length);
+        return;
+      case "columns":
+        insertBlock("::column-left\nLeft column content\n::\n\n::column-right\nRight column content\n::\n", 14, "Left column content".length);
+        return;
+      case "media-right":
+        insertBlock("::media-right\n![Alt text](https://example.com/image.jpg)\n---\nSupporting text here.\n::\n", 25, "Alt text".length);
+        return;
+      case "callout":
+        insertBlock("::callout\nImportant takeaway.\n::\n", 11, "Important takeaway.".length);
+        return;
+      case "quote":
+        insertBlock("::quote\nMemorable quote.\n::\n", 9, "Memorable quote.".length);
+        return;
+      case "mermaid":
+        insertBlock("::mermaid\nflowchart LR\n  A[Author] --> B[Deck]\n::\n", 11, "flowchart LR\n  A[Author] --> B[Deck]".length);
+        return;
+      case "svg":
+        insertBlock("::svg\n![Diagram description](./images/diagram.svg)\n::\n", 9, "Diagram description".length);
+        return;
+      default:
+    }
+  }
+
   function applyPanelState() {
     editorLayout.dataset.editorCollapsed = String(editorCollapsed);
+    editorLayout.dataset.previewCollapsed = String(previewCollapsed);
     editorLayout.dataset.mobilePane = mobilePane;
     previewLayout.dataset.outlineCollapsed = String(outlineCollapsed);
     outlinePanel.dataset.collapsed = String(outlineCollapsed);
     outlinePanel.hidden = outlineCollapsed;
     toggleEditorPanelButton.textContent = editorCollapsed ? "Expand Editor" : "Minimize Editor";
+    togglePreviewPanelButton.textContent = previewCollapsed ? "Expand Preview" : "Minimize Preview";
     toggleOutlinePanelButton.textContent = outlineCollapsed ? "Show Outline" : "Hide Outline";
     toggleOutlinePanelHeaderButton.textContent = outlineCollapsed ? "Show Outline" : "Hide Outline";
+    previewPanel.hidden = previewCollapsed;
+    divider.hidden = editorCollapsed || previewCollapsed;
+    if (editorCollapsed || previewCollapsed) {
+      editorLayout.style.removeProperty("--editor-panel-fr");
+      editorLayout.style.removeProperty("--preview-panel-fr");
+    } else {
+      editorLayout.style.setProperty("--editor-panel-fr", String(splitRatio));
+      editorLayout.style.setProperty("--preview-panel-fr", String(1 - splitRatio));
+    }
     mobilePaneButtons.forEach((button) => {
       const isCurrent = button.dataset.pane === mobilePane;
       button.classList.toggle("is-current", isCurrent);
@@ -469,6 +598,11 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   editor.addEventListener("click", syncPreviewToEditorSelection);
   editor.addEventListener("keyup", syncPreviewToEditorSelection);
   editor.addEventListener("select", syncPreviewToEditorSelection);
+  editorToolbar.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-insert-action]");
+    if (!button) return;
+    handleToolbarAction(button.dataset.insertAction);
+  });
 
   layoutWarningButton.addEventListener("mouseenter", showLayoutWarningTooltip);
   layoutWarningButton.addEventListener("mouseleave", hideLayoutWarningTooltip);
@@ -517,7 +651,18 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   });
 
   toggleEditorPanelButton.addEventListener("click", () => {
+    if (!editorCollapsed && previewCollapsed) {
+      previewCollapsed = false;
+    }
     editorCollapsed = !editorCollapsed;
+    applyPanelState();
+  });
+
+  togglePreviewPanelButton.addEventListener("click", () => {
+    if (!previewCollapsed && editorCollapsed) {
+      editorCollapsed = false;
+    }
+    previewCollapsed = !previewCollapsed;
     applyPanelState();
   });
 
@@ -554,6 +699,45 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     if (!button) return;
     activeSlideIndex = Number.parseInt(button.dataset.slideIndex, 10) || 0;
     render();
+  });
+
+  function updateSplitRatio(clientX) {
+    const rect = editorLayout.getBoundingClientRect();
+    if (!rect.width) return;
+    const nextRatio = (clientX - rect.left) / rect.width;
+    splitRatio = Math.min(0.72, Math.max(0.28, Number(nextRatio.toFixed(3))));
+    applyPanelState();
+  }
+
+  divider.addEventListener("pointerdown", (event) => {
+    if (editorCollapsed || previewCollapsed) return;
+    isResizingPanels = true;
+    divider.setPointerCapture(event.pointerId);
+    editorLayout.dataset.resizing = "true";
+    updateSplitRatio(event.clientX);
+  });
+
+  divider.addEventListener("pointermove", (event) => {
+    if (!isResizingPanels) return;
+    updateSplitRatio(event.clientX);
+  });
+
+  divider.addEventListener("pointerup", (event) => {
+    if (!isResizingPanels) return;
+    isResizingPanels = false;
+    divider.releasePointerCapture(event.pointerId);
+    editorLayout.dataset.resizing = "false";
+  });
+
+  divider.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft") {
+      splitRatio = Math.max(0.28, Number((splitRatio - 0.03).toFixed(3)));
+      applyPanelState();
+    }
+    if (event.key === "ArrowRight") {
+      splitRatio = Math.min(0.72, Number((splitRatio + 0.03).toFixed(3)));
+      applyPanelState();
+    }
   });
 
   presentButton.addEventListener("click", () => {
