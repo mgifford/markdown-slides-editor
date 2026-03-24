@@ -487,6 +487,17 @@ input:focus-visible {
   white-space: nowrap;
 }
 
+.preview-header__nav {
+  display: inline-flex;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+  flex: 0 0 auto;
+}
+
+.preview-header__nav > button {
+  white-space: nowrap;
+}
+
 .color-mode-toggle {
   min-width: 7.5rem;
 }

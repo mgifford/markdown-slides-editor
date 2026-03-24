@@ -107,8 +107,10 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
             </div>
             <button type="button" id="toggle-preview-panel" aria-label="Minimize Preview" title="Minimize Preview">Minimize</button>
             <button type="button" id="toggle-outline-panel-header" aria-label="Show Outline" title="Show Outline">Show Outline</button>
-            <button type="button" id="prev-slide" aria-label="Previous Slide" title="Previous Slide">&lt;</button>
-            <button type="button" id="next-slide" aria-label="Next Slide" title="Next Slide">&gt;</button>
+            <div class="preview-header__nav" aria-label="Slide navigation">
+              <button type="button" id="prev-slide" aria-label="Previous Slide" title="Previous Slide">&lt;</button>
+              <button type="button" id="next-slide" aria-label="Next Slide" title="Next Slide">&gt;</button>
+            </div>
           </div>
         </div>
         <div class="preview-layout" data-outline-collapsed="true">
