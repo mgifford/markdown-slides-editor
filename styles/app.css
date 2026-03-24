@@ -301,7 +301,8 @@ input:focus-visible {
 
 .layout-warning {
   position: relative;
-  margin-top: 0.45rem;
+  margin-top: 0;
+  flex: 0 0 auto;
 }
 
 .layout-warning__button {
@@ -373,7 +374,7 @@ input:focus-visible {
   padding: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
-  align-items: flex-end;
+  align-items: center;
   min-width: 0;
 }
 
@@ -394,6 +395,10 @@ input:focus-visible {
   background: var(--panel-strong);
   box-shadow: var(--shadow);
   z-index: 20;
+}
+
+.theme-menu__panel[hidden] {
+  display: none !important;
 }
 
 .theme-menu__header {

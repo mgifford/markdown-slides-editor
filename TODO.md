@@ -14,6 +14,8 @@ Future ideas and follow-up work for the final project.
 - Reuse the accessible HTML patterns from the W3C slide markup as closely as possible.
 - Preserve keyboard behavior, presenter notes, and slide navigation semantics from `whisper-slides`.
 - Audit the generated HTML against the structure used in [`whisper-slides`](https://github.com/mgifford/whisper-slides).
+- Add optional Cloudflare Worker + D1 integration for authenticated online save/load and comments without making cloud save the baseline.
+- Keep any Cloudflare-backed sync model aligned with `docs/cloudflare-sync-plan.md`, especially around secure session cookies, private deck ownership, and local-first fallback.
 
 ## Accessibility
 

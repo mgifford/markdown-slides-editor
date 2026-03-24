@@ -55,6 +55,7 @@ Then open:
 - `TODO.md`: future roadmap and integration ideas
 - `docs/accessibility-checklist.md`: project accessibility checklist
 - `docs/ai-authoring-workflow.md`: recommended workflow and prompt template for AI-assisted deck drafting
+- `docs/cloudflare-sync-plan.md`: optional Cloudflare Worker + D1 plan for authenticated online save, load, and comments
 - `docs/editor-vision.md`: longer-term product direction for the editor and runtime
 - `docs/layout-syntax.md`: layout directives for centered content, columns, media blocks, callouts, and quotes
 - `docs/manual-a11y-testing.md`: Sa11y-assisted and manual accessibility review workflow

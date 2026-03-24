@@ -61,14 +61,14 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
           <div>
             <p class="panel__label">Live preview</p>
             <p id="deck-meta" class="meta-text"></p>
+          </div>
+          <div class="preview-header__actions">
             <div id="layout-warning" class="layout-warning" hidden>
               <button type="button" id="layout-warning-button" class="layout-warning__button" aria-describedby="layout-warning-tooltip" aria-expanded="false">
                 Suggestion
               </button>
               <div id="layout-warning-tooltip" class="layout-warning__tooltip" role="tooltip" hidden></div>
             </div>
-          </div>
-          <div class="preview-header__actions">
             <div class="theme-menu">
               <button type="button" id="theme-menu-toggle" aria-haspopup="true" aria-expanded="false">Theme</button>
               <div id="theme-menu-panel" class="theme-menu__panel" hidden>
