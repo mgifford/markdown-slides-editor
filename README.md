@@ -48,6 +48,7 @@ Then open:
 
 - `ACCESSIBILITY.md`: accessibility posture, validation expectations, and contributor guidance
 - `AGENTS.md`: repository instructions for coding agents and automation tools
+- `FEATURES.md`: technical inventory of the implemented and maintained feature set
 - `LICENSE`: AGPLv3 license for the project
 - `STYLES.md`: writing, design, and styling standards for the app and repository docs
 - `.github/copilot-instructions.md`: onboarding notes for GitHub Copilot coding agent
