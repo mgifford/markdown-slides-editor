@@ -408,9 +408,17 @@ input:focus-visible {
   list-style: none;
   padding: 0;
   flex-wrap: wrap;
-  justify-content: flex-end;
   align-items: center;
   min-width: 0;
+}
+
+.preview-header__actions {
+  justify-content: flex-start;
+  flex: 1 1 auto;
+}
+
+.lint-summary {
+  justify-content: flex-end;
 }
 
 .theme-menu {
