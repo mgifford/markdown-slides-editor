@@ -9,6 +9,33 @@ function normalizeSource(source) {
   return String(source || "").replaceAll("\r\n", "\n");
 }
 
+function getFrontMatterContentStart(normalizedSource) {
+  const frontMatterMatch = normalizedSource.match(/^---\n[\s\S]*?\n---\n?/);
+  return frontMatterMatch ? frontMatterMatch[0].length : 0;
+}
+
+function toOriginalOffset(source, normalizedOffset) {
+  const original = String(source || "");
+  const clampedNormalizedOffset = Math.max(0, normalizedOffset);
+  let normalizedIndex = 0;
+
+  for (let originalIndex = 0; originalIndex < original.length; originalIndex += 1) {
+    if (normalizedIndex >= clampedNormalizedOffset) {
+      return originalIndex;
+    }
+
+    if (original[originalIndex] === "\r" && original[originalIndex + 1] === "\n") {
+      normalizedIndex += 1;
+      originalIndex += 1;
+      continue;
+    }
+
+    normalizedIndex += 1;
+  }
+
+  return original.length;
+}
+
 function extractMetadataAndContent(source) {
   let content = normalizeSource(source).trim();
   const metadata = {};
@@ -145,8 +172,7 @@ export function getSlideIndexForSourceOffset(source, offset = 0) {
   const safeOffset = Math.max(0, Math.min(offset, normalized.length));
   const titleSlideOffset = /^\s*---\n[\s\S]*?\n---\n?/m.test(normalized) && /\btitleSlide:\s*true\b/i.test(normalized) ? 1 : 0;
 
-  const frontMatterMatch = normalized.match(/^---\n[\s\S]*?\n---\n?/);
-  const contentStart = frontMatterMatch ? frontMatterMatch[0].length : 0;
+  const contentStart = getFrontMatterContentStart(normalized);
   const content = normalized.slice(contentStart);
   const relativeOffset = Math.max(0, safeOffset - contentStart);
 
@@ -162,4 +188,59 @@ export function getSlideIndexForSourceOffset(source, offset = 0) {
   }
 
   return titleSlideOffset + slideIndex;
+}
+
+export function getSourceOffsetForSlideIndex(source, slideIndex, deck = null) {
+  const normalizedSource = normalizeSource(source);
+  const compiledDeck = deck || parseSource(normalizedSource);
+  const totalSlides = compiledDeck?.slides?.length || 0;
+
+  if (!totalSlides) {
+    const normalizedOffset = Math.min(normalizedSource.length, getFrontMatterContentStart(normalizedSource));
+    return toOriginalOffset(source, normalizedOffset);
+  }
+
+  const safeSlideIndex = Math.max(0, Math.min(slideIndex, totalSlides - 1));
+  const currentSlide = compiledDeck.slides[safeSlideIndex];
+
+  if (!currentSlide) {
+    return 0;
+  }
+
+  // Generated title/closing slides are configured in front matter.
+  if (currentSlide.kind === "title" || currentSlide.kind === "closing") {
+    return 0;
+  }
+
+  const contentStart = getFrontMatterContentStart(normalizedSource);
+  const content = normalizedSource.slice(contentStart);
+
+  if (!content.trim()) {
+    return toOriginalOffset(source, contentStart);
+  }
+
+  const contentSlideStarts = [0];
+  const separatorPattern = /\n---\n/g;
+  let match;
+  while ((match = separatorPattern.exec(content))) {
+    contentSlideStarts.push(match.index + 5);
+  }
+
+  const hasTitleSlide = compiledDeck.slides[0]?.kind === "title";
+  const contentSlideIndex = Math.max(0, safeSlideIndex - (hasTitleSlide ? 1 : 0));
+  const rawStart = contentSlideStarts[Math.min(contentSlideIndex, contentSlideStarts.length - 1)] || 0;
+  const nextRawStart = contentSlideStarts[contentSlideIndex + 1] ?? content.length;
+  const segment = content.slice(rawStart, nextRawStart);
+
+  const headingMatch = segment.match(/(?:^|\n)[ \t]{0,3}#{1,6}\s+\S/);
+  if (headingMatch) {
+    const headingOffset = rawStart + headingMatch.index + (headingMatch[0].startsWith("\n") ? 1 : 0);
+    const normalizedOffset = Math.min(normalizedSource.length, contentStart + headingOffset);
+    return toOriginalOffset(source, normalizedOffset);
+  }
+
+  const firstVisibleCharacter = segment.search(/\S/);
+  const startWithinSlide = firstVisibleCharacter === -1 ? 0 : firstVisibleCharacter;
+  const normalizedOffset = Math.min(normalizedSource.length, contentStart + rawStart + startWithinSlide);
+  return toOriginalOffset(source, normalizedOffset);
 }

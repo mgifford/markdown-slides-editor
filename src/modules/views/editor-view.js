@@ -10,7 +10,7 @@ import {
 } from "../export.js";
 import { buildAiAuthoringPrompt, createAiPromptDefaults } from "../ai-prompt.js";
 import { assessSlideDensity } from "../a11y.js";
-import { getSlideIndexForSourceOffset } from "../parser.js";
+import { getSlideIndexForSourceOffset, getSourceOffsetForSlideIndex } from "../parser.js";
 import { updateFrontMatterValue, removeFrontMatterValue } from "../source-format.js";
 import { createSyncChannel } from "../sync.js";
 import { getSlideTitle } from "../presentation-state.js";
@@ -83,13 +83,13 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
           </div>
           <div class="preview-header__actions">
             <div id="layout-warning" class="layout-warning" hidden>
-              <button type="button" id="layout-warning-button" class="layout-warning__button" aria-describedby="layout-warning-tooltip" aria-expanded="false">
+              <button type="button" id="layout-warning-button" class="layout-warning__button" aria-label="Suggestions for Improvements" title="Suggestions for Improvements" aria-describedby="layout-warning-tooltip" aria-expanded="false">
                 Suggestion
               </button>
               <div id="layout-warning-tooltip" class="layout-warning__tooltip" role="tooltip" hidden></div>
             </div>
             <div class="theme-menu">
-              <button type="button" id="theme-menu-toggle" aria-haspopup="true" aria-expanded="false">Theme</button>
+              <button type="button" id="theme-menu-toggle" aria-label="Choose a Theme" title="Choose a Theme" aria-haspopup="true" aria-expanded="false">Theme</button>
               <div id="theme-menu-panel" class="theme-menu__panel" hidden>
                 <div class="theme-menu__header">
                   <p class="panel__label">Theme</p>
@@ -105,10 +105,10 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
                 </label>
               </div>
             </div>
-            <button type="button" id="toggle-preview-panel">Minimize Preview</button>
-            <button type="button" id="toggle-outline-panel-header">Hide Outline</button>
-            <button type="button" id="prev-slide">Previous</button>
-            <button type="button" id="next-slide">Next</button>
+            <button type="button" id="toggle-preview-panel" aria-label="Minimize Preview" title="Minimize Preview">Minimize</button>
+            <button type="button" id="toggle-outline-panel-header" aria-label="Show Outline" title="Show Outline">Show Outline</button>
+            <button type="button" id="prev-slide" aria-label="Previous Slide" title="Previous Slide">&lt;</button>
+            <button type="button" id="next-slide" aria-label="Next Slide" title="Next Slide">&gt;</button>
           </div>
         </div>
         <div class="preview-layout" data-outline-collapsed="true">
@@ -339,6 +339,19 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     editor.setSelectionRange(start, end);
   }
 
+  function jumpEditorToSlide(compiled, slideIndex) {
+    const sourceOffset = getSourceOffsetForSlideIndex(source, slideIndex, compiled);
+
+    if (editorCollapsed) {
+      editorCollapsed = false;
+    }
+    if (mobilePane !== "editor") {
+      mobilePane = "editor";
+    }
+    applyPanelState();
+    setEditorSelection(sourceOffset);
+  }
+
   function replaceEditorSelection(replacement, selectionStart = null, selectionEnd = null) {
     const start = editor.selectionStart || 0;
     const end = editor.selectionEnd || 0;
@@ -436,9 +449,18 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     outlinePanel.dataset.collapsed = String(outlineCollapsed);
     outlinePanel.hidden = outlineCollapsed;
     toggleEditorPanelButton.textContent = editorCollapsed ? "Expand Editor" : "Minimize Editor";
-    togglePreviewPanelButton.textContent = previewCollapsed ? "Expand Preview" : "Minimize Preview";
-    toggleOutlinePanelButton.textContent = outlineCollapsed ? "Show Outline" : "Hide Outline";
-    toggleOutlinePanelHeaderButton.textContent = outlineCollapsed ? "Show Outline" : "Hide Outline";
+    const previewLabel = previewCollapsed ? "Expand Preview" : "Minimize Preview";
+    togglePreviewPanelButton.textContent = previewCollapsed ? "Expand" : "Minimize";
+    togglePreviewPanelButton.setAttribute("aria-label", previewLabel);
+    togglePreviewPanelButton.setAttribute("title", previewLabel);
+
+    const outlineLabel = outlineCollapsed ? "Show Outline" : "Hide Outline";
+    toggleOutlinePanelButton.textContent = outlineLabel;
+    toggleOutlinePanelButton.setAttribute("aria-label", outlineLabel);
+    toggleOutlinePanelButton.setAttribute("title", outlineLabel);
+    toggleOutlinePanelHeaderButton.textContent = outlineLabel;
+    toggleOutlinePanelHeaderButton.setAttribute("aria-label", outlineLabel);
+    toggleOutlinePanelHeaderButton.setAttribute("title", outlineLabel);
     previewPanel.hidden = previewCollapsed;
     divider.hidden = editorCollapsed || previewCollapsed;
     if (editorCollapsed || previewCollapsed) {
@@ -684,21 +706,26 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   });
 
   frame.querySelector("#prev-slide").addEventListener("click", () => {
+    const compiled = compileSource(source);
     activeSlideIndex = Math.max(0, activeSlideIndex - 1);
-    render();
+    publishState(compiled);
+    jumpEditorToSlide(compiled, activeSlideIndex);
   });
 
   frame.querySelector("#next-slide").addEventListener("click", () => {
     const compiled = compileSource(source);
     activeSlideIndex = Math.min(compiled.renderedSlides.length - 1, activeSlideIndex + 1);
     publishState(compiled);
+    jumpEditorToSlide(compiled, activeSlideIndex);
   });
 
   outlineNode.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-slide-index]");
     if (!button) return;
+    const compiled = compileSource(source);
     activeSlideIndex = Number.parseInt(button.dataset.slideIndex, 10) || 0;
-    render();
+    publishState(compiled);
+    jumpEditorToSlide(compiled, activeSlideIndex);
   });
 
   function updateSplitRatio(clientX) {

@@ -172,8 +172,10 @@ export function createPresenterView(root, initialSource) {
   frame.querySelector('[data-panel-id="timer"] .presenter-panel__body').append(timerAutoStartToggle);
   const timerAutoStartInput = timerAutoStartToggle.querySelector("input");
   const openAudienceButton = createButton("Open Audience Window", "Open the audience presentation in a separate window or tab");
-  const previousButton = createButton("Previous");
-  const nextButton = createButton("Next");
+  const previousButton = createButton("<", "Previous Slide");
+  previousButton.setAttribute("aria-label", "Previous Slide");
+  const nextButton = createButton(">", "Next Slide");
+  nextButton.setAttribute("aria-label", "Next Slide");
   const timerStatusButton = createButton("Timer: 30", "Restore or focus the timer panel");
   timerStatusButton.className = "timer-status-button";
   const zoomOutButton = createButton("A-", "Make slide text smaller in presenter and audience views");

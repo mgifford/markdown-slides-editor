@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { getSlideIndexForSourceOffset, parseSource } from "../src/modules/parser.js";
+import { getSlideIndexForSourceOffset, getSourceOffsetForSlideIndex, parseSource } from "../src/modules/parser.js";
 import { renderMarkdown } from "../src/modules/markdown.js";
 import { renderDeck } from "../src/modules/render.js";
 import { removeFrontMatterValue, updateFrontMatterValue } from "../src/modules/source-format.js";
@@ -76,6 +76,81 @@ More body
   assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide one")), 1);
   assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide two")), 2);
   assert.equal(getSlideIndexForSourceOffset(source, source.length), 2);
+});
+
+test("getSourceOffsetForSlideIndex maps rendered slides back to heading lines", () => {
+  const source = `---
+title: Demo deck
+titleSlide: true
+---
+
+
+# Slide one
+
+Body
+
+---
+
+### Slide two heading
+
+More body
+`;
+
+  const deck = parseSource(source);
+  const firstSlideOffset = getSourceOffsetForSlideIndex(source, 1, deck);
+  const secondSlideOffset = getSourceOffsetForSlideIndex(source, 2, deck);
+
+  assert.equal(firstSlideOffset, source.indexOf("# Slide one"));
+  assert.equal(secondSlideOffset, source.indexOf("### Slide two heading"));
+});
+
+test("source/slide mapping remains stable for round-trip navigation", () => {
+  const source = `---
+title: Demo deck
+titleSlide: true
+---
+
+# Slide one
+
+Body one
+
+---
+
+# Slide two
+
+Body two
+
+---
+
+# Slide three
+
+Body three
+`;
+
+  const deck = parseSource(source);
+
+  for (let slideIndex = 1; slideIndex <= 3; slideIndex += 1) {
+    const offset = getSourceOffsetForSlideIndex(source, slideIndex, deck);
+    assert.equal(getSlideIndexForSourceOffset(source, offset), slideIndex);
+  }
+});
+
+test("getSourceOffsetForSlideIndex handles CRLF source and generated slides", () => {
+  const source = `---\r
+title: Demo deck\r
+titleSlide: true\r
+closingSlide: true\r
+---\r
+\r
+# Slide one\r
+\r
+Body\r
+`;
+
+  const deck = parseSource(source);
+  assert.equal(getSourceOffsetForSlideIndex(source, 0, deck), 0);
+  assert.equal(getSourceOffsetForSlideIndex(source, 1, deck), source.indexOf("# Slide one"));
+  assert.equal(getSourceOffsetForSlideIndex(source, 2, deck), 0);
 });
 
 test("lintDeck flags missing alt text and generic links", () => {
