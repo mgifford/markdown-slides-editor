@@ -10,6 +10,44 @@ function escapeAttribute(value) {
   return escapeHtml(String(value));
 }
 
+function sanitizeSvgMarkup(markup) {
+  return String(markup)
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+    .replace(/\s+on[a-z]+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\s+on[a-z]+\s*=\s*'[^']*'/gi, "")
+    .replace(/\s+on[a-z]+\s*=\s*[^\s>]+/gi, "")
+    .replace(/\s+(href|xlink:href)\s*=\s*"\s*javascript:[^"]*"/gi, "")
+    .replace(/\s+(href|xlink:href)\s*=\s*'\s*javascript:[^']*'/gi, "");
+}
+
+function collectInlineSvgBlock(lines, startIndex) {
+  const firstLine = String(lines[startIndex] || "").trimStart();
+  if (!/^<svg\b/i.test(firstLine)) return null;
+
+  const content = [lines[startIndex]];
+  if (/<\/svg>\s*$/i.test(firstLine) || /<\/svg>/i.test(firstLine)) {
+    return {
+      markup: content.join("\n"),
+      endIndex: startIndex,
+    };
+  }
+
+  for (let index = startIndex + 1; index < lines.length; index += 1) {
+    content.push(lines[index]);
+    if (/<\/svg>/i.test(lines[index])) {
+      return {
+        markup: content.join("\n"),
+        endIndex: index,
+      };
+    }
+  }
+
+  return {
+    markup: content.join("\n"),
+    endIndex: lines.length - 1,
+  };
+}
+
 function renderInline(text) {
   let html = escapeHtml(text);
   html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
@@ -118,6 +156,10 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "svg") {
+    const rawSvg = collectInlineSvgBlock(block.content, 0);
+    if (rawSvg) {
+      return `<figure class="layout-svg">${sanitizeSvgMarkup(rawSvg.markup)}</figure>`;
+    }
     return `<figure class="layout-svg">${renderLines(block.content, state)}</figure>`;
   }
 
@@ -205,6 +247,14 @@ function renderLines(lines, state) {
           continue;
         }
       }
+    }
+
+    const rawSvg = collectInlineSvgBlock(lines, index);
+    if (rawSvg) {
+      flushList();
+      htmlParts.push(`<figure class="layout-svg">${sanitizeSvgMarkup(rawSvg.markup)}</figure>`);
+      index = rawSvg.endIndex + 1;
+      continue;
     }
 
     const headingMatch = /^(#{1,6})\s+(.+)$/.exec(line);

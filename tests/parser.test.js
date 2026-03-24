@@ -173,6 +173,31 @@ Memorable quote.
   assert.equal(rendered.html.includes("--column-basis:300px"), true);
 });
 
+test("renderMarkdown renders inline svg blocks directly without escaping markup", () => {
+  const rendered = renderMarkdown(`# Slide
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
+  <rect width="10" height="10" fill="red" />
+</svg>`);
+
+  assert.equal(rendered.html.includes('class="layout-svg"'), true);
+  assert.equal(rendered.html.includes("<svg xmlns=\"http://www.w3.org/2000/svg\""), true);
+  assert.equal(rendered.html.includes("&lt;svg"), false);
+});
+
+test("renderMarkdown strips risky script and event handler attributes from inline svg", () => {
+  const rendered = renderMarkdown(`::svg
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10" onload="alert('x')">
+  <script>alert('x')</script>
+  <a href="javascript:alert('x')"><text y="8">Bad link</text></a>
+</svg>
+::`);
+
+  assert.equal(rendered.html.includes("<script"), false);
+  assert.equal(rendered.html.includes("onload="), false);
+  assert.equal(rendered.html.includes("javascript:"), false);
+});
+
 test("renderDeck renders title-slide metadata into semantic HTML", () => {
   const source = `---
 title: Demo deck

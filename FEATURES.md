@@ -99,6 +99,8 @@ Supported layout directives include:
 - `::media-right`
 - `::callout`
 - `::quote`
+- `::mermaid`
+- `::svg`
 
 These directives are intended to give authors layout control without opening the door to arbitrary, harder-to-maintain HTML.
 
@@ -142,6 +144,7 @@ The editor view at `/` currently includes:
 
 - Markdown source editing
 - live preview of the active slide
+- split-pane editing and preview by default on desktop widths
 - automatic preview sync based on caret position in the source editor
 - slide outline
 - presenter support panel
@@ -160,6 +163,7 @@ The editor view at `/` currently includes:
 
 Current workspace controls include:
 
+- Markdown insert toolbar actions for common structure and layout snippets (for example bold, list, slide break, note, resources, script, center, columns, media, callout, quote, Mermaid, and SVG)
 - minimize editor pane
 - hide slide outline
 - mobile pane switching between `Edit`, `Preview`, and `Support`

@@ -112,7 +112,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
           </div>
         </div>
         <div class="preview-layout" data-outline-collapsed="true">
-          <div id="preview-frame" class="preview-frame"></div>
+          <div id="preview-frame" class="preview-frame preview-frame--compact"></div>
           <aside class="outline-panel" data-collapsed="true" hidden>
             <div class="panel-heading">
               <p class="panel__label">Slide outline</p>
@@ -445,8 +445,8 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
       editorLayout.style.removeProperty("--editor-panel-fr");
       editorLayout.style.removeProperty("--preview-panel-fr");
     } else {
-      editorLayout.style.setProperty("--editor-panel-fr", String(splitRatio));
-      editorLayout.style.setProperty("--preview-panel-fr", String(1 - splitRatio));
+      editorLayout.style.setProperty("--editor-panel-fr", `${splitRatio}fr`);
+      editorLayout.style.setProperty("--preview-panel-fr", `${1 - splitRatio}fr`);
     }
     mobilePaneButtons.forEach((button) => {
       const isCurrent = button.dataset.pane === mobilePane;
