@@ -396,6 +396,17 @@ input:focus-visible {
   z-index: 20;
 }
 
+.theme-menu__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.theme-menu__header button {
+  padding: 0.45rem 0.75rem;
+}
+
 .theme-control {
   display: grid;
   gap: 0.35rem;
@@ -597,6 +608,31 @@ input:focus-visible {
 
 .layout-center img {
   margin-inline: auto;
+}
+
+.layout-svg,
+.layout-mermaid {
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+  justify-items: center;
+}
+
+.layout-svg img,
+.layout-svg svg,
+.layout-mermaid svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.layout-mermaid .mermaid {
+  width: 100%;
+  overflow: auto;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--panel-strong) 94%, transparent);
 }
 
 .layout-columns {
@@ -1170,6 +1206,7 @@ input:focus-visible {
 
 .one-page-body {
   padding: 0 1rem 3rem;
+  background: var(--body-layer-1), var(--body-layer-2), var(--body-layer-3);
 }
 
 .one-page-controls {
@@ -1195,10 +1232,10 @@ input:focus-visible {
 .one-page-slide-card {
   display: grid;
   gap: 1rem;
-  padding: 1rem;
-  border: 1px solid var(--border);
+  padding: 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
   border-radius: 24px;
-  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  background: color-mix(in srgb, var(--panel-alt) 88%, transparent);
   box-shadow: var(--shadow);
 }
 
@@ -1219,10 +1256,13 @@ input:focus-visible {
 
 .one-page-body .slide {
   min-height: auto;
+  padding: 0.25rem 0;
 }
 
 .one-page-body .slide__content {
   min-height: auto;
+  display: grid;
+  place-items: center;
 }
 
 .one-page-body .slide-card {
@@ -1230,6 +1270,7 @@ input:focus-visible {
   max-width: min(100%, 90rem);
   margin: 0 auto;
   min-height: 0;
+  aspect-ratio: var(--slide-aspect-ratio);
 }
 
 .one-page-body li.next[hidden] {
@@ -1258,6 +1299,10 @@ input:focus-visible {
   border: 1px solid var(--border);
   border-radius: 18px;
   background: color-mix(in srgb, var(--panel-alt) 94%, transparent);
+}
+
+.one-page-support__card h2 {
+  color: var(--ink);
 }
 
 .one-page-support__card h2 {

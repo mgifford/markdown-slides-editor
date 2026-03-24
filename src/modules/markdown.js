@@ -117,6 +117,23 @@ function renderSpecialDirective(block, state) {
     return `<div class="layout-center">${renderLines(block.content, state)}</div>`;
   }
 
+  if (block.directive === "svg") {
+    return `<figure class="layout-svg">${renderLines(block.content, state)}</figure>`;
+  }
+
+  if (block.directive === "mermaid") {
+    const source = block.content.join("\n").trim();
+    if (!source) {
+      return `<figure class="layout-mermaid"><p>Mermaid diagram source is empty.</p></figure>`;
+    }
+    state.mermaidCount += 1;
+    return `
+      <figure class="layout-mermaid">
+        <div class="mermaid" data-mermaid-id="mermaid-${state.mermaidCount}">${escapeHtml(source)}</div>
+      </figure>
+    `;
+  }
+
   if (block.directive === "callout") {
     return `<aside class="layout-callout">${renderLines(block.content, state)}</aside>`;
   }
@@ -246,6 +263,7 @@ export function renderMarkdown(markdown) {
   const state = {
     headings: [],
     stepCount: 0,
+    mermaidCount: 0,
   };
 
   return {

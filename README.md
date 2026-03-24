@@ -192,6 +192,8 @@ The editor warns when a slide looks too dense for the target presentation frame,
 
 The editor also supports layout directives such as `::center`, `::column-left`, `::column-right`, `::media-left`, `::media-right`, `::callout`, and `::quote`. See `docs/layout-syntax.md` for examples.
 
+For diagrams and scalable custom graphics, the editor also supports `::mermaid` blocks and `::svg` figure wrappers. Mermaid rendering is attempted in the browser and in exported HTML, while SVG assets can be included as normal image references inside the `::svg` block.
+
 ## Optional captions
 
 Live captions are optional and remain hidden unless a transcript source is actually available.

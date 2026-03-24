@@ -21,6 +21,16 @@ export const BUILT_IN_THEMES = [
   },
 ];
 
+export function isValidThemeStylesheetUrl(value) {
+  if (!value) return false;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function ensureThemeLink() {
   let link = document.querySelector(`#${THEME_LINK_ID}`);
   if (!link) {
@@ -38,7 +48,7 @@ export function applyDeckTheme(metadata = {}) {
   applySlideDimensions(metadata);
 
   const link = ensureThemeLink();
-  if (metadata.themeStylesheet) {
+  if (isValidThemeStylesheetUrl(metadata.themeStylesheet)) {
     link.href = metadata.themeStylesheet;
     link.disabled = false;
   } else {
@@ -48,7 +58,7 @@ export function applyDeckTheme(metadata = {}) {
 }
 
 export function buildThemeLinkTag(metadata = {}) {
-  if (!metadata.themeStylesheet) {
+  if (!isValidThemeStylesheetUrl(metadata.themeStylesheet)) {
     return "";
   }
 

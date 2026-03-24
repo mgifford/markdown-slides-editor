@@ -14,7 +14,7 @@ import { getSlideIndexForSourceOffset } from "../parser.js";
 import { updateFrontMatterValue, removeFrontMatterValue } from "../source-format.js";
 import { createSyncChannel } from "../sync.js";
 import { getSlideTitle } from "../presentation-state.js";
-import { applyDeckTheme, BUILT_IN_THEMES } from "../theme.js";
+import { applyDeckTheme, BUILT_IN_THEMES, isValidThemeStylesheetUrl } from "../theme.js";
 import { addColorModeToggle, buildSupplementalHtml, compileSource, createButton, createDeckFrame, mountSlideInto } from "./shared.js";
 
 async function readCss() {
@@ -35,7 +35,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   let activeSlideIndex = 0;
   let lastCompiled = null;
   let editorCollapsed = false;
-  let outlineCollapsed = false;
+  let outlineCollapsed = true;
   let mobilePane = "editor";
   let aiPromptDefaults = null;
   const sync = createSyncChannel();
@@ -72,13 +72,10 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
             <div class="theme-menu">
               <button type="button" id="theme-menu-toggle" aria-haspopup="true" aria-expanded="false">Theme</button>
               <div id="theme-menu-panel" class="theme-menu__panel" hidden>
-                <label class="theme-control">
-                  <span>Theme source</span>
-                  <select id="theme-mode-select">
-                    <option value="built-in">Built-in theme</option>
-                    <option value="external">Custom CSS</option>
-                  </select>
-                </label>
+                <div class="theme-menu__header">
+                  <p class="panel__label">Theme</p>
+                  <button type="button" id="theme-menu-close">Close</button>
+                </div>
                 <label class="theme-control" id="theme-select-control">
                   <span>Built-in theme</span>
                   <select id="theme-select"></select>
@@ -94,9 +91,9 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
             <button type="button" id="next-slide">Next</button>
           </div>
         </div>
-        <div class="preview-layout" data-outline-collapsed="false">
+        <div class="preview-layout" data-outline-collapsed="true">
           <div id="preview-frame" class="preview-frame"></div>
-          <aside class="outline-panel" data-collapsed="false">
+          <aside class="outline-panel" data-collapsed="true" hidden>
             <div class="panel-heading">
               <p class="panel__label">Slide outline</p>
               <button type="button" id="toggle-outline-panel">Hide Outline</button>
@@ -125,7 +122,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   const outlineNode = frame.querySelector("#slide-outline");
   const themeMenuToggle = frame.querySelector("#theme-menu-toggle");
   const themeMenuPanel = frame.querySelector("#theme-menu-panel");
-  const themeModeSelect = frame.querySelector("#theme-mode-select");
+  const themeMenuClose = frame.querySelector("#theme-menu-close");
   const themeSelect = frame.querySelector("#theme-select");
   const themeSelectControl = frame.querySelector("#theme-select-control");
   const themeStylesheetInput = frame.querySelector("#theme-stylesheet-input");
@@ -329,6 +326,17 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     });
   }
 
+  function closeThemeMenu() {
+    themeMenuPanel.hidden = true;
+    themeMenuToggle.setAttribute("aria-expanded", "false");
+  }
+
+  function openThemeMenu() {
+    themeMenuPanel.hidden = false;
+    themeMenuToggle.setAttribute("aria-expanded", "true");
+    (themeSelectControl.hidden ? themeStylesheetInput : themeSelect).focus();
+  }
+
   function publishState(compiled) {
     applyDeckTheme(compiled.metadata);
     aiPromptDefaults = createAiPromptDefaults(compiled);
@@ -349,10 +357,9 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     themeSelect.value = compiled.metadata.theme || "default-high-contrast";
     themeStylesheetInput.dataset.fullValue = stylesheetValue;
     themeStylesheetInput.value = shortenThemeStylesheetValue(stylesheetValue);
-    const hasExternalStylesheet = isValidStylesheetUrl(stylesheetValue);
-    themeModeSelect.value = hasExternalStylesheet ? "external" : "built-in";
+    const hasExternalStylesheet = isValidThemeStylesheetUrl(stylesheetValue);
     themeSelectControl.hidden = hasExternalStylesheet;
-    themeStylesheetControl.hidden = !hasExternalStylesheet;
+    themeStylesheetControl.hidden = false;
     const fitResult = mountSlideInto(previewFrame, slide);
     notesPreview.innerHTML = buildSupplementalHtml(slide);
     const currentSlideWarnings = compiled.issues.filter(
@@ -480,25 +487,16 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   });
 
   themeMenuToggle.addEventListener("click", () => {
-    const isOpening = themeMenuPanel.hidden;
-    themeMenuPanel.hidden = !isOpening;
-    themeMenuToggle.setAttribute("aria-expanded", String(isOpening));
-    if (isOpening) {
-      (themeModeSelect.value === "external" ? themeStylesheetInput : themeSelect).focus();
-    }
-  });
-
-  themeModeSelect.addEventListener("change", () => {
-    const usingExternal = themeModeSelect.value === "external";
-    themeSelectControl.hidden = usingExternal;
-    themeStylesheetControl.hidden = !usingExternal;
-    if (!usingExternal) {
-      const nextSource = removeFrontMatterValue(source, "themeStylesheet");
-      setSource(nextSource);
-      themeSelect.focus();
+    if (themeMenuPanel.hidden) {
+      openThemeMenu();
       return;
     }
-    themeStylesheetInput.focus();
+    closeThemeMenu();
+  });
+
+  themeMenuClose.addEventListener("click", () => {
+    closeThemeMenu();
+    themeMenuToggle.focus();
   });
 
   themeStylesheetInput.addEventListener("focus", () => {
@@ -508,7 +506,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   themeStylesheetInput.addEventListener("change", () => {
     const value = themeStylesheetInput.value.trim();
     themeStylesheetInput.dataset.fullValue = value;
-    const nextSource = value
+    const nextSource = isValidThemeStylesheetUrl(value)
       ? updateFrontMatterValue(source, "themeStylesheet", value)
       : removeFrontMatterValue(source, "themeStylesheet");
     setSource(nextSource);
@@ -731,23 +729,17 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   document.addEventListener("click", (event) => {
     if (themeMenuPanel.hidden) return;
     if (themeMenuPanel.contains(event.target) || themeMenuToggle.contains(event.target)) return;
-    themeMenuPanel.hidden = true;
-    themeMenuToggle.setAttribute("aria-expanded", "false");
+    closeThemeMenu();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || themeMenuPanel.hidden) return;
+    closeThemeMenu();
   });
 }
 
-function isValidStylesheetUrl(value) {
-  if (!value) return false;
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
 function shortenThemeStylesheetValue(value) {
-  if (!isValidStylesheetUrl(value)) return value;
+  if (!isValidThemeStylesheetUrl(value)) return value;
   try {
     const parsed = new URL(value);
     const shortPath = parsed.pathname.split("/").filter(Boolean).slice(-2).join("/");

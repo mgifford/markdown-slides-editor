@@ -123,11 +123,20 @@ test("renderMarkdown supports ordered lists and progressive disclosure markers",
   assert.equal(rendered.stepCount, 1);
 });
 
-test("renderMarkdown supports centered blocks, columns, media, callouts, and quotes", () => {
+test("renderMarkdown supports centered blocks, columns, media, callouts, quotes, mermaid, and svg wrappers", () => {
   const rendered = renderMarkdown(`# Slide
 
 ::center
 ![Alt text](https://example.com/image.jpg)
+::
+
+::svg
+![Architecture diagram](https://example.com/diagram.svg)
+::
+
+::mermaid
+flowchart LR
+  A[Author] --> B[Deck]
 ::
 
 ::column-left-75%
@@ -157,6 +166,9 @@ Memorable quote.
   assert.equal(rendered.html.includes('class="layout-media layout-media--right"'), true);
   assert.equal(rendered.html.includes('class="layout-callout"'), true);
   assert.equal(rendered.html.includes('class="layout-quote"'), true);
+  assert.equal(rendered.html.includes('class="layout-svg"'), true);
+  assert.equal(rendered.html.includes('class="layout-mermaid"'), true);
+  assert.equal(rendered.html.includes('data-mermaid-id="mermaid-1"'), true);
   assert.equal(rendered.html.includes("--column-basis:75%"), true);
   assert.equal(rendered.html.includes("--column-basis:300px"), true);
 });

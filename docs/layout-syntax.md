@@ -34,6 +34,41 @@ Current behavior:
 - centers text alignment inside that block
 - does not vertically center the entire slide
 
+## SVG figures
+
+Use `::svg` when you want to present an SVG asset as a figure block.
+
+```md
+::svg
+![Architecture diagram](./images/architecture.svg)
+::
+```
+
+This is useful for:
+
+- diagrams exported as SVG
+- icons and branded vector illustrations
+- custom visuals that need to scale cleanly on large screens
+
+## Mermaid diagrams
+
+Use `::mermaid` for MermaidJS diagram source.
+
+```md
+::mermaid
+flowchart LR
+  A[Author] --> B[Deck]
+  B --> C[Audience]
+::
+```
+
+Current behavior:
+
+- Mermaid source is stored directly in the slide
+- the editor and exported HTML try to render the diagram in the browser
+- Mermaid rendering depends on loading MermaidJS from a CDN at runtime
+- if Mermaid cannot load, the source text remains in place instead of breaking the slide
+
 ## Two columns
 
 Use paired column directives for left and right column content.
@@ -118,6 +153,8 @@ Accessibility is a quality issue, not a feature request.
 ## Accessibility guidance
 
 - Always include meaningful alt text for images.
+- Always give Mermaid diagrams enough surrounding context that the audience can understand the point of the diagram.
+- Prefer SVG for diagrams and illustrations that need to stay sharp at different sizes.
 - Keep columns readable and balanced.
 - Do not overload columns with dense text.
 - Make sure centered or callout text remains meaningful out of context.

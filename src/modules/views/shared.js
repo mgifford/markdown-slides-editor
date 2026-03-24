@@ -2,6 +2,7 @@ import { parseSource } from "../parser.js";
 import { renderDeck } from "../render.js";
 import { lintDeck } from "../a11y.js";
 import { attachColorModeToggle } from "../color-mode.js";
+import { renderMermaidBlocks } from "../mermaid.js";
 import { createRevealState } from "../presentation-state.js";
 import { fitSlideBodyText } from "../slide-layout.js";
 
@@ -106,5 +107,9 @@ export function mountSlideInto(container, renderedSlide, options = {}) {
 
   const revealState = createRevealState(renderedSlide, revealStep);
   applyRevealState(container, revealState.revealStep);
-  return fitSlideBodyText(container, renderedSlide);
+  const fitResult = fitSlideBodyText(container, renderedSlide);
+  renderMermaidBlocks(container).then(() => {
+    fitSlideBodyText(container, renderedSlide);
+  });
+  return fitResult;
 }

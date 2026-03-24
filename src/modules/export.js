@@ -484,18 +484,27 @@ function buildOnePageSupportMarkup(slide) {
 export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
   const slidesMarkup = renderedSlides
     .map(
-      (slide, index) => `
+      (slide, index) => {
+        const slideCardClass = slide.kind === "title" || slide.kind === "closing"
+          ? "slide-card slide-card--title"
+          : "slide-card";
+        return `
         <section class="one-page-slide-card" aria-label="Slide ${index + 1}">
           <header class="one-page-slide-card__header">
             <p class="one-page-slide-card__eyebrow">Slide ${index + 1}</p>
           </header>
           <article class="slide" data-slide-index="${index}" data-kind="${slide.kind || "content"}" aria-label="Slide ${index + 1}">
             <div class="slide__content">
-              ${slide.html}
+              <article class="${slideCardClass}">
+                <div class="slide-card__content">
+                  ${slide.html}
+                </div>
+              </article>
             </div>
           </article>
           ${buildOnePageSupportMarkup(slide)}
-        </section>`,
+        </section>`;
+      },
     )
     .join("");
 
@@ -523,6 +532,28 @@ export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
       ${slidesMarkup}
     </main>
     <script>
+      async function renderMermaidBlocks(root = document) {
+        const blocks = [...root.querySelectorAll(".mermaid:not([data-mermaid-rendered])")];
+        if (!blocks.length) return;
+        try {
+          const module = await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+          const mermaid = module.default || module;
+          if (!window.__deckMermaidInitialized) {
+            mermaid.initialize({ startOnLoad: false, securityLevel: "strict" });
+            window.__deckMermaidInitialized = true;
+          }
+          for (const block of blocks) {
+            const source = block.textContent.trim();
+            if (!source) continue;
+            const result = await mermaid.render(block.dataset.mermaidId || \`mermaid-one-page-\${Date.now()}-\${Math.random().toString(16).slice(2)}\`, source);
+            block.innerHTML = result.svg;
+            block.dataset.mermaidRendered = "true";
+          }
+        } catch (error) {
+          console.warn("Mermaid diagrams could not be rendered in the one-page view.", error);
+        }
+      }
+
       function saveHtmlDocument() {
         const html = "<!doctype html>\\n" + document.documentElement.outerHTML;
         const blob = new Blob([html], { type: "text/html;charset=utf-8" });
@@ -536,6 +567,7 @@ export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
 
       document.querySelector('[data-action="save-html"]')?.addEventListener("click", saveHtmlDocument);
       document.querySelector('[data-action="print"]')?.addEventListener("click", () => window.print());
+      renderMermaidBlocks();
     </script>
   </body>
 </html>`;
@@ -585,6 +617,30 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
       const status = document.querySelector("#snapshot-status");
       let activeIndex = 0;
       let revealStep = 0;
+      let mermaidRenderSequence = 0;
+
+      async function renderMermaidBlocks(root = document) {
+        const blocks = [...root.querySelectorAll(".mermaid:not([data-mermaid-rendered])")];
+        if (!blocks.length) return;
+        try {
+          const module = await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+          const mermaid = module.default || module;
+          if (!window.__deckMermaidInitialized) {
+            mermaid.initialize({ startOnLoad: false, securityLevel: "strict" });
+            window.__deckMermaidInitialized = true;
+          }
+          for (const block of blocks) {
+            const source = block.textContent.trim();
+            if (!source) continue;
+            const fallbackId = \`mermaid-snapshot-\${mermaidRenderSequence += 1}\`;
+            const result = await mermaid.render(block.dataset.mermaidId || fallbackId, source);
+            block.innerHTML = result.svg;
+            block.dataset.mermaidRendered = "true";
+          }
+        } catch (error) {
+          console.warn("Mermaid diagrams could not be rendered in the snapshot view.", error);
+        }
+      }
 
       function contentOverflows(content) {
         return content.scrollHeight > content.clientHeight + 1 || content.scrollWidth > content.clientWidth + 1;
@@ -655,6 +711,7 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
           if (index === activeIndex) {
             prepareSlide(slide);
             applyRevealState(slide);
+            renderMermaidBlocks(slide).then(() => prepareSlide(slide));
           }
         });
         status.textContent = \`\${activeIndex + 1} / \${slides.length} · \${revealStep} / \${Number(slides[activeIndex]?.dataset.stepCount || 0)} reveals\`;
