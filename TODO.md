@@ -16,6 +16,7 @@ Future ideas and follow-up work for the final project.
 - Audit the generated HTML against the structure used in [`whisper-slides`](https://github.com/mgifford/whisper-slides).
 - Add optional Cloudflare Worker + D1 integration for authenticated online save/load and comments without making cloud save the baseline.
 - Keep any Cloudflare-backed sync model aligned with `docs/cloudflare-sync-plan.md`, especially around secure session cookies, private deck ownership, and local-first fallback.
+- htmx was evaluated and found unsuitable for the static baseline (no server to return HTML fragments). See `docs/technology-decisions.md` for full reasoning. Revisit only if the Cloudflare Worker UI layer grows complex enough to benefit from server-rendered HTML fragments.
 
 ## Accessibility
 
