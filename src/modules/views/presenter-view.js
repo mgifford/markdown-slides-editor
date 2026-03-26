@@ -25,6 +25,7 @@ import {
   tickPresenterTimer,
 } from "../presenter-timer.js";
 import { createCaptionMonitor, getCaptionConfig } from "../captions.js";
+import { isSpeechRecognitionSupported, createSpeechRecognitionSource } from "../speech-recognition.js";
 import { toggleColorMode } from "../color-mode.js";
 import { applyDeckTheme } from "../theme.js";
 import { addColorModeToggle, buildSupplementalHtml, compileSource, createButton, createDeckFrame, mountSlideInto } from "./shared.js";
@@ -51,6 +52,15 @@ export function createPresenterView(root, initialSource) {
   let captionConfig = getCaptionConfig(compiled.metadata);
   const captionMonitor = createCaptionMonitor(captionConfig, (state) => {
     captionsState = state;
+    render();
+  });
+
+  const sttSupported = isSpeechRecognitionSupported();
+  let sttEnabled = sttSupported;
+  let sttState = { active: false, text: "", error: "" };
+  const sttSource = createSpeechRecognitionSource((update) => {
+    sttState = { active: update.active, text: update.text, error: update.error || "" };
+    sync.postMessage({ type: "caption-update", text: sttState.text, timestamp: Date.now() });
     render();
   });
 
@@ -183,7 +193,15 @@ export function createPresenterView(root, initialSource) {
   const zoomInButton = createButton("A+", "Make slide text larger in presenter and audience views");
   const collapsedPanelsNode = document.createElement("div");
   collapsedPanelsNode.className = "collapsed-panel-actions";
+  const sttToggleButton = sttSupported
+    ? createButton("🎙 Turn Off Captions", "Turn off live speech-to-text captions")
+    : null;
+  if (sttToggleButton) {
+    sttToggleButton.className = "stt-toggle-button";
+    sttToggleButton.dataset.sttActive = "true";
+  }
   actions.append(openAudienceButton, previousButton, nextButton, timerStatusButton, collapsedPanelsNode, zoomOutButton, zoomResetButton, zoomInButton);
+  if (sttToggleButton) actions.append(sttToggleButton);
   addColorModeToggle(actions);
   let timerAutoStart = true;
 
@@ -277,11 +295,29 @@ export function createPresenterView(root, initialSource) {
       : `<article class="slide-card slide-card--next empty-state"><p>No next slide.</p></article>`;
     nextFrame.style.setProperty("--presentation-text-zoom", String(textZoom));
     notesNode.innerHTML = buildSupplementalHtml(currentSlide);
-    captionsPanel.hidden = !captionsState.available;
-    captionsStatusNode.textContent = captionsState.available
-      ? `${captionsState.provider === "whisper.cpp" ? "whisper.cpp" : "Caption source"} · ${captionsState.active ? "live" : "connected"}`
-      : "";
-    captionsNode.textContent = captionsState.text || "Caption source is available and waiting for speech.";
+    if (sttSupported) {
+      captionsPanel.hidden = false;
+      if (sttState.error === "not-allowed" || sttState.error === "service-not-allowed") {
+        captionsStatusNode.textContent = "Live Captions · microphone permission denied";
+        captionsNode.textContent = "Microphone access was denied. Enable it in your browser settings to use live captions.";
+      } else {
+        captionsStatusNode.textContent = sttEnabled
+          ? `Live Captions · ${sttState.active ? "listening" : "starting…"}`
+          : "Live Captions · off";
+        captionsNode.textContent = sttState.text || (sttEnabled ? "Listening for speech…" : "Live captions are paused.");
+      }
+      if (sttToggleButton) {
+        sttToggleButton.textContent = sttEnabled ? "🎙 Turn Off Captions" : "🎙 Turn On Captions";
+        sttToggleButton.dataset.sttActive = String(sttEnabled);
+        sttToggleButton.title = sttEnabled ? "Turn off live speech-to-text captions" : "Turn on live speech-to-text captions";
+      }
+    } else {
+      captionsPanel.hidden = !captionsState.available;
+      captionsStatusNode.textContent = captionsState.available
+        ? `${captionsState.provider === "whisper.cpp" ? "whisper.cpp" : "Caption source"} · ${captionsState.active ? "live" : "connected"}`
+        : "";
+      captionsNode.textContent = captionsState.text || "Caption source is available and waiting for speech.";
+    }
     outlineNode.innerHTML = compiled.renderedSlides
       .map((renderedSlide, index) => {
         const currentClass = index === activeSlideIndex ? ' class="is-current"' : "";
@@ -318,6 +354,10 @@ export function createPresenterView(root, initialSource) {
     activeSlideIndex = nextPosition.activeSlideIndex;
     revealStep = nextPosition.revealStep;
     syncTimerForSlideChange(previousSlideIndex);
+    if (sttSource && sttEnabled) {
+      sttSource.clearText();
+      sync.postMessage({ type: "caption-update", text: "", timestamp: Date.now() });
+    }
     render();
     publishState();
   }
@@ -485,7 +525,23 @@ export function createPresenterView(root, initialSource) {
     timerAutoStart = timerAutoStartInput.checked;
   });
 
+  if (sttToggleButton) {
+    sttToggleButton.addEventListener("click", () => {
+      sttEnabled = !sttEnabled;
+      if (sttEnabled) {
+        sttSource.start();
+      } else {
+        sttSource.stop();
+        sync.postMessage({ type: "caption-update", text: "", timestamp: Date.now() });
+      }
+      render();
+    });
+  }
+
   render();
   publishState();
   captionMonitor.start();
+  if (sttSource && sttEnabled) {
+    sttSource.start();
+  }
 }
