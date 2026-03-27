@@ -25,7 +25,7 @@ import {
   tickPresenterTimer,
 } from "../presenter-timer.js";
 import { createCaptionMonitor, getCaptionConfig } from "../captions.js";
-import { isSpeechRecognitionSupported, createSpeechRecognitionSource } from "../speech-recognition.js";
+import { isSpeechRecognitionSupported, createSpeechRecognitionSource, CAPTION_LANGUAGES, getCaptionLanguage } from "../speech-recognition.js";
 import { toggleColorMode } from "../color-mode.js";
 import { applyDeckTheme } from "../theme.js";
 import { addColorModeToggle, buildSupplementalHtml, compileSource, createButton, createDeckFrame, mountSlideInto } from "./shared.js";
@@ -137,6 +137,7 @@ export function createPresenterView(root, initialSource) {
         </div>
         <div class="presenter-panel__body">
           <p id="presenter-captions-status" class="meta-text"></p>
+          ${sttSupported ? `<label class="captions-language-label"><span class="sr-only">Caption language</span><select id="captions-language-select">${CAPTION_LANGUAGES.map(([tag, label]) => `<option value="${tag}"${tag === getCaptionLanguage() ? " selected" : ""}>${label}</option>`).join("")}</select></label>` : ""}
           <div id="presenter-captions" class="notes-content captions-transcript"></div>
         </div>
       </section>
@@ -535,6 +536,13 @@ export function createPresenterView(root, initialSource) {
         sync.postMessage({ type: "caption-update", text: "", timestamp: Date.now() });
       }
       render();
+    });
+  }
+
+  const captionsLanguageSelect = sttSupported ? frame.querySelector("#captions-language-select") : null;
+  if (captionsLanguageSelect && sttSource) {
+    captionsLanguageSelect.addEventListener("change", () => {
+      sttSource.setLanguage(captionsLanguageSelect.value);
     });
   }
 
