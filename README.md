@@ -58,6 +58,7 @@ Then open:
 - `docs/cloudflare-sync-plan.md`: optional Cloudflare Worker + D1 plan for authenticated online save, load, and comments
 - `docs/editor-vision.md`: longer-term product direction for the editor and runtime
 - `docs/layout-syntax.md`: layout directives for centered content, columns, media blocks, callouts, and quotes
+- `docs/live-captioning-guide.md`: event room setup, browser-native and whisper.cpp captioning, volunteer guidance, known issues, and privacy
 - `docs/manual-a11y-testing.md`: Sa11y-assisted and manual accessibility review workflow
 - `docs/resources.md`: accessibility references and source material
 
