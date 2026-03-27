@@ -45,6 +45,7 @@ function ensureThemeLink() {
 export function applyDeckTheme(metadata = {}) {
   const theme = metadata.theme || "default-high-contrast";
   document.documentElement.dataset.theme = theme;
+  document.documentElement.lang = metadata.lang || "en";
   applySlideDimensions(metadata);
 
   const link = ensureThemeLink();

@@ -389,3 +389,55 @@ themeStylesheet: https://example.com/theme.css
   const updated = removeFrontMatterValue(source, "themeStylesheet");
   assert.equal(updated.includes("themeStylesheet"), false);
 });
+
+test("parseSource normalizes Language full name to lang ISO code", () => {
+  const source = `---
+title: Demo
+Language: French
+---
+
+# Slide one`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.metadata.lang, "fr");
+  assert.equal(deck.metadata.Language, undefined);
+});
+
+test("parseSource normalizes Language ISO code passthrough", () => {
+  const source = `---
+title: Demo
+Language: es
+---
+
+# Slide one`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.metadata.lang, "es");
+  assert.equal(deck.metadata.Language, undefined);
+});
+
+test("parseSource uses explicit lang when both lang and Language are present", () => {
+  const source = `---
+title: Demo
+lang: de
+Language: French
+---
+
+# Slide one`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.metadata.lang, "de");
+  assert.equal(deck.metadata.Language, undefined);
+});
+
+test("parseSource case-insensitively maps language names", () => {
+  const source = `---
+title: Demo
+Language: SPANISH
+---
+
+# Slide one`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.metadata.lang, "es");
+});
