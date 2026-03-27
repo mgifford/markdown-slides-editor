@@ -191,6 +191,10 @@ export function createPresentationView(root, initialSource) {
       }
       render();
     }
+    if (message.type === "caption-update") {
+      captionNode.hidden = !message.text;
+      captionNode.textContent = message.text || "";
+    }
   });
 
   applyHashPosition();
