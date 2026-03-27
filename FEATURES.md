@@ -51,7 +51,8 @@ Supported deck structure:
 Currently supported front matter includes:
 
 - `title`
-- `lang`
+- `lang` — BCP 47 language tag (e.g. `en`, `fr`, `es-MX`). Sets the HTML `lang` attribute on the presentation.
+- `Language` — alternative to `lang`; accepts ISO 639-1 codes or full English language names (e.g. `French`, `Spanish`). Resolved to an ISO 639-1 language code automatically. Ignored when `lang` is also present.
 - `theme`
 - `themeStylesheet`
 - `durationMinutes`

@@ -5,6 +5,90 @@ function parseYamlValue(value) {
   return trimmed;
 }
 
+const LANGUAGE_NAME_TO_CODE = {
+  afrikaans: "af",
+  albanian: "sq",
+  arabic: "ar",
+  armenian: "hy",
+  basque: "eu",
+  belarusian: "be",
+  bengali: "bn",
+  bosnian: "bs",
+  bulgarian: "bg",
+  catalan: "ca",
+  chinese: "zh",
+  croatian: "hr",
+  czech: "cs",
+  danish: "da",
+  dutch: "nl",
+  english: "en",
+  estonian: "et",
+  finnish: "fi",
+  french: "fr",
+  galician: "gl",
+  georgian: "ka",
+  german: "de",
+  greek: "el",
+  gujarati: "gu",
+  haitian: "ht",
+  hebrew: "he",
+  hindi: "hi",
+  hungarian: "hu",
+  icelandic: "is",
+  indonesian: "id",
+  irish: "ga",
+  italian: "it",
+  japanese: "ja",
+  kannada: "kn",
+  kazakh: "kk",
+  korean: "ko",
+  latvian: "lv",
+  lithuanian: "lt",
+  macedonian: "mk",
+  malay: "ms",
+  maltese: "mt",
+  marathi: "mr",
+  mongolian: "mn",
+  nepali: "ne",
+  norwegian: "no",
+  persian: "fa",
+  polish: "pl",
+  portuguese: "pt",
+  punjabi: "pa",
+  romanian: "ro",
+  russian: "ru",
+  serbian: "sr",
+  sinhala: "si",
+  slovak: "sk",
+  slovenian: "sl",
+  somali: "so",
+  spanish: "es",
+  swahili: "sw",
+  swedish: "sv",
+  tagalog: "tl",
+  tamil: "ta",
+  telugu: "te",
+  thai: "th",
+  turkish: "tr",
+  ukrainian: "uk",
+  urdu: "ur",
+  uzbek: "uz",
+  vietnamese: "vi",
+  welsh: "cy",
+  zulu: "zu",
+};
+
+export function resolveLanguage(value) {
+  if (!value || typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const lower = trimmed.toLowerCase();
+  if (LANGUAGE_NAME_TO_CODE[lower]) {
+    return LANGUAGE_NAME_TO_CODE[lower];
+  }
+  return trimmed;
+}
+
 function normalizeSource(source) {
   return String(source || "").replaceAll("\r\n", "\n");
 }
@@ -54,6 +138,14 @@ function extractMetadataAndContent(source) {
       content = content.slice(end + 5);
     }
   }
+
+  if (metadata.Language !== undefined && metadata.lang === undefined) {
+    const resolved = resolveLanguage(metadata.Language);
+    if (resolved !== undefined) {
+      metadata.lang = resolved;
+    }
+  }
+  delete metadata.Language;
 
   return { metadata, content };
 }
