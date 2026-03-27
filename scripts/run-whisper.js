@@ -8,6 +8,7 @@ function parseArgs() {
   const config = {
     bin: process.env.WHISPER_BIN || "",
     model: process.env.WHISPER_MODEL || "",
+    language: process.env.WHISPER_LANGUAGE || "",
     threads: Number.parseInt(process.env.WHISPER_THREADS || String(Math.max(1, os.cpus().length - 1)), 10),
     step: Number.parseInt(process.env.WHISPER_STEP || "500", 10),
     length: Number.parseInt(process.env.WHISPER_LENGTH || "5000", 10),
@@ -23,6 +24,11 @@ function parseArgs() {
     }
     if (arg === "--model") {
       config.model = args[index + 1] || "";
+      index += 1;
+      continue;
+    }
+    if (arg === "--language" || arg === "-l") {
+      config.language = args[index + 1] || "";
       index += 1;
       continue;
     }
@@ -46,10 +52,12 @@ function parseArgs() {
       break;
     }
     if (arg === "-h" || arg === "--help") {
-      console.log(`Usage: node scripts/run-whisper.js [--bin <path>] [--model <path>] [--threads N] [--step ms] [--length ms] [-- <extra flags>]
+      console.log(`Usage: node scripts/run-whisper.js [--bin <path>] [--model <path>] [--language <code>] [--threads N] [--step ms] [--length ms] [-- <extra flags>]
 
 Environment variables:
-  WHISPER_BIN, WHISPER_MODEL, WHISPER_THREADS, WHISPER_STEP, WHISPER_LENGTH
+  WHISPER_BIN, WHISPER_MODEL, WHISPER_LANGUAGE, WHISPER_THREADS, WHISPER_STEP, WHISPER_LENGTH
+
+Language codes are ISO 639-1 (e.g. en, fr, de, es, ja, zh). If omitted, Whisper uses auto-detection.
 `);
       process.exit(0);
     }
@@ -109,7 +117,14 @@ if (!model) {
   process.exit(1);
 }
 
-const args = ["-m", model, "-t", String(config.threads), "--step", String(config.step), "--length", String(config.length), ...config.extra];
+const args = ["-m", model, "-t", String(config.threads), "--step", String(config.step), "--length", String(config.length)];
+if (config.language) {
+  args.push("-l", config.language);
+  console.log(`[run-whisper] Language: ${config.language}`);
+} else {
+  console.log("[run-whisper] Language: auto-detect");
+}
+args.push(...config.extra);
 const child = spawn(bin, args, { stdio: ["ignore", "pipe", "pipe"] });
 let transcript = "";
 

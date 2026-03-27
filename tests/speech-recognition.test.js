@@ -4,6 +4,10 @@ import assert from "node:assert/strict";
 import {
   isSpeechRecognitionSupported,
   createSpeechRecognitionSource,
+  CAPTION_LANGUAGES,
+  CAPTION_LANGUAGE_STORAGE_KEY,
+  getCaptionLanguage,
+  setCaptionLanguage,
 } from "../src/modules/speech-recognition.js";
 
 test("isSpeechRecognitionSupported returns false when window is undefined", () => {
@@ -145,4 +149,98 @@ test("createSpeechRecognitionSource disables on permission error", () => {
   assert.equal(lastUpdate.error, "not-allowed");
 
   delete globalThis.window;
+});
+
+test("CAPTION_LANGUAGES contains BCP 47 tag, human label, and Whisper code", () => {
+  assert.ok(Array.isArray(CAPTION_LANGUAGES), "CAPTION_LANGUAGES should be an array");
+  assert.ok(CAPTION_LANGUAGES.length > 0, "CAPTION_LANGUAGES should not be empty");
+  for (const entry of CAPTION_LANGUAGES) {
+    assert.equal(entry.length, 3, `Each entry should have 3 elements, got: ${JSON.stringify(entry)}`);
+    const [tag, label, whisperCode] = entry;
+    assert.ok(typeof tag === "string" && tag.length > 0, `BCP 47 tag should be a non-empty string: ${tag}`);
+    assert.ok(typeof label === "string" && label.length > 0, `Label should be a non-empty string: ${label}`);
+    assert.ok(typeof whisperCode === "string" && whisperCode.length > 0, `Whisper code should be a non-empty string: ${whisperCode}`);
+  }
+});
+
+test("CAPTION_LANGUAGES includes English (United States) as en-US", () => {
+  const entry = CAPTION_LANGUAGES.find(([tag]) => tag === "en-US");
+  assert.ok(entry, "en-US should be present");
+  assert.equal(entry[2], "en", "Whisper code for en-US should be 'en'");
+});
+
+test("CAPTION_LANGUAGE_STORAGE_KEY is a stable string", () => {
+  assert.equal(typeof CAPTION_LANGUAGE_STORAGE_KEY, "string");
+  assert.ok(CAPTION_LANGUAGE_STORAGE_KEY.length > 0);
+});
+
+test("getCaptionLanguage falls back to en-US when localStorage and document are unavailable", () => {
+  // Node.js has no window/localStorage/document, so the fallback should apply.
+  const lang = getCaptionLanguage();
+  assert.equal(lang, "en-US");
+});
+
+test("setCaptionLanguage and getCaptionLanguage round-trip through localStorage", () => {
+  // Provide a minimal localStorage stub.
+  const store = {};
+  globalThis.localStorage = {
+    getItem: (key) => store[key] ?? null,
+    setItem: (key, value) => { store[key] = value; },
+    removeItem: (key) => { delete store[key]; },
+  };
+
+  setCaptionLanguage("fr-FR");
+  assert.equal(getCaptionLanguage(), "fr-FR");
+
+  setCaptionLanguage("de");
+  assert.equal(getCaptionLanguage(), "de");
+
+  delete globalThis.localStorage;
+});
+
+test("createSpeechRecognitionSource exposes getLanguage and setLanguage", () => {
+  const store = {};
+  globalThis.localStorage = {
+    getItem: (key) => store[key] ?? null,
+    setItem: (key, value) => { store[key] = value; },
+    removeItem: (key) => { delete store[key]; },
+  };
+
+  function FakeSpeechRecognition() {
+    this.continuous = false;
+    this.interimResults = false;
+    this.lang = "";
+    this.onstart = null;
+    this.onresult = null;
+    this.onend = null;
+    this.onerror = null;
+    this._started = false;
+    this.start = () => {
+      this._started = true;
+      if (this.onstart) this.onstart();
+    };
+    this.stop = () => {
+      this._started = false;
+      if (this.onend) this.onend();
+    };
+  }
+  globalThis.window = { SpeechRecognition: FakeSpeechRecognition };
+
+  const updates = [];
+  const source = createSpeechRecognitionSource((update) => updates.push(update));
+  assert.ok(source, "source should be returned when API is available");
+
+  assert.equal(typeof source.getLanguage, "function", "getLanguage should be a function");
+  assert.equal(typeof source.setLanguage, "function", "setLanguage should be a function");
+
+  // Initial language should default to en-US (no stored language).
+  assert.equal(source.getLanguage(), "en-US");
+
+  // setLanguage should persist to localStorage.
+  source.setLanguage("ja");
+  assert.equal(source.getLanguage(), "ja");
+  assert.equal(store[CAPTION_LANGUAGE_STORAGE_KEY], "ja");
+
+  delete globalThis.window;
+  delete globalThis.localStorage;
 });
