@@ -9,6 +9,14 @@
 - WAI accessible presentations guidance: use for presentation-specific semantics and sharing practices.
   Resource: [WAI Presentations](https://www.w3.org/WAI/presentations/)
 
+## Live captioning references
+
+- MidCamp live-captioning: use as the primary reference for event room setup, volunteer guidance,
+  known browser captioning issues, and privacy considerations for Web Speech API use.
+  Repository: [MidCamp/live-captioning](https://github.com/MidCamp/live-captioning)
+- WCAG 2.2 Guideline 1.2: captions and time-based media alternatives are a Level A/AA requirement.
+  Reference: [Understanding SC 1.2](https://www.w3.org/WAI/WCAG22/Understanding/time-based-media)
+
 ## Project usage
 
 - Keep these references visible in contributor docs and review checklists.
