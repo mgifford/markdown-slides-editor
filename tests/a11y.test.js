@@ -42,3 +42,64 @@ test("lintDeck keeps using dense density as the layout warning threshold", () =>
 
   assert.equal(issues.some((issue) => issue.category === "layout" && issue.level === "warning"), true);
 });
+
+test("assessSlideDensity marks a sparse slide as comfortable", () => {
+  const density = assessSlideDensity({ body: "# Title\n\nShort description." });
+  assert.equal(density.level, "comfortable");
+  assert.equal(density.label, "");
+});
+
+test("assessSlideDensity returns numeric word, bullet, and paragraph counts", () => {
+  const density = assessSlideDensity({ body: "# Title\n\n- A bullet\n- Another bullet" });
+  assert.equal(typeof density.wordCount, "number");
+  assert.equal(typeof density.bulletCount, "number");
+  assert.equal(typeof density.paragraphCount, "number");
+});
+
+test("lintDeck reports an error when a slide has no H1 heading", () => {
+  const deck = { slides: [{ notes: "Has notes" }] };
+  const renderedSlides = [{ headings: [{ level: 2, text: "Subtitle" }], html: "<h2>Subtitle</h2>" }];
+  const issues = lintDeck(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.level === "error" && i.message.includes("exactly one H1")), true);
+});
+
+test("lintDeck reports an error when a slide has more than one H1 heading", () => {
+  const deck = { slides: [{ notes: "Has notes" }] };
+  const renderedSlides = [
+    {
+      headings: [{ level: 1, text: "Title A" }, { level: 1, text: "Title B" }],
+      html: "<h1>Title A</h1><h1>Title B</h1>",
+    },
+  ];
+  const issues = lintDeck(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.level === "error" && i.message.includes("exactly one H1")), true);
+});
+
+test("lintDeck reports an error when heading levels are skipped", () => {
+  const deck = { slides: [{ notes: "Has notes" }] };
+  const renderedSlides = [
+    {
+      headings: [{ level: 1, text: "Title" }, { level: 3, text: "Sub" }],
+      html: "<h1>Title</h1><h3>Sub</h3>",
+    },
+  ];
+  const issues = lintDeck(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.level === "error" && i.message.includes("skips heading levels")), true);
+});
+
+test("lintDeck reports an info issue when a slide has no speaker notes", () => {
+  const deck = { slides: [{ notes: "" }] };
+  const renderedSlides = [{ headings: [{ level: 1, text: "Title" }], html: "<h1>Title</h1>" }];
+  const issues = lintDeck(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.level === "info" && i.message.includes("no speaker notes")), true);
+});
+
+test("lintDeck includes the slide number in each issue", () => {
+  const deck = { slides: [{ notes: "" }] };
+  const renderedSlides = [{ headings: [{ level: 1, text: "Title" }], html: "<h1>Title</h1>" }];
+  const issues = lintDeck(deck, renderedSlides);
+  for (const issue of issues) {
+    assert.equal(typeof issue.slide, "number");
+    assert.equal(issue.slide, 1);
+  }
+});
