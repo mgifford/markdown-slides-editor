@@ -241,3 +241,20 @@ test("buildOfflinePresentationHtml does not contain unescaped closing script tag
 
   assert.equal(html.includes("</script><script>alert"), false);
 });
+
+test("buildOfflinePresentationHtml escapes closing script tags in the embedded JSON payload for titles", () => {
+  const maliciousTitle = 'Deck with </script><script>alert("xss")</script> end';
+  const html = buildOfflinePresentationHtml({
+    title: maliciousTitle,
+    cssText: "",
+    themeStylesheetCss: "",
+    renderedSlides: [{ html: "<h1>One</h1>", stepCount: 0 }],
+    metadata: {},
+  });
+
+  // The payload JSON inside the <script> block must not contain raw </script>
+  const payloadMatch = html.match(/<script id="deck-payload"[^>]*>([\s\S]*?)<\/script>/);
+  assert.ok(payloadMatch, "deck-payload script block should be present");
+  assert.equal(payloadMatch[1].includes("</script>"), false, "raw </script> must not appear inside deck-payload block");
+  assert.equal(payloadMatch[1].includes("<\\/script>"), true, "escaped form should be present in deck-payload");
+});

@@ -560,7 +560,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
   const timerSeconds = "00";
   const initialTimer = `${timerMinutes}:${timerSeconds}`;
 
-  const audienceScriptText = escapeScriptText(buildAudienceScriptText());
+  const escapedAudienceScript = escapeScriptText(buildAudienceScriptText());
 
   return `<!doctype html>
 <html lang="${lang}">
@@ -631,7 +631,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
       </section>
     </main>
     <script id="deck-payload" type="application/json">${payload}</script>
-    <script id="offline-audience-script" type="text/plain">${audienceScriptText}</script>
+    <script id="offline-audience-script" type="text/plain">${escapedAudienceScript}</script>
     <script>
 (function() {
   var data = JSON.parse(document.getElementById('deck-payload').textContent);
@@ -786,11 +786,12 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
   }
 
   function openAudienceWindow() {
+    var BLOB_URL_REVOKE_DELAY_MS = 60000;
     var html = buildAudienceHtml();
     var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     var url = URL.createObjectURL(blob);
     audienceWindow = window.open(url, 'offline-audience-window');
-    setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+    setTimeout(function() { URL.revokeObjectURL(url); }, BLOB_URL_REVOKE_DELAY_MS);
   }
 
   document.getElementById('prev-btn').addEventListener('click', function() { move(-1); });
