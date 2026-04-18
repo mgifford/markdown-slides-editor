@@ -6,6 +6,7 @@ import {
   buildMhtmlDocument,
   buildOdpPresentation,
   buildOnePageHtml,
+  buildOfflinePresentationHtml,
   buildSnapshotHtml,
 } from "../src/modules/export.js";
 import { buildThemeLinkTag } from "../src/modules/theme.js";
@@ -81,6 +82,33 @@ test("buildExportBundle includes markdown, html, odp, and mhtml files in the zip
   assert.equal(bundle[1], 0x4b);
 });
 
+test("buildExportBundle includes presentation-offline.mhtml when offlineMhtml is provided", () => {
+  const bundle = buildExportBundle({
+    markdownSource: "# Deck",
+    deckJson: "{\"title\":\"Deck\"}",
+    snapshotHtml: "<!doctype html><html><body>Deck</body></html>",
+    odpBytes: new Uint8Array([0x50, 0x4b, 0x03, 0x04]),
+    onePageMhtml: "MIME-Version: 1.0",
+    offlineMhtml: "MIME-Version: 1.0 offline",
+  });
+
+  const text = new TextDecoder().decode(bundle);
+  assert.equal(text.includes("presentation-offline.mhtml"), true);
+});
+
+test("buildExportBundle omits presentation-offline.mhtml when offlineMhtml is not provided", () => {
+  const bundle = buildExportBundle({
+    markdownSource: "# Deck",
+    deckJson: "{\"title\":\"Deck\"}",
+    snapshotHtml: "<!doctype html><html><body>Deck</body></html>",
+    odpBytes: new Uint8Array([0x50, 0x4b, 0x03, 0x04]),
+    onePageMhtml: "MIME-Version: 1.0",
+  });
+
+  const text = new TextDecoder().decode(bundle);
+  assert.equal(text.includes("presentation-offline.mhtml"), false);
+});
+
 test("buildOnePageHtml opens as a readable handout with save controls and support cards", () => {
   const html = buildOnePageHtml({
     title: "One page deck",
@@ -141,4 +169,75 @@ test("buildMhtmlDocument wraps one-page html as a single mhtml document", () => 
   assert.equal(mhtml.includes('Content-Type: multipart/related; type="text/html"'), true);
   assert.equal(mhtml.includes("Content-Transfer-Encoding: base64"), true);
   assert.equal(mhtml.includes("PCFkb2N0eXBl"), true);
+});
+
+test("buildOfflinePresentationHtml produces a presenter-view HTML with embedded data and audience script", () => {
+  const html = buildOfflinePresentationHtml({
+    title: "My Offline Deck",
+    cssText: ".slide{color:black;}",
+    themeStylesheetCss: "",
+    renderedSlides: [
+      { html: "<h1>Slide One</h1>", kind: "title", notesHtml: "<p>Opening notes</p>", stepCount: 0 },
+      { html: "<h1>Slide Two</h1>", kind: "content", notesHtml: "", stepCount: 2 },
+    ],
+    metadata: {
+      lang: "en-CA",
+      theme: "night-slate",
+      durationMinutes: 20,
+    },
+  });
+
+  assert.equal(html.includes('<!doctype html>'), true);
+  assert.equal(html.includes('<html lang="en-CA">'), true);
+  assert.equal(html.includes('data-theme="night-slate"'), true);
+  assert.equal(html.includes("My Offline Deck"), true);
+  assert.equal(html.includes("Offline Presentation"), true);
+  assert.equal(html.includes("Open Audience Window"), true);
+  assert.equal(html.includes("current-slide-frame"), true);
+  assert.equal(html.includes("next-slide-frame"), true);
+  assert.equal(html.includes("presenter-notes"), true);
+  assert.equal(html.includes("deck-payload"), true);
+  assert.equal(html.includes("offline-audience-script"), true);
+  assert.equal(html.includes('"duration":20'), true);
+  assert.equal(html.includes('"stepCount":2'), true);
+  assert.equal(html.includes("20:00"), true);
+});
+
+test("buildOfflinePresentationHtml embeds theme CSS inline when themeStylesheetCss is provided", () => {
+  const html = buildOfflinePresentationHtml({
+    title: "Themed Deck",
+    cssText: ".slide{color:black;}",
+    themeStylesheetCss: ".custom-theme { background: navy; }",
+    renderedSlides: [{ html: "<h1>One</h1>", kind: "title", stepCount: 0 }],
+    metadata: { theme: "default-high-contrast" },
+  });
+
+  assert.equal(html.includes(".custom-theme { background: navy; }"), true);
+  assert.equal(html.includes(".slide{color:black;}"), true);
+});
+
+test("buildOfflinePresentationHtml does not include external theme link tags", () => {
+  const html = buildOfflinePresentationHtml({
+    title: "Deck",
+    cssText: "",
+    themeStylesheetCss: ".theme { color: red; }",
+    renderedSlides: [{ html: "<h1>One</h1>", kind: "title", stepCount: 0 }],
+    metadata: { themeStylesheet: "https://example.com/theme.css" },
+  });
+
+  assert.equal(html.includes('href="https://example.com/theme.css"'), false);
+  assert.equal(html.includes(".theme { color: red; }"), true);
+});
+
+test("buildOfflinePresentationHtml does not contain unescaped closing script tags in payload", () => {
+  const html = buildOfflinePresentationHtml({
+    title: "Escape test",
+    cssText: "",
+    themeStylesheetCss: "",
+    renderedSlides: [{ html: "<h1>One</h1>", stepCount: 0 }],
+    metadata: {},
+    source: "</script><script>alert('x')</script>",
+  });
+
+  assert.equal(html.includes("</script><script>alert"), false);
 });

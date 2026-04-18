@@ -442,14 +442,407 @@ export function buildMhtmlDocument({ title, html }) {
   ].join("\r\n");
 }
 
-export function buildExportBundle({ markdownSource, snapshotHtml, deckJson, odpBytes, onePageMhtml }) {
+export function buildExportBundle({ markdownSource, snapshotHtml, deckJson, odpBytes, onePageMhtml, offlineMhtml }) {
   return buildZipArchive([
     { name: "deck.md", contents: markdownSource },
     { name: "deck.json", contents: deckJson },
     { name: "presentation.html", contents: snapshotHtml },
     { name: "presentation.odp", contents: odpBytes },
     { name: "presentation-one-page.mhtml", contents: onePageMhtml },
+    ...(offlineMhtml ? [{ name: "presentation-offline.mhtml", contents: offlineMhtml }] : []),
   ]);
+}
+
+function buildAudienceScriptText() {
+  return `(function() {
+  var data = JSON.parse(document.getElementById('deck-payload').textContent);
+  var slides = data.slides;
+  var activeIndex = 0;
+  var rs = 0;
+  var frame = document.getElementById('audience-frame');
+  function applyRevealState(container, step) {
+    var items = Array.from(container.querySelectorAll('li.next'));
+    items.forEach(function(item, i) {
+      item.hidden = i >= step;
+      item.classList.toggle('visited', i < step - 1);
+      item.classList.toggle('active', i === step - 1);
+    });
+  }
+  function mountSlide(container, slide, step) {
+    if (!slide) {
+      container.innerHTML = '<article class="slide-card empty-state"><div class="slide-card__content"><p>No slide</p></div></article>';
+      return;
+    }
+    var cls = (slide.kind === 'title' || slide.kind === 'closing') ? 'slide-card slide-card--title' : 'slide-card';
+    container.innerHTML = '<article class="' + cls + '"><div class="slide-card__content">' + slide.html + '</div></article>';
+    applyRevealState(container, step);
+  }
+  function render() {
+    mountSlide(frame, slides[activeIndex], rs);
+    document.title = data.title + ' \u2013 Audience (' + (activeIndex + 1) + '/' + slides.length + ')';
+  }
+  function notifyPresenter() {
+    if (window.opener) {
+      try { window.opener.postMessage({ type: 'audience-navigate', slideIndex: activeIndex, revealStep: rs }, '*'); } catch(e) {}
+    }
+  }
+  function move(delta) {
+    var slide = slides[activeIndex];
+    var stepCount = slide ? slide.stepCount : 0;
+    if (delta > 0 && rs < stepCount) { rs++; }
+    else if (delta < 0 && rs > 0) { rs--; }
+    else {
+      activeIndex = Math.max(0, Math.min(slides.length - 1, activeIndex + delta));
+      rs = delta > 0 ? 0 : (slides[activeIndex] ? slides[activeIndex].stepCount : 0);
+    }
+    render();
+    notifyPresenter();
+  }
+  window.addEventListener('message', function(event) {
+    if (!event.data) return;
+    if (event.data.type === 'slide-changed') {
+      activeIndex = event.data.slideIndex || 0;
+      rs = event.data.revealStep || 0;
+      render();
+    }
+  });
+  document.addEventListener('keydown', function(event) {
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') { event.preventDefault(); move(1); }
+    if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); move(-1); }
+    if (event.key === 'Home') { activeIndex = 0; rs = 0; render(); notifyPresenter(); }
+    if (event.key === 'End') {
+      activeIndex = Math.max(0, slides.length - 1);
+      rs = slides[activeIndex] ? slides[activeIndex].stepCount : 0;
+      render(); notifyPresenter();
+    }
+  });
+  if (window.opener) {
+    try { window.opener.postMessage({ type: 'audience-ready' }, '*'); } catch(e) {}
+  }
+  render();
+})();`;
+}
+
+export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCss, renderedSlides, metadata }) {
+  const theme = metadata.theme || "default-high-contrast";
+  const lang = metadata.lang || "en";
+  const deckStyleAttr = buildDeckStyleAttribute(metadata);
+  const duration = Number.parseInt(metadata.durationMinutes, 10) > 0
+    ? Number.parseInt(metadata.durationMinutes, 10)
+    : 30;
+
+  const slidesForPayload = renderedSlides.map((slide, index) => ({
+    index,
+    html: slide.html || "",
+    notesHtml: slide.notesHtml || "",
+    scriptHtml: slide.scriptHtml || "",
+    resourcesHtml: slide.resourcesHtml || "",
+    stepCount: slide.stepCount || 0,
+    kind: slide.kind || "content",
+  }));
+
+  const payload = escapeScriptText(
+    JSON.stringify({
+      title,
+      theme,
+      lang,
+      deckStyleAttr,
+      duration,
+      slides: slidesForPayload,
+    }),
+  );
+
+  const allCss = cssText + (themeStylesheetCss ? "\n" + themeStylesheetCss : "");
+
+  const slideCount = renderedSlides.length;
+  const timerMinutes = String(Math.floor(duration)).padStart(2, "0");
+  const timerSeconds = "00";
+  const initialTimer = `${timerMinutes}:${timerSeconds}`;
+
+  const audienceScriptText = escapeScriptText(buildAudienceScriptText());
+
+  return `<!doctype html>
+<html lang="${lang}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${title} \u2013 Offline Presentation</title>
+    <style id="offline-app-styles">${allCss}</style>
+    <style>
+      .offline-presenter-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr auto;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        height: calc(100vh - var(--topbar-height, 3.5rem));
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+      .offline-panel {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid var(--color-border, #555);
+        border-radius: 0.375rem;
+        padding: 0.5rem;
+      }
+      .offline-panel .preview-frame {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .offline-panel--notes {
+        grid-column: 1 / -1;
+        max-height: 14rem;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+  <body class="snapshot-body" data-theme="${theme}" style="${deckStyleAttr}">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Offline Presentation</p>
+        <h1>${title}</h1>
+      </div>
+      <div class="topbar__actions">
+        <button type="button" id="open-audience-btn">Open Audience Window</button>
+        <button type="button" id="prev-btn" aria-label="Previous slide">\u2039</button>
+        <span id="slide-counter" class="meta-text" aria-live="polite">1 / ${slideCount}</span>
+        <button type="button" id="next-btn" aria-label="Next slide">\u203a</button>
+        <span id="timer-display" class="timer">${initialTimer}</span>
+        <button type="button" id="start-pause-btn">Start</button>
+        <button type="button" id="reset-timer-btn">Reset</button>
+      </div>
+    </header>
+    <main class="offline-presenter-layout">
+      <section class="offline-panel offline-panel--current" aria-label="Current slide">
+        <p class="panel__label">Current slide</p>
+        <div id="current-slide-frame" class="preview-frame preview-frame--compact"></div>
+      </section>
+      <section class="offline-panel offline-panel--next" aria-label="Next slide">
+        <p class="panel__label">Next slide</p>
+        <div id="next-slide-frame" class="preview-frame preview-frame--compact"></div>
+      </section>
+      <section class="offline-panel offline-panel--notes" aria-label="Presenter support">
+        <p class="panel__label">Presenter support</p>
+        <div id="presenter-notes" class="notes-content"></div>
+      </section>
+    </main>
+    <script id="deck-payload" type="application/json">${payload}</script>
+    <script id="offline-audience-script" type="text/plain">${audienceScriptText}</script>
+    <script>
+(function() {
+  var data = JSON.parse(document.getElementById('deck-payload').textContent);
+  var slides = data.slides;
+  var activeSlideIndex = 0;
+  var revealStep = 0;
+  var audienceWindow = null;
+  var timerSeconds = data.duration * 60;
+  var timerRunning = false;
+  var timerStarted = false;
+  var timerInterval = null;
+  var currentFrame = document.getElementById('current-slide-frame');
+  var nextFrame = document.getElementById('next-slide-frame');
+  var notesEl = document.getElementById('presenter-notes');
+  var slideCounter = document.getElementById('slide-counter');
+  var timerDisplay = document.getElementById('timer-display');
+  var startPauseBtn = document.getElementById('start-pause-btn');
+
+  function applyRevealState(container, step) {
+    var items = Array.from(container.querySelectorAll('li.next'));
+    items.forEach(function(item, i) {
+      item.hidden = i >= step;
+      item.classList.toggle('visited', i < step - 1);
+      item.classList.toggle('active', i === step - 1);
+    });
+  }
+
+  function mountSlide(container, slide, step) {
+    if (!slide) {
+      container.innerHTML = '<article class="slide-card empty-state"><div class="slide-card__content"><p>No slide</p></div></article>';
+      return;
+    }
+    var cls = (slide.kind === 'title' || slide.kind === 'closing') ? 'slide-card slide-card--title' : 'slide-card';
+    container.innerHTML = '<article class="' + cls + '"><div class="slide-card__content">' + slide.html + '</div></article>';
+    applyRevealState(container, step);
+  }
+
+  function buildSupplementalHtml(slide) {
+    if (!slide) return '<p>No presenter support for this slide.</p>';
+    var parts = [];
+    if (slide.notesHtml) parts.push('<section class="support-section"><h2>Notes</h2>' + slide.notesHtml + '</section>');
+    if (slide.resourcesHtml) parts.push('<section class="support-section"><h2>Resources</h2>' + slide.resourcesHtml + '</section>');
+    if (slide.scriptHtml) parts.push('<section class="support-section"><h2>Script</h2>' + slide.scriptHtml + '</section>');
+    return parts.join('') || '<p>No presenter support for this slide.</p>';
+  }
+
+  function renderPresenter() {
+    mountSlide(currentFrame, slides[activeSlideIndex], revealStep);
+    var nextSlide = slides[activeSlideIndex + 1] || null;
+    if (nextSlide) {
+      mountSlide(nextFrame, nextSlide, 0);
+    } else {
+      nextFrame.innerHTML = '<article class="slide-card empty-state"><div class="slide-card__content"><p>No next slide.</p></div></article>';
+    }
+    notesEl.innerHTML = buildSupplementalHtml(slides[activeSlideIndex]);
+    slideCounter.textContent = (activeSlideIndex + 1) + ' / ' + slides.length;
+    publishState();
+  }
+
+  function move(delta) {
+    var prevIndex = activeSlideIndex;
+    var slide = slides[activeSlideIndex];
+    var stepCount = slide ? slide.stepCount : 0;
+    if (delta > 0 && revealStep < stepCount) {
+      revealStep++;
+    } else if (delta < 0 && revealStep > 0) {
+      revealStep--;
+    } else {
+      activeSlideIndex = Math.max(0, Math.min(slides.length - 1, activeSlideIndex + delta));
+      revealStep = delta > 0 ? 0 : (slides[activeSlideIndex] ? slides[activeSlideIndex].stepCount : 0);
+    }
+    if (!timerStarted && prevIndex === 0 && activeSlideIndex > 0) {
+      startTimer();
+    }
+    renderPresenter();
+  }
+
+  function publishState() {
+    if (audienceWindow && !audienceWindow.closed) {
+      try {
+        audienceWindow.postMessage({ type: 'slide-changed', slideIndex: activeSlideIndex, revealStep: revealStep }, '*');
+      } catch(e) {}
+    }
+  }
+
+  function formatTime(s) {
+    var m = Math.floor(s / 60);
+    var sec = s % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+
+  function updateTimerDisplay() {
+    timerDisplay.textContent = formatTime(timerSeconds);
+    var totalSecs = data.duration * 60;
+    var progress = totalSecs > 0 ? timerSeconds / totalSecs : 1;
+    timerDisplay.className = 'timer' + (progress <= 0.1 ? ' timer--danger' : progress <= 0.25 ? ' timer--caution' : '');
+  }
+
+  function startTimer() {
+    if (timerRunning) return;
+    timerRunning = true;
+    timerStarted = true;
+    startPauseBtn.textContent = 'Pause';
+    timerInterval = setInterval(function() {
+      if (timerSeconds > 0) {
+        timerSeconds--;
+        updateTimerDisplay();
+      } else {
+        timerRunning = false;
+        clearInterval(timerInterval);
+        startPauseBtn.textContent = 'Start';
+      }
+    }, 1000);
+  }
+
+  function pauseTimer() {
+    timerRunning = false;
+    clearInterval(timerInterval);
+    startPauseBtn.textContent = 'Start';
+  }
+
+  function escH(value) {
+    return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function buildAudienceHtml() {
+    var css = document.getElementById('offline-app-styles').textContent;
+    var payloadJson = document.getElementById('deck-payload').textContent;
+    var audienceScript = document.getElementById('offline-audience-script').textContent;
+    var endScript = '<' + '/script>';
+    var h = [
+      '<!doctype html>',
+      '<html lang="' + escH(data.lang) + '">',
+      '<head>',
+      '<meta charset="UTF-8"/>',
+      '<meta name="viewport" content="width=device-width, initial-scale=1.0"/>',
+      '<title>' + escH(data.title) + ' \u2013 Audience View</title>',
+      '<style>' + css + '</style>',
+      '<style>html,body{margin:0;padding:0;}.presentation-frame{position:fixed;inset:0;}</style>',
+      '</head>',
+      '<body class="snapshot-body" data-theme="' + escH(data.theme) + '" style="' + escH(data.deckStyleAttr) + '">',
+      '<main class="presentation-layout">',
+      '<p id="presentation-status" class="sr-only" aria-live="polite"></p>',
+      '<div id="audience-frame" class="presentation-frame"></div>',
+      '</main>',
+      '<script id="deck-payload" type="application/json">' + payloadJson + endScript,
+      '<script>' + audienceScript + endScript,
+      '</body>',
+      '</html>',
+    ];
+    return h.join('\n');
+  }
+
+  function openAudienceWindow() {
+    var html = buildAudienceHtml();
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    audienceWindow = window.open(url, 'offline-audience-window');
+    setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+  }
+
+  document.getElementById('prev-btn').addEventListener('click', function() { move(-1); });
+  document.getElementById('next-btn').addEventListener('click', function() { move(1); });
+  document.getElementById('start-pause-btn').addEventListener('click', function() {
+    if (timerRunning) { pauseTimer(); } else { startTimer(); }
+  });
+  document.getElementById('reset-timer-btn').addEventListener('click', function() {
+    pauseTimer();
+    timerStarted = false;
+    timerSeconds = data.duration * 60;
+    updateTimerDisplay();
+  });
+  document.getElementById('open-audience-btn').addEventListener('click', function() {
+    if (audienceWindow && !audienceWindow.closed) {
+      audienceWindow.focus();
+      publishState();
+    } else {
+      openAudienceWindow();
+    }
+  });
+
+  document.addEventListener('keydown', function(event) {
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') { event.preventDefault(); move(1); }
+    if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); move(-1); }
+    if (event.key === 'Home') { activeSlideIndex = 0; revealStep = 0; renderPresenter(); }
+    if (event.key === 'End') {
+      activeSlideIndex = Math.max(0, slides.length - 1);
+      revealStep = slides[activeSlideIndex] ? slides[activeSlideIndex].stepCount : 0;
+      renderPresenter();
+    }
+  });
+
+  window.addEventListener('message', function(event) {
+    if (!event.data) return;
+    if (event.data.type === 'audience-navigate') {
+      activeSlideIndex = event.data.slideIndex || 0;
+      revealStep = event.data.revealStep || 0;
+      renderPresenter();
+    }
+    if (event.data.type === 'audience-ready') {
+      publishState();
+    }
+  });
+
+  renderPresenter();
+  updateTimerDisplay();
+})();
+    </script>
+  </body>
+</html>`;
 }
 
 function buildOnePageSupportMarkup(slide) {

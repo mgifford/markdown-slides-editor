@@ -4,6 +4,7 @@ import {
   buildMhtmlDocument,
   buildOdpPresentation,
   buildOnePageHtml,
+  buildOfflinePresentationHtml,
   buildSnapshotHtml,
   downloadFile,
   openHtmlInNewWindow,
@@ -805,6 +806,20 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
 
   exportBundleButton.addEventListener("click", async () => {
     const cssText = await readCss();
+
+    let themeStylesheetCss = "";
+    const themeStylesheetUrl = lastCompiled?.metadata?.themeStylesheet;
+    if (isValidThemeStylesheetUrl(themeStylesheetUrl)) {
+      try {
+        const themeResponse = await fetch(themeStylesheetUrl);
+        if (themeResponse.ok) {
+          themeStylesheetCss = await themeResponse.text();
+        }
+      } catch {
+        // Theme CSS fetch failed; offline file will omit the external theme
+      }
+    }
+
     const html = buildSnapshotHtml({
       title: lastCompiled?.metadata.title || "Slide deck snapshot",
       cssText,
@@ -827,6 +842,13 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
       renderedSlides: lastCompiled?.renderedSlides || [],
       metadata: lastCompiled?.metadata || {},
     });
+    const offlineHtml = buildOfflinePresentationHtml({
+      title: lastCompiled?.metadata.title || "Slide deck",
+      cssText,
+      themeStylesheetCss,
+      renderedSlides: lastCompiled?.renderedSlides || [],
+      metadata: lastCompiled?.metadata || {},
+    });
     const bundle = buildExportBundle({
       markdownSource: source,
       snapshotHtml: html,
@@ -839,6 +861,10 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
       onePageMhtml: buildMhtmlDocument({
         title: lastCompiled?.metadata.title || "Slide deck one-page view",
         html: onePageHtml,
+      }),
+      offlineMhtml: buildMhtmlDocument({
+        title: lastCompiled?.metadata.title || "Slide deck offline presentation",
+        html: offlineHtml,
       }),
     });
     downloadFile(
