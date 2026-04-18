@@ -753,7 +753,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
     startPauseBtn.textContent = 'Start';
   }
 
-  function escH(value) {
+  function escapeHtml(value) {
     return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
@@ -764,15 +764,15 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
     var endScript = '<' + '/script>';
     var h = [
       '<!doctype html>',
-      '<html lang="' + escH(data.lang) + '">',
+      '<html lang="' + escapeHtml(data.lang) + '">',
       '<head>',
       '<meta charset="UTF-8"/>',
       '<meta name="viewport" content="width=device-width, initial-scale=1.0"/>',
-      '<title>' + escH(data.title) + ' \u2013 Audience View</title>',
+      '<title>' + escapeHtml(data.title) + ' \u2013 Audience View</title>',
       '<style>' + css + '</style>',
       '<style>html,body{margin:0;padding:0;}.presentation-frame{position:fixed;inset:0;}</style>',
       '</head>',
-      '<body class="snapshot-body" data-theme="' + escH(data.theme) + '" style="' + escH(data.deckStyleAttr) + '">',
+      '<body class="snapshot-body" data-theme="' + escapeHtml(data.theme) + '" style="' + escapeHtml(data.deckStyleAttr) + '">',
       '<main class="presentation-layout">',
       '<p id="presentation-status" class="sr-only" aria-live="polite"></p>',
       '<div id="audience-frame" class="presentation-frame"></div>',
@@ -786,12 +786,12 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
   }
 
   function openAudienceWindow() {
-    var BLOB_URL_REVOKE_DELAY_MS = 60000;
+    var AUDIENCE_BLOB_URL_REVOKE_DELAY_MS = 60000;
     var html = buildAudienceHtml();
     var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     var url = URL.createObjectURL(blob);
     audienceWindow = window.open(url, 'offline-audience-window');
-    setTimeout(function() { URL.revokeObjectURL(url); }, BLOB_URL_REVOKE_DELAY_MS);
+    setTimeout(function() { URL.revokeObjectURL(url); }, AUDIENCE_BLOB_URL_REVOKE_DELAY_MS);
   }
 
   document.getElementById('prev-btn').addEventListener('click', function() { move(-1); });
