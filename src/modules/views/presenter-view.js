@@ -35,6 +35,7 @@ export function createPresenterView(root, initialSource) {
   let activeSlideIndex = 0;
   let revealStep = 0;
   let textZoom = 1;
+  let panelControlsLocked = true;
   const sync = createSyncChannel();
   const frame = createDeckFrame("Presenter View");
   let panelLayout = loadPresenterLayout();
@@ -194,6 +195,8 @@ export function createPresenterView(root, initialSource) {
   const zoomInButton = createButton("A+", "Make slide text larger in presenter and audience views");
   const collapsedPanelsNode = document.createElement("div");
   collapsedPanelsNode.className = "collapsed-panel-actions";
+  const lockToggleButton = createButton("Unlock", "Unlock panel positioning controls");
+  lockToggleButton.className = "unlock-mode-toggle";
   const sttToggleButton = sttSupported
     ? createButton("🎙 Turn Off Captions", "Turn off live speech-to-text captions")
     : null;
@@ -204,6 +207,7 @@ export function createPresenterView(root, initialSource) {
   actions.append(openAudienceButton, previousButton, nextButton, timerStatusButton, collapsedPanelsNode, zoomOutButton, zoomResetButton, zoomInButton);
   if (sttToggleButton) actions.append(sttToggleButton);
   addColorModeToggle(actions);
+  actions.append(lockToggleButton);
   let timerAutoStart = true;
 
   function getAudiencePresentationUrl() {
@@ -245,6 +249,15 @@ export function createPresenterView(root, initialSource) {
       panelNode.hidden = panel?.mode === "collapsed";
       panelNode.classList.toggle("presenter-panel--fullscreen", panel?.mode === "fullscreen");
     });
+
+    const currentPanel = panelsById.get("current");
+    if (currentPanel) {
+      const defaultSpan = 5;
+      const spanScale = (currentPanel.span || defaultSpan) / defaultSpan;
+      currentFrame.style.setProperty("--panel-span-scale", String(spanScale));
+    }
+
+    layoutGrid.classList.toggle("presenter-layout--controls-locked", panelControlsLocked);
 
     collapsedPanelsNode.innerHTML = panelLayout
       .filter((panel) => panel.mode === "collapsed" && panel.id !== "timer")
@@ -410,6 +423,20 @@ export function createPresenterView(root, initialSource) {
     publishState();
   });
   zoomInButton.addEventListener("click", () => updateZoom(0.1));
+
+  lockToggleButton.addEventListener("click", () => {
+    panelControlsLocked = !panelControlsLocked;
+    if (panelControlsLocked) {
+      lockToggleButton.textContent = "Unlock";
+      lockToggleButton.title = "Unlock panel positioning controls";
+      lockToggleButton.className = "unlock-mode-toggle";
+    } else {
+      lockToggleButton.textContent = "Lock";
+      lockToggleButton.title = "Lock panel positioning controls";
+      lockToggleButton.className = "lock-mode-toggle";
+    }
+    applyLayout();
+  });
 
   nextFrame.addEventListener("click", () => {
     if (compiled.renderedSlides[activeSlideIndex + 1]) {

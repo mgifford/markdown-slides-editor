@@ -510,6 +510,11 @@ input:focus-visible {
   min-width: 7.5rem;
 }
 
+.lock-mode-toggle,
+.unlock-mode-toggle {
+  min-width: 5.5rem;
+}
+
 .editor-layout[data-editor-collapsed="true"] .panel--editor {
   padding: 0.9rem 1rem;
 }
@@ -638,6 +643,14 @@ input:focus-visible {
   grid-column: span 12 !important;
 }
 
+.presenter-panel[data-panel-id="current"] {
+  background: color-mix(in srgb, var(--panel) 85%, var(--accent-soft) 15%);
+}
+
+.presenter-layout--controls-locked .presenter-panel__controls {
+  display: none;
+}
+
 .captions-transcript {
   min-height: 8rem;
   white-space: pre-wrap;
@@ -658,7 +671,7 @@ input:focus-visible {
 .slide-card__content {
   height: 100%;
   max-width: 70ch;
-  font-size: calc(clamp(1.5rem, 2.8vw, 2.25rem) * var(--presentation-text-zoom, 1));
+  font-size: calc(clamp(1.5rem, 2.8vw, 2.25rem) * var(--presentation-text-zoom, 1) * var(--panel-span-scale, 1));
   line-height: 1.45;
   overflow: hidden;
 }
