@@ -906,6 +906,29 @@ input:focus-visible {
   padding-left: 1.25rem;
 }
 
+.slide-card ul ul,
+.slide-card ul ol,
+.slide-card ol ul,
+.slide-card ol ol {
+  font-size: calc(1em - 1px);
+  color: color-mix(in srgb, var(--ink) 90%, var(--panel));
+  padding-left: 1.25rem;
+  margin-top: 0.2em;
+  margin-bottom: 0;
+}
+
+.slide-card ul ul ul,
+.slide-card ul ul ol,
+.slide-card ul ol ul,
+.slide-card ul ol ol,
+.slide-card ol ul ul,
+.slide-card ol ul ol,
+.slide-card ol ol ul,
+.slide-card ol ol ol {
+  font-size: calc(1em - 1px);
+  color: color-mix(in srgb, var(--ink) 81%, var(--panel));
+}
+
 .slide-card li.next {
   list-style: disc;
 }

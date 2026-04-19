@@ -198,6 +198,29 @@ test("renderMarkdown supports ordered lists and progressive disclosure markers",
   assert.equal(rendered.stepCount, 1);
 });
 
+test("renderMarkdown renders nested unordered lists up to three levels deep", () => {
+  const rendered = renderMarkdown(`# Slide
+
+- Platforms define:
+  - Who gets access
+  - What is permitted
+    - Sub-point
+  - How decisions are enforced
+- Most of this logic is hidden`);
+
+  assert.equal(rendered.html.includes("<ul>"), true);
+  assert.equal(rendered.html.includes("Platforms define:"), true);
+  assert.equal(rendered.html.includes("Who gets access"), true);
+  assert.equal(rendered.html.includes("Sub-point"), true);
+  assert.equal(rendered.html.includes("Most of this logic is hidden"), true);
+  // Nested ul should be inside a parent li, not adjacent to it
+  assert.equal(rendered.html.includes("Platforms define:<ul>"), true);
+  // Level 2 item that has children should contain a nested ul
+  assert.equal(rendered.html.includes("What is permitted<ul>"), true);
+  // Third-level item should appear inside a doubly-nested ul
+  assert.equal(rendered.html.includes("<ul><li>Sub-point</li></ul>"), true);
+});
+
 test("renderMarkdown supports centered blocks, columns, media, callouts, quotes, mermaid, and svg wrappers", () => {
   const rendered = renderMarkdown(`# Slide
 

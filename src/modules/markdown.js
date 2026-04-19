@@ -199,6 +199,33 @@ function renderSpecialDirective(block, state) {
   return null;
 }
 
+function buildNestedListHtml(items, type, currentDepth) {
+  const parts = [];
+  parts.push(`<${type}>`);
+
+  let i = 0;
+  while (i < items.length) {
+    const item = items[i];
+    let j = i + 1;
+    while (j < items.length && items[j].depth > currentDepth) {
+      j += 1;
+    }
+    const children = items.slice(i + 1, j);
+    const classes = item.isProgressive ? ' class="next"' : "";
+    if (children.length > 0) {
+      parts.push(
+        `<li${classes}>${renderInline(item.text)}${buildNestedListHtml(children, type, currentDepth + 1)}</li>`,
+      );
+    } else {
+      parts.push(`<li${classes}>${renderInline(item.text)}</li>`);
+    }
+    i = j;
+  }
+
+  parts.push(`</${type}>`);
+  return parts.join("");
+}
+
 function renderLines(lines, state) {
   const htmlParts = [];
   let listItems = [];
@@ -206,12 +233,7 @@ function renderLines(lines, state) {
 
   function flushList() {
     if (listItems.length === 0) return;
-    htmlParts.push(`<${listType}>`);
-    for (const item of listItems) {
-      const classes = item.isProgressive ? ' class="next"' : "";
-      htmlParts.push(`<li${classes}>${renderInline(item.text)}</li>`);
-    }
-    htmlParts.push(`</${listType}>`);
+    htmlParts.push(buildNestedListHtml(listItems, listType, 0));
     listItems = [];
     listType = null;
   }
@@ -268,9 +290,10 @@ function renderLines(lines, state) {
       continue;
     }
 
-    const unorderedListMatch = /^-\s+(.+)$/.exec(line);
+    const unorderedListMatch = /^(\s*)-\s+(.+)$/.exec(line);
     if (unorderedListMatch) {
-      const text = unorderedListMatch[1].trim();
+      const depth = Math.min(Math.floor(unorderedListMatch[1].length / 2), 2);
+      const text = unorderedListMatch[2].trim();
       const isProgressive = text.startsWith("[>] ");
       if (!listType) listType = "ul";
       if (listType !== "ul") flushList();
@@ -278,15 +301,17 @@ function renderLines(lines, state) {
       listItems.push({
         text: isProgressive ? text.slice(4).trim() : text,
         isProgressive,
+        depth,
       });
       if (isProgressive) state.stepCount += 1;
       index += 1;
       continue;
     }
 
-    const orderedListMatch = /^(\d+)\.\s+(.+)$/.exec(line);
+    const orderedListMatch = /^(\s*)(\d+)\.\s+(.+)$/.exec(line);
     if (orderedListMatch) {
-      const text = orderedListMatch[2].trim();
+      const depth = Math.min(Math.floor(orderedListMatch[1].length / 2), 2);
+      const text = orderedListMatch[3].trim();
       const isProgressive = text.startsWith("[>] ");
       if (!listType) listType = "ol";
       if (listType !== "ol") flushList();
@@ -294,6 +319,7 @@ function renderLines(lines, state) {
       listItems.push({
         text: isProgressive ? text.slice(4).trim() : text,
         isProgressive,
+        depth,
       });
       if (isProgressive) state.stepCount += 1;
       index += 1;
