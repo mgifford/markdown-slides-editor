@@ -557,7 +557,7 @@ input:focus-visible {
 
 .preview-frame--compact .slide-card__content {
   max-width: none;
-  font-size: calc(clamp(0.48rem, 0.78vw, 0.82rem) * var(--presentation-text-zoom, 1));
+  font-size: calc(clamp(0.55rem, 0.88vw, 0.92rem) * var(--presentation-text-zoom, 1));
   line-height: 1.28;
 }
 
@@ -566,13 +566,18 @@ input:focus-visible {
 }
 
 .preview-frame--compact .slide-card h1 {
-  font-size: clamp(1rem, 1.7vw, 1.55rem);
+  font-size: clamp(1rem, 2.15vw, 1.75rem);
   margin-bottom: 0.45rem;
 }
 
 .preview-frame--compact .slide-card h2 {
-  font-size: clamp(0.8rem, 1.2vw, 1.08rem);
+  font-size: clamp(0.85rem, 1.37vw, 1.1rem);
   margin-bottom: 0.35rem;
+}
+
+.preview-frame--compact .slide-card h3 {
+  font-size: clamp(0.75rem, 1.02vw, 0.86rem);
+  margin-bottom: 0.3rem;
 }
 
 .preview-frame--compact .slide-card p,
@@ -653,7 +658,7 @@ input:focus-visible {
 .slide-card__content {
   height: 100%;
   max-width: 70ch;
-  font-size: calc(clamp(1rem, 1.6vw, 1.3rem) * var(--presentation-text-zoom, 1));
+  font-size: calc(clamp(1.5rem, 2.8vw, 2.25rem) * var(--presentation-text-zoom, 1));
   line-height: 1.45;
   overflow: hidden;
 }
@@ -819,7 +824,7 @@ input:focus-visible {
 
 .title-slide__subtitle {
   margin: 0;
-  font-size: clamp(1.25rem, 2.2vw, 1.9rem);
+  font-size: clamp(1.5rem, 3.75vw, 3rem);
   color: var(--muted);
 }
 
@@ -877,14 +882,19 @@ input:focus-visible {
 }
 
 .slide-card h1 {
-  font-size: clamp(2.2rem, 5vw, 4rem);
+  font-size: clamp(2.5rem, 5.5vw, 4.5rem);
   margin-top: 0;
   margin-bottom: 1rem;
 }
 
 .slide-card h2 {
-  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  font-size: clamp(1.75rem, 3.5vw, 2.8rem);
   margin-bottom: 0.75rem;
+}
+
+.slide-card h3 {
+  font-size: clamp(1.4rem, 2.6vw, 2.2rem);
+  margin-bottom: 0.6rem;
 }
 
 .slide-card p,

@@ -30,6 +30,30 @@ Keep text slides short enough that they can be read quickly without pressure.
 
 ---
 
+# Big statement
+
+::center
+**One clear idea is more powerful than ten crowded bullet points.**
+::
+
+Note:
+A big statement slide works well as a transition between sections or to emphasise a key principle.
+
+---
+
+# Key number
+
+::center
+**73%**
+
+of people retain a message better when it is paired with one strong visual.
+::
+
+Note:
+Lead with the number, then give the single sentence that makes it meaningful.
+
+---
+
 # Quote or callout
 
 ::quote
@@ -57,6 +81,19 @@ Progressive disclosure can help you pace the room without putting every detail o
 
 ---
 
+# Numbered steps
+
+1. Define the goal clearly
+2. Identify the audience and their needs
+3. Draft the key message for each slide
+4. Review for density and cut where possible
+5. Add speaker notes for every slide
+
+Note:
+Use numbered lists when order matters — processes, instructions, or ranked priorities.
+
+---
+
 # Text and bullets
 
 Slides can mix a short paragraph with a list when that helps provide context.
@@ -73,6 +110,29 @@ If you need a fuller written script for delivery support or advance sharing, inc
 
 ---
 
+# Before and after
+
+::column-left
+## Before
+
+- Dense walls of text
+- Small fonts hard to read
+- No clear hierarchy
+::
+
+::column-right
+## After
+
+- One idea per slide
+- Readable font sizes
+- Clear headings and short bullets
+::
+
+Note:
+Before-and-after columns work well for comparisons, improvements, or contrasting perspectives.
+
+---
+
 # Centered content
 
 ::center
@@ -82,6 +142,17 @@ If you need a fuller written script for delivery support or advance sharing, inc
 ::center
 A centered image or statement works well when you want a simple visual moment.
 ::
+
+---
+
+# Image only
+
+::center
+![Wide panoramic photograph of a conference room with a projected slide on screen](https://dummyimage.com/1280x540/102542/dae8f5.png&text=Visual+moment)
+::
+
+Note:
+A full-width image with no body text is a strong way to open or close a section, or to let a photograph speak for itself.
 
 ---
 
