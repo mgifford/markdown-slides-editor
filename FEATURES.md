@@ -260,6 +260,7 @@ Current bundle contents:
 - `presentation.html`
 - `presentation.odp`
 - `presentation-one-page.mhtml`
+- `presentation-offline.mhtml`
 
 ZIP filenames are generated from the deck title plus date when available.
 
@@ -294,7 +295,22 @@ Current one-page behaviors:
 Current additional export formats:
 
 - ODP for OpenDocument Presentation handoff and PowerPoint import
-- MHTML for one-file archival/transfer of the one-page view
+- MHTML (`presentation-one-page.mhtml`) for one-file archival/transfer of the one-page handout view
+- MHTML (`presentation-offline.mhtml`) for fully offline presenter-and-audience presentation
+
+### Offline presenter MHTML
+
+`presentation-offline.mhtml` is a fully self-contained offline presenter file. Opening it in a browser shows:
+
+- **Presenter view** (default): current slide, next-slide preview, speaker notes, and a countdown timer
+- **Open Audience Window** button: opens a linked audience view in a new browser window
+
+Audience and presenter windows stay in sync:
+
+- Navigating in the presenter advances the audience display automatically
+- Navigating in the audience window notifies the presenter view
+
+The file requires no network access once saved. If a `themeStylesheet` URL is set in the deck front matter, the CSS at that URL is fetched at export time and embedded directly so the offline file remains self-contained.
 
 These exports are pragmatic interoperability formats, not guaranteed pixel-perfect reproductions of the HTML runtime.
 
