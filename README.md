@@ -178,6 +178,28 @@ Optional full script text can go here for delivery support or to share with atte
 # Next slide
 ```
 
+The `Note:`, `Resources:`, and `Script:` labels also accept the `::` directive style for consistency with other layout directives:
+
+```md
+# Slide title
+
+Visible content.
+
+::notes
+Speaker notes go here.
+::
+
+::resources
+- [Reference article](https://example.com/article)
+::
+
+::script
+Optional full script text.
+::
+```
+
+Both forms are equivalent and can be used interchangeably. The closing `::` is optional. The labels are case-insensitive, so `::Notes`, `::NOTE`, etc. all work. The singular and plural forms (`::note`/`::notes`, `::resource`/`::resources`, `::reference`/`::references`, `::script`/`::scripts`) are all accepted.
+
 Use `- [>]` inside a list item to mark content for progressive disclosure in audience and snapshot presentation modes.
 
 By default, slides target a 1280x720 presentation surface. Set `slideWidth` and `slideHeight` in front matter if you need a different fixed presentation size.

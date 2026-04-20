@@ -166,3 +166,37 @@ Accessibility is a quality issue, not a feature request.
 Markdown is still the base format.
 
 Raw HTML is not the primary layout mechanism in the current editor. The preferred approach is to use these layout directives so the output remains easier to style, test, and keep accessible.
+
+## Section directives: notes, resources, and script
+
+Speaker notes, references, and speaker scripts can be written using `::` directives for consistency with other layout blocks.
+
+```md
+# Slide title
+
+Visible body content.
+
+::notes
+Speaker notes go here.
+::
+
+::resources
+- [Reference article](https://example.com/article)
+::
+
+::script
+Optional full spoken script for delivery support.
+::
+```
+
+The `Note:`, `Resources:`, and `Script:` colon-style labels are also still supported. Both forms are equivalent.
+
+Rules:
+
+- The closing `::` is optional. If omitted, the section runs to the end of the slide.
+- Labels are case-insensitive: `::Notes`, `::NOTE`, `::RESOURCES`, etc. all work.
+- Singular and plural forms are both accepted:
+  - Notes: `::note` or `::notes`
+  - Resources: `::resource`, `::resources`, `::reference`, or `::references`
+  - Script: `::script` or `::scripts`
+- Nested layout directives (e.g. `::callout`) inside a section are passed through to the section renderer unchanged.

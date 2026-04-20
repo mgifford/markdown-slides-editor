@@ -211,21 +211,63 @@ export function parseSource(source) {
       script: [],
     };
     let activeSection = "body";
+    // Tracks nesting depth when a section was opened with a :: directive.
+    // A depth > 0 means the current section was opened via ::notes/::resources/::script.
+    // Inner :: directives (e.g. ::callout inside ::notes) increment the depth so that
+    // their closing :: does not accidentally end the outer section.
+    let sectionDirectiveDepth = 0;
 
     for (const line of raw.split("\n")) {
       const trimmed = line.trim();
+
+      // Legacy colon-style section markers (backward-compatible).
       if (/^Note:\s*$/i.test(trimmed)) {
         activeSection = "notes";
+        sectionDirectiveDepth = 0;
         continue;
       }
       if (/^Resources:\s*$/i.test(trimmed)) {
         activeSection = "resources";
+        sectionDirectiveDepth = 0;
         continue;
       }
       if (/^Script:\s*$/i.test(trimmed)) {
         activeSection = "script";
+        sectionDirectiveDepth = 0;
         continue;
       }
+
+      // Double-colon section directives (new syntax).
+      if (/^::notes?\s*$/i.test(trimmed)) {
+        activeSection = "notes";
+        sectionDirectiveDepth = 1;
+        continue;
+      }
+      if (/^::(resources?|references?)\s*$/i.test(trimmed)) {
+        activeSection = "resources";
+        sectionDirectiveDepth = 1;
+        continue;
+      }
+      if (/^::scripts?\s*$/i.test(trimmed)) {
+        activeSection = "script";
+        sectionDirectiveDepth = 1;
+        continue;
+      }
+
+      // When inside a :: section directive, track nested directives so that a
+      // closing :: on an inner block does not prematurely exit the section.
+      if (sectionDirectiveDepth > 0) {
+        if (/^::[a-z0-9%-]+\s*$/i.test(trimmed)) {
+          sectionDirectiveDepth += 1;
+        } else if (trimmed === "::") {
+          sectionDirectiveDepth -= 1;
+          if (sectionDirectiveDepth === 0) {
+            activeSection = "body";
+            continue;
+          }
+        }
+      }
+
       sections[activeSection].push(line);
     }
 
