@@ -464,3 +464,142 @@ Language: SPANISH
   const deck = parseSource(source);
   assert.equal(deck.metadata.lang, "es");
 });
+
+test("parseSource supports ::notes directive as alternative to Note:", () => {
+  const source = `# Slide
+
+Body text.
+
+::notes
+Speaker note via directive.
+::`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.slides[0].body.trim(), "# Slide\n\nBody text.");
+  assert.equal(deck.slides[0].notes, "Speaker note via directive.");
+});
+
+test("parseSource supports ::note (singular) directive", () => {
+  const source = `# Slide
+
+::note
+Singular note directive.
+::`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.slides[0].notes, "Singular note directive.");
+});
+
+test("parseSource supports ::notes directive without closing ::", () => {
+  const source = `# Slide
+
+Body.
+
+::notes
+Note without closing marker.`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.slides[0].notes, "Note without closing marker.");
+});
+
+test("parseSource supports ::resources directive as alternative to Resources:", () => {
+  const source = `# Slide
+
+Body.
+
+::resources
+- [Reference](https://example.com)
+::`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.slides[0].resources, "- [Reference](https://example.com)");
+});
+
+test("parseSource supports ::references directive as alternative to Resources:", () => {
+  const source = `# Slide
+
+Body.
+
+::references
+- [Alt link](https://example.com)
+::`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.slides[0].resources, "- [Alt link](https://example.com)");
+});
+
+test("parseSource supports ::script directive as alternative to Script:", () => {
+  const source = `# Slide
+
+Body.
+
+::script
+Full spoken script.
+::`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.slides[0].script, "Full spoken script.");
+});
+
+test("parseSource treats ::notes/::resources/::script case-insensitively", () => {
+  const source = `# Slide
+
+::Notes
+Notes content.
+::
+
+::Resources
+Resources content.
+::
+
+::Script
+Script content.
+::`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.slides[0].notes, "Notes content.");
+  assert.equal(deck.slides[0].resources, "Resources content.");
+  assert.equal(deck.slides[0].script, "Script content.");
+});
+
+test("parseSource does not close ::notes section for nested directives in notes", () => {
+  const source = `# Slide
+
+::notes
+Some note text.
+::callout
+Important callout inside notes.
+::
+More note text.
+::`;
+
+  const deck = parseSource(source);
+  assert.equal(
+    deck.slides[0].notes,
+    "Some note text.\n::callout\nImportant callout inside notes.\n::\nMore note text.",
+  );
+});
+
+test("parseSource allows all three :: sections on one slide", () => {
+  const source = `# Slide
+
+Visible body.
+
+::notes
+My note.
+::
+
+::references
+- [Link](https://example.com)
+::
+
+::script
+Full script here.
+::`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.slides[0].body.trim(), "# Slide\n\nVisible body.");
+  assert.equal(deck.slides[0].notes, "My note.");
+  assert.equal(deck.slides[0].resources, "- [Link](https://example.com)");
+  assert.equal(deck.slides[0].script, "Full script here.");
+});
