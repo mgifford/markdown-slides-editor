@@ -148,6 +148,21 @@ test("renderMarkdown strips javascript: src from img tag inside ::svg", () => {
   assert.equal(result.html.includes("src="), false);
 });
 
+test("renderMarkdown strips data: src from img tag inside ::svg", () => {
+  const result = renderMarkdown('::svg\n<img src="data:text/html,<script>alert(1)</script>" alt="Bad">\n::');
+  assert.equal(result.html.includes('class="layout-svg"'), true);
+  assert.equal(result.html.includes("data:"), false);
+  assert.equal(result.html.includes("src="), false);
+});
+
+test("renderMarkdown allows relative and https src values in ::svg img tags", () => {
+  const result = renderMarkdown('::svg\n<img src="./images/diagram.svg" alt="Diagram">\n::');
+  assert.equal(result.html.includes('src="./images/diagram.svg"'), true);
+
+  const result2 = renderMarkdown('::svg\n<img src="https://example.com/logo.svg" alt="Logo">\n::');
+  assert.equal(result2.html.includes('src="https://example.com/logo.svg"'), true);
+});
+
 test("renderMarkdown renders column without explicit width", () => {
   const result = renderMarkdown("::column-left\nLeft content.\n::\n\n::column-right\nRight content.\n::");
   assert.equal(result.html.includes('class="layout-columns"'), true);

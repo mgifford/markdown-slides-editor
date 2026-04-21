@@ -26,14 +26,19 @@ const SAFE_IMG_ATTRS = new Set([
 
 function sanitizeImgMarkup(markup) {
   // Rebuild the <img> tag using only allowlisted attributes to prevent injection.
-  const attrPattern = /\s+([a-z][a-z0-9-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+  // Handles quoted ("..." or '...') and unquoted attribute values.
+  const attrPattern = /\s+([a-z][a-z0-9-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi;
   let safeAttrs = "";
   let match;
   while ((match = attrPattern.exec(markup)) !== null) {
     const name = match[1].toLowerCase();
-    const value = match[2] !== undefined ? match[2] : match[3];
+    const value = match[2] !== undefined ? match[2] : match[3] !== undefined ? match[3] : match[4];
     if (!SAFE_IMG_ATTRS.has(name)) continue;
-    if (name === "src" && /^\s*javascript:/i.test(value)) continue;
+    if (name === "src") {
+      // Only allow http/https absolute URLs and relative paths; block all other protocols.
+      const trimmedVal = String(value).trim();
+      if (/^[a-z][a-z0-9+.-]*:/i.test(trimmedVal) && !/^https?:/i.test(trimmedVal)) continue;
+    }
     safeAttrs += ` ${name}="${escapeAttribute(value)}"`;
   }
   return `<img${safeAttrs}>`;
