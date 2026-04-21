@@ -122,6 +122,32 @@ test("renderMarkdown handles a single-line inline SVG", () => {
   assert.equal(result.html.includes("<svg"), true);
 });
 
+test("renderMarkdown renders an img tag inside ::svg as a figure", () => {
+  const result = renderMarkdown(
+    '::svg\n<img src="https://example.com/diagram.svg" alt="Architecture diagram">\n::',
+  );
+  assert.equal(result.html.includes('class="layout-svg"'), true);
+  assert.equal(result.html.includes('<img src="https://example.com/diagram.svg"'), true);
+  assert.equal(result.html.includes("&lt;img"), false);
+});
+
+test("renderMarkdown strips event handlers from img tag inside ::svg", () => {
+  const result = renderMarkdown(
+    '::svg\n<img src="https://example.com/diagram.svg" onerror="alert(1)" alt="Diagram">\n::',
+  );
+  assert.equal(result.html.includes('class="layout-svg"'), true);
+  assert.equal(result.html.includes("onerror="), false);
+  assert.equal(result.html.includes('<img src="https://example.com/diagram.svg"'), true);
+});
+
+test("renderMarkdown strips javascript: src from img tag inside ::svg", () => {
+  const result = renderMarkdown('::svg\n<img src="javascript:alert(1)" alt="Bad">\n::');
+  assert.equal(result.html.includes('class="layout-svg"'), true);
+  assert.equal(result.html.includes("javascript:"), false);
+  // The src attribute is dropped entirely when it holds a javascript: URL.
+  assert.equal(result.html.includes("src="), false);
+});
+
 test("renderMarkdown renders column without explicit width", () => {
   const result = renderMarkdown("::column-left\nLeft content.\n::\n\n::column-right\nRight content.\n::");
   assert.equal(result.html.includes('class="layout-columns"'), true);
