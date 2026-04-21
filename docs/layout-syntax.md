@@ -44,6 +44,14 @@ Use `::svg` when you want to present an SVG asset as a figure block.
 ::
 ```
 
+You can also use a raw `<img>` tag when you need to reference an external SVG by URL:
+
+```md
+::svg
+<img src="https://example.com/diagram.svg" alt="Architecture diagram">
+::
+```
+
 This is useful for:
 
 - diagrams exported as SVG

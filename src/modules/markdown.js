@@ -20,6 +20,30 @@ function sanitizeSvgMarkup(markup) {
     .replace(/\s+(href|xlink:href)\s*=\s*'\s*javascript:[^']*'/gi, "");
 }
 
+const SAFE_IMG_ATTRS = new Set([
+  "src", "alt", "width", "height", "class", "id", "loading", "decoding", "crossorigin",
+]);
+
+function sanitizeImgMarkup(markup) {
+  // Rebuild the <img> tag using only allowlisted attributes to prevent injection.
+  // Handles quoted ("..." or '...') and unquoted attribute values.
+  const attrPattern = /\s+([a-z][a-z0-9-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi;
+  let safeAttrs = "";
+  let match;
+  while ((match = attrPattern.exec(markup)) !== null) {
+    const name = match[1].toLowerCase();
+    const value = match[2] !== undefined ? match[2] : match[3] !== undefined ? match[3] : match[4];
+    if (!SAFE_IMG_ATTRS.has(name)) continue;
+    if (name === "src") {
+      // Only allow http/https absolute URLs and relative paths; block all other protocols.
+      const trimmedVal = String(value).trim();
+      if (/^[a-z][a-z0-9+.-]*:/i.test(trimmedVal) && !/^https?:/i.test(trimmedVal)) continue;
+    }
+    safeAttrs += ` ${name}="${escapeAttribute(value)}"`;
+  }
+  return `<img${safeAttrs}>`;
+}
+
 function collectInlineSvgBlock(lines, startIndex) {
   const firstLine = String(lines[startIndex] || "").trimStart();
   if (!/^<svg\b/i.test(firstLine)) return null;
@@ -159,6 +183,11 @@ function renderSpecialDirective(block, state) {
     const rawSvg = collectInlineSvgBlock(block.content, 0);
     if (rawSvg) {
       return `<figure class="layout-svg">${sanitizeSvgMarkup(rawSvg.markup)}</figure>`;
+    }
+    // Support a bare <img> tag referencing an external SVG file.
+    const firstNonEmpty = block.content.find((l) => l.trim());
+    if (firstNonEmpty && /^<img\b/i.test(firstNonEmpty.trim())) {
+      return `<figure class="layout-svg">${sanitizeImgMarkup(firstNonEmpty.trim())}</figure>`;
     }
     return `<figure class="layout-svg">${renderLines(block.content, state)}</figure>`;
   }
