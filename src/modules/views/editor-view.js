@@ -87,7 +87,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
           <div class="preview-header__actions">
             <div id="layout-warning" class="layout-warning" hidden>
               <button type="button" id="layout-warning-button" class="layout-warning__button" aria-label="Suggestions for Improvements" title="Suggestions for Improvements" aria-describedby="layout-warning-tooltip" aria-expanded="false">
-                Suggestion
+                ⚠
               </button>
               <div id="layout-warning-tooltip" class="layout-warning__tooltip" role="tooltip" hidden></div>
             </div>
@@ -108,8 +108,8 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
                 </label>
               </div>
             </div>
-            <button type="button" id="toggle-preview-panel" aria-label="Minimize Preview" title="Minimize Preview">Minimize</button>
-            <button type="button" id="toggle-outline-panel-header" aria-label="Show Outline" title="Show Outline">Show Outline</button>
+            <button type="button" id="toggle-preview-panel" aria-label="Minimize Preview" title="Minimize Preview">◂</button>
+            <button type="button" id="toggle-outline-panel-header" aria-label="Show Outline" title="Show Outline">☰</button>
             <div class="preview-header__nav" aria-label="Slide navigation">
               <button type="button" id="prev-slide" aria-label="Previous Slide" title="Previous Slide">&lt;</button>
               <button type="button" id="next-slide" aria-label="Next Slide" title="Next Slide">&gt;</button>
@@ -455,7 +455,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     outlinePanel.hidden = outlineCollapsed;
     toggleEditorPanelButton.textContent = editorCollapsed ? "Expand Editor" : "Minimize Editor";
     const previewLabel = previewCollapsed ? "Expand Preview" : "Minimize Preview";
-    togglePreviewPanelButton.textContent = previewCollapsed ? "Expand" : "Minimize";
+    togglePreviewPanelButton.textContent = previewCollapsed ? "▶" : "◂";
     togglePreviewPanelButton.setAttribute("aria-label", previewLabel);
     togglePreviewPanelButton.setAttribute("title", previewLabel);
 
@@ -463,7 +463,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     toggleOutlinePanelButton.textContent = outlineLabel;
     toggleOutlinePanelButton.setAttribute("aria-label", outlineLabel);
     toggleOutlinePanelButton.setAttribute("title", outlineLabel);
-    toggleOutlinePanelHeaderButton.textContent = outlineLabel;
+    toggleOutlinePanelHeaderButton.textContent = outlineCollapsed ? "☰" : "✕";
     toggleOutlinePanelHeaderButton.setAttribute("aria-label", outlineLabel);
     toggleOutlinePanelHeaderButton.setAttribute("title", outlineLabel);
     previewPanel.hidden = previewCollapsed;
