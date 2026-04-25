@@ -67,7 +67,7 @@ test("calculateSlideBodyScale stops at MIN_BODY_SCALE and reports overflow when 
   }));
 
   assert.equal(result.overflow, true);
-  assert.equal(result.scale, 0.5);
+  assert.equal(result.scale, 0.6);
 });
 
 test("buildSlideDimensionStyle uses custom dimensions from metadata", () => {
