@@ -4,7 +4,7 @@ import { lintDeck } from "../a11y.js";
 import { attachColorModeToggle } from "../color-mode.js";
 import { renderMermaidBlocks } from "../mermaid.js";
 import { createRevealState } from "../presentation-state.js";
-import { fitSlideBodyText } from "../slide-layout.js";
+import { fitSlideBodyText, applyPreviewScale } from "../slide-layout.js";
 
 export function compileSource(source) {
   const deck = parseSource(source);
@@ -107,6 +107,9 @@ export function mountSlideInto(container, renderedSlide, options = {}) {
 
   const revealState = createRevealState(renderedSlide, revealStep);
   applyRevealState(container, revealState.revealStep);
+  if (container.classList.contains("preview-frame--compact")) {
+    applyPreviewScale(container);
+  }
   const fitResult = fitSlideBodyText(container, renderedSlide);
   renderMermaidBlocks(container).then(() => {
     fitSlideBodyText(container, renderedSlide);

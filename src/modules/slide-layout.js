@@ -100,3 +100,24 @@ export function fitSlideBodyText(container, renderedSlide) {
   container.dataset.slideOverflow = overflow ? "true" : "false";
   return result;
 }
+
+/**
+ * Compute and apply a CSS scale factor so that a slide rendered at its
+ * canonical pixel dimensions (--slide-width-px × --slide-height-px) fits
+ * entirely within the container's current width.  The result is stored as
+ * the --preview-scale custom property on the frame element and consumed by
+ * the .preview-frame--compact CSS rule.
+ *
+ * Safe to call when the frame is hidden or has no width: in that case the
+ * function returns early without changing the property, allowing the
+ * ResizeObserver to correct it once the frame becomes visible.
+ */
+export function applyPreviewScale(frameEl, root = document.documentElement) {
+  const containerWidth = frameEl.clientWidth;
+  if (containerWidth <= 0) return;
+  const slideWidth =
+    parseFloat(getComputedStyle(root).getPropertyValue("--slide-width-px").trim()) ||
+    DEFAULT_SLIDE_WIDTH;
+  const scale = containerWidth / slideWidth;
+  frameEl.style.setProperty("--preview-scale", String(scale));
+}

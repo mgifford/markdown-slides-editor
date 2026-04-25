@@ -28,6 +28,7 @@ import { createCaptionMonitor, getCaptionConfig } from "../captions.js";
 import { isSpeechRecognitionSupported, createSpeechRecognitionSource, CAPTION_LANGUAGES, getCaptionLanguage } from "../speech-recognition.js";
 import { toggleColorMode } from "../color-mode.js";
 import { applyDeckTheme } from "../theme.js";
+import { applyPreviewScale } from "../slide-layout.js";
 import { addColorModeToggle, buildSupplementalHtml, compileSource, createButton, createDeckFrame, mountSlideInto } from "./shared.js";
 
 export function createPresenterView(root, initialSource) {
@@ -252,9 +253,7 @@ export function createPresenterView(root, initialSource) {
 
     const currentPanel = panelsById.get("current");
     if (currentPanel) {
-      const defaultSpan = 5;
-      const spanScale = (currentPanel.span || defaultSpan) / defaultSpan;
-      currentFrame.style.setProperty("--panel-span-scale", String(spanScale));
+      applyPreviewScale(currentFrame);
     }
 
     layoutGrid.classList.toggle("presenter-layout--controls-locked", panelControlsLocked);
@@ -308,6 +307,7 @@ export function createPresenterView(root, initialSource) {
       ? `<article class="slide-card slide-card--next"><div class="slide-card__content">${nextSlide.html}</div></article>`
       : `<article class="slide-card slide-card--next empty-state"><p>No next slide.</p></article>`;
     nextFrame.style.setProperty("--presentation-text-zoom", String(textZoom));
+    applyPreviewScale(nextFrame);
     notesNode.innerHTML = buildSupplementalHtml(currentSlide);
     if (sttSupported) {
       captionsPanel.hidden = false;
@@ -579,4 +579,12 @@ export function createPresenterView(root, initialSource) {
   if (sttSource && sttEnabled) {
     sttSource.start();
   }
+
+  const slideFrameObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      applyPreviewScale(entry.target);
+    }
+  });
+  slideFrameObserver.observe(currentFrame);
+  slideFrameObserver.observe(nextFrame);
 }
