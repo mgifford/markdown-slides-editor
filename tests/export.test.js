@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildExportFilename,
+  buildShortExportFilename,
   buildExportBundle,
   buildMhtmlDocument,
   buildOdpPresentation,
@@ -16,6 +17,25 @@ test("buildExportFilename uses a clean title slug and compact date", () => {
     buildExportFilename("Digital Independence & Open Source Ecosystems", "2025-03-23"),
     "Digital-Independence-Open-Source-Ecosystems_23Mar2025.zip",
   );
+});
+
+test("buildShortExportFilename truncates the title to the first 5 words by default", () => {
+  assert.equal(
+    buildShortExportFilename("Code as Constitution Building Public Digital Infrastructure We Can Actually Trust", "2026-05-01"),
+    "Code-as-Constitution-Building-Public_01May2026.zip",
+  );
+});
+
+test("buildShortExportFilename respects a custom maxWords value", () => {
+  assert.equal(
+    buildShortExportFilename("One Two Three Four Five Six Seven", "2026-05-01", 3),
+    "One-Two-Three_01May2026.zip",
+  );
+});
+
+test("buildShortExportFilename falls back gracefully when title is empty", () => {
+  const result = buildShortExportFilename("", "2026-05-01");
+  assert.equal(result, "01May2026.zip");
 });
 
 test("buildThemeLinkTag includes an external stylesheet only when configured", () => {
@@ -80,6 +100,26 @@ test("buildExportBundle includes markdown, html, odp, and mhtml files in the zip
   assert.equal(text.includes("presentation-one-page.mhtml"), true);
   assert.equal(bundle[0], 0x50);
   assert.equal(bundle[1], 0x4b);
+});
+
+test("buildExportBundle uses the provided filePrefix for presentation files", () => {
+  const bundle = buildExportBundle({
+    markdownSource: "# Deck",
+    deckJson: "{\"title\":\"Deck\"}",
+    snapshotHtml: "<!doctype html><html><body>Deck</body></html>",
+    odpBytes: new Uint8Array([0x50, 0x4b, 0x03, 0x04]),
+    onePageMhtml: "MIME-Version: 1.0",
+    offlineMhtml: "MIME-Version: 1.0 offline",
+    filePrefix: "My-Deck_01May2026",
+  });
+
+  const text = new TextDecoder().decode(bundle);
+  assert.equal(text.includes("My-Deck_01May2026.html"), true);
+  assert.equal(text.includes("My-Deck_01May2026.odp"), true);
+  assert.equal(text.includes("My-Deck_01May2026-one-page.mhtml"), true);
+  assert.equal(text.includes("My-Deck_01May2026-offline.mhtml"), true);
+  assert.equal(text.includes("deck.md"), true);
+  assert.equal(text.includes("deck.json"), true);
 });
 
 test("buildExportBundle includes presentation-offline.mhtml when offlineMhtml is provided", () => {
