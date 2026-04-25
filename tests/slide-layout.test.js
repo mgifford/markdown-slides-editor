@@ -60,6 +60,16 @@ test("buildSlideDimensionStyle returns CSS custom properties for default slide d
   assert.ok(style.endsWith(";"));
 });
 
+test("calculateSlideBodyScale stops at MIN_BODY_SCALE and reports overflow when content never fits", () => {
+  const result = calculateSlideBodyScale((_scale) => ({
+    overflow: true,
+    fillRatio: 1.5,
+  }));
+
+  assert.equal(result.overflow, true);
+  assert.equal(result.scale, 0.5);
+});
+
 test("buildSlideDimensionStyle uses custom dimensions from metadata", () => {
   const style = buildSlideDimensionStyle({ slideWidth: "1024", slideHeight: "768" });
   assert.equal(style.includes("--slide-width-px:1024"), true);
