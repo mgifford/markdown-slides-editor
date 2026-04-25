@@ -463,7 +463,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     toggleOutlinePanelButton.textContent = outlineLabel;
     toggleOutlinePanelButton.setAttribute("aria-label", outlineLabel);
     toggleOutlinePanelButton.setAttribute("title", outlineLabel);
-    toggleOutlinePanelHeaderButton.textContent = outlineCollapsed ? "☰" : "✕";
+    toggleOutlinePanelHeaderButton.textContent = outlineCollapsed ? "☰" : "×";
     toggleOutlinePanelHeaderButton.setAttribute("aria-label", outlineLabel);
     toggleOutlinePanelHeaderButton.setAttribute("title", outlineLabel);
     previewPanel.hidden = previewCollapsed;
