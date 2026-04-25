@@ -89,6 +89,36 @@ export function buildExportFilename(title, dateValue) {
   return `${safeTitle}_${safeDate}.zip`;
 }
 
+/**
+ * Like `buildExportFilename` but truncates the title slug to the first
+ * `maxWords` dash-separated words, producing a shorter filename that still
+ * captures the topic without including every word from a long title.
+ *
+ * @param {string} title - The deck title from front matter.
+ * @param {string|Date} dateValue - The deck date (ISO string or Date object).
+ * @param {number} [maxWords=5] - Maximum number of slug words to keep.
+ * @returns {string} A `.zip` filename with a shortened title slug.
+ */
+export function buildShortExportFilename(title, dateValue, maxWords = 5) {
+  const safeTitle = slugifyFilenamePart(title || "");
+  const safeDate = formatCompactDate(dateValue || new Date());
+  const shortTitle = safeTitle.split("-").slice(0, maxWords).join("-");
+
+  if (!shortTitle && !safeDate) {
+    return "deck-export.zip";
+  }
+
+  if (!shortTitle) {
+    return `${safeDate}.zip`;
+  }
+
+  if (!safeDate) {
+    return `${shortTitle}.zip`;
+  }
+
+  return `${shortTitle}_${safeDate}.zip`;
+}
+
 function encodeText(value) {
   return textEncoder.encode(value);
 }
@@ -442,14 +472,15 @@ export function buildMhtmlDocument({ title, html }) {
   ].join("\r\n");
 }
 
-export function buildExportBundle({ markdownSource, snapshotHtml, deckJson, odpBytes, onePageMhtml, offlineMhtml }) {
+export function buildExportBundle({ markdownSource, snapshotHtml, deckJson, odpBytes, onePageMhtml, offlineMhtml, filePrefix }) {
+  const prefix = filePrefix || "presentation";
   return buildZipArchive([
     { name: "deck.md", contents: markdownSource },
     { name: "deck.json", contents: deckJson },
-    { name: "presentation.html", contents: snapshotHtml },
-    { name: "presentation.odp", contents: odpBytes },
-    { name: "presentation-one-page.mhtml", contents: onePageMhtml },
-    ...(offlineMhtml ? [{ name: "presentation-offline.mhtml", contents: offlineMhtml }] : []),
+    { name: `${prefix}.html`, contents: snapshotHtml },
+    { name: `${prefix}.odp`, contents: odpBytes },
+    { name: `${prefix}-one-page.mhtml`, contents: onePageMhtml },
+    ...(offlineMhtml ? [{ name: `${prefix}-offline.mhtml`, contents: offlineMhtml }] : []),
   ]);
 }
 

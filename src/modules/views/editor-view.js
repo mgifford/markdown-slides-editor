@@ -1,5 +1,6 @@
 import {
   buildExportFilename,
+  buildShortExportFilename,
   buildExportBundle,
   buildMhtmlDocument,
   buildOdpPresentation,
@@ -849,6 +850,8 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
       renderedSlides: lastCompiled?.renderedSlides || [],
       metadata: lastCompiled?.metadata || {},
     });
+    const zipFilename = buildExportFilename(lastCompiled?.metadata.title || "deck-export", lastCompiled?.metadata.date);
+    const filePrefix = zipFilename.replace(/\.zip$/, "");
     const bundle = buildExportBundle({
       markdownSource: source,
       snapshotHtml: html,
@@ -866,9 +869,10 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
         title: lastCompiled?.metadata.title || "Slide deck offline presentation",
         html: offlineHtml,
       }),
+      filePrefix,
     });
     downloadFile(
-      buildExportFilename(lastCompiled?.metadata.title || "deck-export", lastCompiled?.metadata.date),
+      zipFilename,
       bundle,
       "application/zip",
     );
