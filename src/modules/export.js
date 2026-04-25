@@ -263,7 +263,7 @@ function htmlToTextLines(value) {
     String(value)
       .replace(/<li[^>]*>/gi, "\n• ")
       .replace(/<(?:br|br\/)\s*>/gi, "\n")
-      .replace(/<\/(?:p|div|section|article|blockquote|ul|ol|li|h1|h2|h3|h4|h5|h6)>/gi, "\n")
+      .replace(/<\/(?:p|div|section|article|blockquote|ul|ol|li|h1|h2|h3|h4|h5|h6|dt|dd|th|td|tr)>/gi, "\n")
       .replace(/<[^>]+>/g, "")
   )
     .split(/\n+/)
@@ -335,9 +335,32 @@ function buildOdpContentXml({ title, renderedSlides, metadata = {} }) {
 
   const pagesMarkup = renderedSlides
     .map((slide, index) => {
-      const titleText = slide.headings?.find((heading) => heading.level === 1)?.text || `Slide ${index + 1}`;
-      const bodyHtml = slide.html.replace(/<h1[^>]*>[\s\S]*?<\/h1>/i, "");
-      const bodyLines = htmlToTextLines(bodyHtml);
+      let titleText;
+      let bodyLines;
+
+      if (slide.kind === "title") {
+        titleText = slide.title || `Slide ${index + 1}`;
+        const lines = [];
+        if (slide.subtitle) lines.push(slide.subtitle);
+        if (slide.date) lines.push(`Date: ${slide.date}`);
+        if (slide.location) lines.push(`Location: ${slide.location}`);
+        if (slide.speakers) lines.push(`Speakers: ${slide.speakers}`);
+        bodyLines = lines;
+      } else if (slide.kind === "closing") {
+        titleText = slide.title || `Slide ${index + 1}`;
+        const lines = [];
+        if (slide.prompt) lines.push(slide.prompt);
+        if (slide.contactEmail) lines.push(`Email: ${slide.contactEmail}`);
+        if (slide.contactUrl) lines.push(`Website: ${slide.contactUrl}`);
+        if (slide.socialLinks) lines.push(`Social: ${slide.socialLinks}`);
+        if (slide.presentationUrl) lines.push(`Slides: ${slide.presentationUrl}`);
+        bodyLines = lines;
+      } else {
+        titleText = slide.headings?.find((heading) => heading.level === 1)?.text || `Slide ${index + 1}`;
+        const bodyHtml = slide.html.replace(/<h1[^>]*>[\s\S]*?<\/h1>/i, "");
+        bodyLines = htmlToTextLines(bodyHtml);
+      }
+
       const bodyParagraphs = bodyLines.length
         ? bodyLines.map((line) => `<text:p text:style-name="PBody">${escapeXml(line)}</text:p>`).join("")
         : '<text:p text:style-name="PBody"></text:p>';

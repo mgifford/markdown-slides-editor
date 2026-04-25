@@ -199,6 +199,61 @@ test("buildOdpPresentation creates an OpenDocument Presentation archive", () => 
   assert.equal(text.includes("application/vnd.oasis.opendocument.presentation"), true);
 });
 
+test("buildOdpPresentation formats title slide metadata without concatenation", () => {
+  const odp = buildOdpPresentation({
+    title: "My Talk",
+    renderedSlides: [
+      {
+        kind: "title",
+        title: "My Talk",
+        subtitle: "A subtitle",
+        date: "2026-05-01",
+        location: "Ottawa, Canada",
+        speakers: "Jane Doe",
+        html: "",
+        headings: [{ level: 1, text: "My Talk" }],
+      },
+      {
+        html: "<h1>Slide one</h1><p>Content here</p>",
+        headings: [{ level: 1, text: "Slide one" }],
+      },
+    ],
+    metadata: { slideWidth: 1280, slideHeight: 720 },
+  });
+
+  const zip = new TextDecoder().decode(odp);
+  // content.xml is stored uncompressed so its text is searchable in the raw bytes
+  assert.equal(zip.includes("Date: 2026-05-01"), true, "date label and value should be separated");
+  assert.equal(zip.includes("Location: Ottawa, Canada"), true, "location label and value should be separated");
+  assert.equal(zip.includes("Speakers: Jane Doe"), true, "speakers label and value should be separated");
+  assert.equal(zip.includes("Date2026"), false, "date label should not be concatenated with value");
+});
+
+test("buildOdpPresentation formats closing slide metadata without concatenation", () => {
+  const odp = buildOdpPresentation({
+    title: "My Talk",
+    renderedSlides: [
+      {
+        kind: "closing",
+        title: "Questions?",
+        prompt: "What are you building?",
+        contactUrl: "https://example.com/",
+        socialLinks: "Mastodon @user@mastodon.social",
+        presentationUrl: "https://example.com/slides/",
+        html: "",
+        headings: [{ level: 1, text: "Questions?" }],
+      },
+    ],
+    metadata: { slideWidth: 1280, slideHeight: 720 },
+  });
+
+  const zip = new TextDecoder().decode(odp);
+  assert.equal(zip.includes("What are you building?"), true, "closing prompt should be present");
+  assert.equal(zip.includes("Website: https://example.com/"), true, "website label and value should be separated");
+  assert.equal(zip.includes("Slides: https://example.com/slides/"), true, "slides label and value should be separated");
+  assert.equal(zip.includes("Websitehttps"), false, "website label should not be concatenated with URL");
+});
+
 test("buildMhtmlDocument wraps one-page html as a single mhtml document", () => {
   const mhtml = buildMhtmlDocument({
     title: "Deck one page",
