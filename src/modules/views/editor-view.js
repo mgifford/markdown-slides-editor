@@ -17,6 +17,7 @@ import { updateFrontMatterValue, removeFrontMatterValue } from "../source-format
 import { createSyncChannel } from "../sync.js";
 import { getSlideTitle } from "../presentation-state.js";
 import { applyDeckTheme, BUILT_IN_THEMES, isValidThemeStylesheetUrl } from "../theme.js";
+import { applyPreviewScale } from "../slide-layout.js";
 import { addColorModeToggle, buildSupplementalHtml, compileSource, createButton, createDeckFrame, mountSlideInto } from "./shared.js";
 
 async function readCss() {
@@ -613,6 +614,11 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   editor.value = source;
   applyPanelState();
   render();
+
+  const previewFrameObserver = new ResizeObserver(() => {
+    applyPreviewScale(previewFrame);
+  });
+  previewFrameObserver.observe(previewFrame);
 
   editor.addEventListener("input", () => {
     source = editor.value;

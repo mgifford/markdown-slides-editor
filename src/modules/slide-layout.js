@@ -1,6 +1,6 @@
 const DEFAULT_SLIDE_WIDTH = 1280;
 const DEFAULT_SLIDE_HEIGHT = 720;
-const MIN_BODY_SCALE = 0.72;
+const MIN_BODY_SCALE = 0.6;
 const MAX_BODY_SCALE = 1.56;
 const TARGET_BODY_FILL_RATIO = 0.82;
 const SCALE_STEP = 0.04;
@@ -99,4 +99,25 @@ export function fitSlideBodyText(container, renderedSlide) {
   const overflow = result.overflow;
   container.dataset.slideOverflow = overflow ? "true" : "false";
   return result;
+}
+
+/**
+ * Compute and apply a CSS scale factor so that a slide rendered at its
+ * canonical pixel dimensions (--slide-width-px × --slide-height-px) fits
+ * entirely within the container's current width.  The result is stored as
+ * the --preview-scale custom property on the frame element and consumed by
+ * the .preview-frame--compact CSS rule.
+ *
+ * Safe to call when the frame is hidden or has no width: in that case the
+ * function returns early without changing the property, allowing the
+ * ResizeObserver to correct it once the frame becomes visible.
+ */
+export function applyPreviewScale(frameEl, root = document.documentElement) {
+  const containerWidth = frameEl.clientWidth;
+  if (containerWidth <= 0) return;
+  const slideWidth =
+    parseFloat(getComputedStyle(root).getPropertyValue("--slide-width-px").trim()) ||
+    DEFAULT_SLIDE_WIDTH;
+  const scale = containerWidth / slideWidth;
+  frameEl.style.setProperty("--preview-scale", String(scale));
 }
