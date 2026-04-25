@@ -89,6 +89,16 @@ export function buildExportFilename(title, dateValue) {
   return `${safeTitle}_${safeDate}.zip`;
 }
 
+/**
+ * Like `buildExportFilename` but truncates the title slug to the first
+ * `maxWords` dash-separated words, producing a shorter filename that still
+ * captures the topic without including every word from a long title.
+ *
+ * @param {string} title - The deck title from front matter.
+ * @param {string|Date} dateValue - The deck date (ISO string or Date object).
+ * @param {number} [maxWords=5] - Maximum number of slug words to keep.
+ * @returns {string} A `.zip` filename with a shortened title slug.
+ */
 export function buildShortExportFilename(title, dateValue, maxWords = 5) {
   const safeTitle = slugifyFilenamePart(title || "");
   const safeDate = formatCompactDate(dateValue || new Date());
