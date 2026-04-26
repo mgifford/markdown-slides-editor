@@ -61,19 +61,84 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
           <button type="button" id="restore-preview-panel" hidden>Show Preview</button>
         </div>
         <div class="editor-toolbar" role="toolbar" aria-label="Markdown editing tools">
-          <button type="button" data-insert-action="bold" title="Bold selected text">B</button>
-          <button type="button" data-insert-action="list" title="Turn selected lines into a list">List</button>
-          <button type="button" data-insert-action="new-slide" title="Insert a new slide">New slide</button>
-          <button type="button" data-insert-action="note" title="Insert a speaker notes section">Note</button>
-          <button type="button" data-insert-action="resources" title="Insert a references section">Resources</button>
-          <button type="button" data-insert-action="script" title="Insert a script section">Script</button>
-          <button type="button" data-insert-action="center" title="Insert a centered block">Center</button>
-          <button type="button" data-insert-action="columns" title="Insert a two-column layout">2 Col</button>
-          <button type="button" data-insert-action="media-right" title="Insert media with supporting text">Media</button>
-          <button type="button" data-insert-action="callout" title="Insert a callout">Callout</button>
-          <button type="button" data-insert-action="quote" title="Insert a quote block">Quote</button>
-          <button type="button" data-insert-action="mermaid" title="Insert a Mermaid diagram block">Mermaid</button>
-          <button type="button" data-insert-action="svg" title="Insert an SVG figure block">SVG</button>
+          <span class="toolbar-item">
+            <button type="button" data-insert-action="bold" aria-label="Bold" aria-describedby="tb-tip-bold">
+              <svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h5a2.5 2.5 0 0 1 0 5H4V3z"/><path d="M4 8h5.5a2.5 2.5 0 0 1 0 5H4V8z"/></svg>
+            </button>
+            <span id="tb-tip-bold" role="tooltip" class="toolbar-tooltip">Bold selected text</span>
+          </span>
+          <span class="toolbar-item">
+            <button type="button" data-insert-action="list" aria-label="Bullet list" aria-describedby="tb-tip-list">
+              <svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="2.5" cy="4.5" r="1" fill="currentColor" stroke="none"/><line x1="5.5" y1="4.5" x2="14" y2="4.5"/><circle cx="2.5" cy="8" r="1" fill="currentColor" stroke="none"/><line x1="5.5" y1="8" x2="14" y2="8"/><circle cx="2.5" cy="11.5" r="1" fill="currentColor" stroke="none"/><line x1="5.5" y1="11.5" x2="14" y2="11.5"/></svg>
+            </button>
+            <span id="tb-tip-list" role="tooltip" class="toolbar-tooltip">Turn selected lines into a bullet list</span>
+          </span>
+          <span class="toolbar-item">
+            <button type="button" data-insert-action="new-slide" aria-label="New slide" aria-describedby="tb-tip-new-slide">
+              <svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><line x1="8" y1="5.5" x2="8" y2="10.5"/><line x1="5.5" y1="8" x2="10.5" y2="8"/></svg>
+            </button>
+            <span id="tb-tip-new-slide" role="tooltip" class="toolbar-tooltip">Insert a new slide</span>
+          </span>
+          <span class="toolbar-item">
+            <button type="button" data-insert-action="note" aria-label="Speaker note" aria-describedby="tb-tip-note">
+              <svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2h12a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7l-3.5 3V11H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/></svg>
+            </button>
+            <span id="tb-tip-note" role="tooltip" class="toolbar-tooltip">Insert a speaker notes section</span>
+          </span>
+          <span class="toolbar-item">
+            <button type="button" data-insert-action="resources" aria-label="Resources" aria-describedby="tb-tip-resources">
+              <svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6.5 9.5a3 3 0 0 0 4.24 0l2-2a3 3 0 0 0-4.24-4.24l-1.06 1.06"/><path d="M9.5 6.5a3 3 0 0 0-4.24 0l-2 2a3 3 0 0 0 4.24 4.24l1.06-1.06"/></svg>
+            </button>
+            <span id="tb-tip-resources" role="tooltip" class="toolbar-tooltip">Insert a references section</span>
+          </span>
+          <span class="toolbar-item">
+            <button type="button" data-insert-action="script" aria-label="Script" aria-describedby="tb-tip-script">
+              <svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="1" width="10" height="14" rx="1.5"/><line x1="5.5" y1="5" x2="10.5" y2="5"/><line x1="5.5" y1="8" x2="10.5" y2="8"/><line x1="5.5" y1="11" x2="8.5" y2="11"/></svg>
+            </button>
+            <span id="tb-tip-script" role="tooltip" class="toolbar-tooltip">Insert a script section</span>
+          </span>
+          <span class="toolbar-item">
+            <button type="button" data-insert-action="center" aria-label="Center layout" aria-describedby="tb-tip-center">
+              <svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="2" y1="4" x2="14" y2="4"/><line x1="4" y1="7" x2="12" y2="7"/><line x1="2" y1="10" x2="14" y2="10"/><line x1="4" y1="13" x2="12" y2="13"/></svg>
+            </button>
+            <span id="tb-tip-center" role="tooltip" class="toolbar-tooltip">Insert a centered block</span>
+          </span>
+          <span class="toolbar-item">
+            <button type="button" data-insert-action="columns" aria-label="Two columns" aria-describedby="tb-tip-columns">
+              <svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2.5" width="6" height="11" rx="1"/><rect x="9" y="2.5" width="6" height="11" rx="1"/></svg>
+            </button>
+            <span id="tb-tip-columns" role="tooltip" class="toolbar-tooltip">Insert a two-column layout</span>
+          </span>
+          <span class="toolbar-item">
+            <button type="button" data-insert-action="media-right" aria-label="Media with text" aria-describedby="tb-tip-media-right">
+              <svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="2.5" width="14" height="11" rx="1.5"/><circle cx="5.5" cy="7" r="1.5"/><path d="M1 10.5l4-3.5 3 2.5 2-1.5 5 4"/></svg>
+            </button>
+            <span id="tb-tip-media-right" role="tooltip" class="toolbar-tooltip">Insert media with supporting text</span>
+          </span>
+          <span class="toolbar-item">
+            <button type="button" data-insert-action="callout" aria-label="Callout box" aria-describedby="tb-tip-callout">
+              <svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><line x1="8" y1="7.5" x2="8" y2="11"/><circle cx="8" cy="5.5" r="0.75" fill="currentColor" stroke="none"/></svg>
+            </button>
+            <span id="tb-tip-callout" role="tooltip" class="toolbar-tooltip">Insert a callout box</span>
+          </span>
+          <span class="toolbar-item">
+            <button type="button" data-insert-action="quote" aria-label="Quote block" aria-describedby="tb-tip-quote">
+              <svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="3" x2="3" y2="12"/><line x1="5" y1="5" x2="14" y2="5"/><line x1="5" y1="8" x2="12" y2="8"/><line x1="5" y1="11" x2="10" y2="11"/></svg>
+            </button>
+            <span id="tb-tip-quote" role="tooltip" class="toolbar-tooltip">Insert a quote block</span>
+          </span>
+          <span class="toolbar-item">
+            <button type="button" data-insert-action="mermaid" aria-label="Mermaid diagram" aria-describedby="tb-tip-mermaid">
+              <svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="8,1.5 14.5,8 8,14.5 1.5,8"/></svg>
+            </button>
+            <span id="tb-tip-mermaid" role="tooltip" class="toolbar-tooltip">Insert a Mermaid diagram block</span>
+          </span>
+          <span class="toolbar-item">
+            <button type="button" data-insert-action="svg" aria-label="SVG figure" aria-describedby="tb-tip-svg">
+              <svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4L1 8l4 4"/><path d="M11 4l4 4-4 4"/><line x1="9.5" y1="3" x2="6.5" y2="13"/></svg>
+            </button>
+            <span id="tb-tip-svg" role="tooltip" class="toolbar-tooltip">Insert an SVG figure block</span>
+          </span>
         </div>
         <p class="local-save-status">Saved locally in this browser on this device. Export to keep a copy elsewhere.</p>
         <textarea id="source-editor" class="editor" spellcheck="false"></textarea>
@@ -632,6 +697,15 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     const button = event.target.closest("button[data-insert-action]");
     if (!button) return;
     handleToolbarAction(button.dataset.insertAction);
+  });
+
+  editorToolbar.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      const button = event.target.closest("button[data-insert-action]");
+      if (button) {
+        button.blur();
+      }
+    }
   });
 
   layoutWarningButton.addEventListener("mouseenter", showLayoutWarningTooltip);
