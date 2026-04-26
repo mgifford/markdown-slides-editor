@@ -68,6 +68,9 @@ test("buildSnapshotHtml includes theme data, step counts, and embedded source pa
   assert.equal(html.includes('data-step-count="2"'), true);
   assert.equal(html.includes('<script id="deck-source" type="application/json">'), true);
   assert.equal(html.includes('"slideCount":2'), true);
+  assert.equal(html.includes('class="snapshot-body snapshot-viewer"'), true, "body should have snapshot-viewer class for viewport scaling");
+  assert.equal(html.includes("slide-card__content"), true, "slides should include slide-card wrapper");
+  assert.equal(html.includes('setProperty("--snapshot-scale"'), true, "JS should set the viewport scale CSS variable");
 });
 
 test("buildSnapshotHtml escapes closing script tags inside embedded source", () => {
@@ -109,7 +112,7 @@ test("buildExportBundle uses the provided filePrefix for presentation files", ()
     snapshotHtml: "<!doctype html><html><body>Deck</body></html>",
     odpBytes: new Uint8Array([0x50, 0x4b, 0x03, 0x04]),
     onePageMhtml: "MIME-Version: 1.0",
-    offlineMhtml: "MIME-Version: 1.0 offline",
+    offlineHtml: "<!doctype html><html><body>Offline</body></html>",
     filePrefix: "My-Deck_01May2026",
   });
 
@@ -117,26 +120,26 @@ test("buildExportBundle uses the provided filePrefix for presentation files", ()
   assert.equal(text.includes("My-Deck_01May2026.html"), true);
   assert.equal(text.includes("My-Deck_01May2026.odp"), true);
   assert.equal(text.includes("My-Deck_01May2026-one-page.mhtml"), true);
-  assert.equal(text.includes("My-Deck_01May2026-offline.mhtml"), true);
+  assert.equal(text.includes("My-Deck_01May2026-offline.html"), true);
   assert.equal(text.includes("deck.md"), true);
   assert.equal(text.includes("deck.json"), true);
 });
 
-test("buildExportBundle includes presentation-offline.mhtml when offlineMhtml is provided", () => {
+test("buildExportBundle includes presentation-offline.html when offlineHtml is provided", () => {
   const bundle = buildExportBundle({
     markdownSource: "# Deck",
     deckJson: "{\"title\":\"Deck\"}",
     snapshotHtml: "<!doctype html><html><body>Deck</body></html>",
     odpBytes: new Uint8Array([0x50, 0x4b, 0x03, 0x04]),
     onePageMhtml: "MIME-Version: 1.0",
-    offlineMhtml: "MIME-Version: 1.0 offline",
+    offlineHtml: "<!doctype html><html><body>Offline</body></html>",
   });
 
   const text = new TextDecoder().decode(bundle);
-  assert.equal(text.includes("presentation-offline.mhtml"), true);
+  assert.equal(text.includes("presentation-offline.html"), true);
 });
 
-test("buildExportBundle omits presentation-offline.mhtml when offlineMhtml is not provided", () => {
+test("buildExportBundle omits presentation-offline.html when offlineHtml is not provided", () => {
   const bundle = buildExportBundle({
     markdownSource: "# Deck",
     deckJson: "{\"title\":\"Deck\"}",
@@ -146,7 +149,7 @@ test("buildExportBundle omits presentation-offline.mhtml when offlineMhtml is no
   });
 
   const text = new TextDecoder().decode(bundle);
-  assert.equal(text.includes("presentation-offline.mhtml"), false);
+  assert.equal(text.includes("presentation-offline.html"), false);
 });
 
 test("buildOnePageHtml opens as a readable handout with save controls and support cards", () => {
@@ -171,6 +174,7 @@ test("buildOnePageHtml opens as a readable handout with save controls and suppor
   assert.equal(html.includes('aria-label="Slide 2"'), true);
   assert.equal(html.includes("Save HTML"), true);
   assert.equal(html.includes("Print / Save PDF"), true);
+  assert.equal(html.includes("4 per page"), true, "should include the 4-per-page layout toggle");
   assert.equal(html.includes("Speaker notes"), true);
   assert.equal(html.includes("References"), true);
   assert.equal(html.includes("window.print()"), true);

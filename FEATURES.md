@@ -260,7 +260,7 @@ Current bundle contents:
 - `presentation.html`
 - `presentation.odp`
 - `presentation-one-page.mhtml`
-- `presentation-offline.mhtml`
+- `presentation-offline.html`
 
 ZIP filenames are generated from the deck title plus date when available.
 
@@ -268,27 +268,30 @@ ZIP filenames are generated from the deck title plus date when available.
 
 The HTML snapshot export maintains:
 
-- rendered slide HTML
+- rendered slide HTML in slide-card containers (correct aspect ratio, viewport-scaling)
 - theme data
 - runtime navigation
 - reveal-step behavior
 - embedded source payload
+- viewport-filling layout: slides scale to fill the browser window at any display size
 
 This is intended as a portable presentation output.
 
 ### One-page view
 
-The one-page view is available as an in-browser window rather than an automatic download.
+The one-page view is available as an in-browser window rather than an automatic download. It is designed for printing or saving as PDF.
 
 Current one-page behaviors:
 
-- opens in a new window or tab
+- opens in a new window or tab (tooltip explains its print/PDF purpose)
 - shows all slides in sequence
 - wraps each slide in a clear card
 - renders notes, references, and script in sub-cards beneath each slide
 - exposes optional `Save HTML`
 - exposes `Print / Save PDF`
 - has print-aware styling for handout/PDF workflows
+- **4 per page** toggle: switch between 1-slide-per-page and a 2×2 four-up layout; speaker notes are hidden in 4-up mode to save space
+- multi-column slide layouts are preserved regardless of browser window width
 
 ### ODP and MHTML output
 
@@ -296,11 +299,11 @@ Current additional export formats:
 
 - ODP for OpenDocument Presentation handoff and PowerPoint import
 - MHTML (`presentation-one-page.mhtml`) for one-file archival/transfer of the one-page handout view
-- MHTML (`presentation-offline.mhtml`) for fully offline presenter-and-audience presentation
+- HTML (`presentation-offline.html`) for fully offline presenter-and-audience presentation
 
-### Offline presenter MHTML
+### Offline presenter HTML
 
-`presentation-offline.mhtml` is a fully self-contained offline presenter file. Opening it in a browser shows:
+`presentation-offline.html` is a fully self-contained offline presenter file. Opening it in a browser shows:
 
 - **Presenter view** (default): current slide, next-slide preview, speaker notes, and a countdown timer
 - **Open Audience Window** button: opens a linked audience view in a new browser window
@@ -311,8 +314,6 @@ Audience and presenter windows stay in sync:
 - Navigating in the audience window notifies the presenter view
 
 The file requires no network access once saved. If a `themeStylesheet` URL is set in the deck front matter, the CSS at that URL is fetched at export time and embedded directly so the offline file remains self-contained.
-
-These exports are pragmatic interoperability formats, not guaranteed pixel-perfect reproductions of the HTML runtime.
 
 ## Accessibility Features
 
