@@ -57,7 +57,8 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
       <section class="panel panel--editor">
         <div class="panel-heading">
           <label class="panel__label" for="source-editor">Markdown source</label>
-          <button type="button" id="toggle-editor-panel">Minimize Editor</button>
+          <button type="button" id="restore-editor-panel" hidden>Show Editor</button>
+          <button type="button" id="restore-preview-panel" hidden>Show Preview</button>
         </div>
         <div class="editor-toolbar" role="toolbar" aria-label="Markdown editing tools">
           <button type="button" data-insert-action="bold" title="Bold selected text">B</button>
@@ -108,7 +109,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
                 </label>
               </div>
             </div>
-            <button type="button" id="toggle-preview-panel" aria-label="Minimize Preview" title="Minimize Preview">◂</button>
+
             <button type="button" id="toggle-outline-panel-header" aria-label="Show Outline" title="Show Outline">☰</button>
             <div class="preview-header__nav" aria-label="Slide navigation">
               <button type="button" id="prev-slide" aria-label="Previous Slide" title="Previous Slide">&lt;</button>
@@ -159,8 +160,8 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   const previewPanel = frame.querySelector(".panel--preview");
   const outlinePanel = frame.querySelector(".outline-panel");
   const mobilePaneButtons = [...frame.querySelectorAll(".mobile-pane-tabs__button")];
-  const toggleEditorPanelButton = frame.querySelector("#toggle-editor-panel");
-  const togglePreviewPanelButton = frame.querySelector("#toggle-preview-panel");
+  const restoreEditorPanelButton = frame.querySelector("#restore-editor-panel");
+  const restorePreviewPanelButton = frame.querySelector("#restore-preview-panel");
   const toggleOutlinePanelButton = frame.querySelector("#toggle-outline-panel");
   const toggleOutlinePanelHeaderButton = frame.querySelector("#toggle-outline-panel-header");
 
@@ -453,11 +454,8 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     previewLayout.dataset.outlineCollapsed = String(outlineCollapsed);
     outlinePanel.dataset.collapsed = String(outlineCollapsed);
     outlinePanel.hidden = outlineCollapsed;
-    toggleEditorPanelButton.textContent = editorCollapsed ? "Expand Editor" : "Minimize Editor";
-    const previewLabel = previewCollapsed ? "Expand Preview" : "Minimize Preview";
-    togglePreviewPanelButton.textContent = previewCollapsed ? "▶" : "◂";
-    togglePreviewPanelButton.setAttribute("aria-label", previewLabel);
-    togglePreviewPanelButton.setAttribute("title", previewLabel);
+    restoreEditorPanelButton.hidden = !editorCollapsed;
+    restorePreviewPanelButton.hidden = !previewCollapsed;
 
     const outlineLabel = outlineCollapsed ? "Show Outline" : "Hide Outline";
     toggleOutlinePanelButton.textContent = outlineLabel;
@@ -682,19 +680,13 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     themeStylesheetInput.value = shortenThemeStylesheetValue(themeStylesheetInput.dataset.fullValue || "");
   });
 
-  toggleEditorPanelButton.addEventListener("click", () => {
-    if (!editorCollapsed && previewCollapsed) {
-      previewCollapsed = false;
-    }
-    editorCollapsed = !editorCollapsed;
+  restoreEditorPanelButton.addEventListener("click", () => {
+    editorCollapsed = false;
     applyPanelState();
   });
 
-  togglePreviewPanelButton.addEventListener("click", () => {
-    if (!previewCollapsed && editorCollapsed) {
-      editorCollapsed = false;
-    }
-    previewCollapsed = !previewCollapsed;
+  restorePreviewPanelButton.addEventListener("click", () => {
+    previewCollapsed = false;
     applyPanelState();
   });
 
@@ -738,11 +730,27 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     jumpEditorToSlide(compiled, activeSlideIndex);
   });
 
+  const SPLIT_MIN = 0.28;
+  const SPLIT_MAX = 0.72;
+  const COLLAPSE_DRAG_THRESHOLD = 0.15;
+
+  function collapseEditorPanel() {
+    previewCollapsed = false;
+    editorCollapsed = true;
+    splitRatio = 0.5;
+  }
+
+  function collapsePreviewPanel() {
+    editorCollapsed = false;
+    previewCollapsed = true;
+    splitRatio = 0.5;
+  }
+
   function updateSplitRatio(clientX) {
     const rect = editorLayout.getBoundingClientRect();
     if (!rect.width) return;
     const nextRatio = (clientX - rect.left) / rect.width;
-    splitRatio = Math.min(0.72, Math.max(0.28, Number(nextRatio.toFixed(3))));
+    splitRatio = Math.min(0.95, Math.max(0.05, Number(nextRatio.toFixed(3))));
     applyPanelState();
   }
 
@@ -764,15 +772,29 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     isResizingPanels = false;
     divider.releasePointerCapture(event.pointerId);
     editorLayout.dataset.resizing = "false";
+    if (splitRatio <= COLLAPSE_DRAG_THRESHOLD) {
+      collapseEditorPanel();
+    } else if (splitRatio >= 1 - COLLAPSE_DRAG_THRESHOLD) {
+      collapsePreviewPanel();
+    }
+    applyPanelState();
   });
 
   divider.addEventListener("keydown", (event) => {
     if (event.key === "ArrowLeft") {
-      splitRatio = Math.max(0.28, Number((splitRatio - 0.03).toFixed(3)));
+      if (splitRatio <= SPLIT_MIN) {
+        collapseEditorPanel();
+      } else {
+        splitRatio = Math.max(SPLIT_MIN, Number((splitRatio - 0.03).toFixed(3)));
+      }
       applyPanelState();
     }
     if (event.key === "ArrowRight") {
-      splitRatio = Math.min(0.72, Number((splitRatio + 0.03).toFixed(3)));
+      if (splitRatio >= SPLIT_MAX) {
+        collapsePreviewPanel();
+      } else {
+        splitRatio = Math.min(SPLIT_MAX, Number((splitRatio + 0.03).toFixed(3)));
+      }
       applyPanelState();
     }
   });

@@ -229,12 +229,16 @@ input:focus-visible {
   --editor-divider-width: 0.6rem;
   align-items: stretch;
   grid-template-columns:
-    minmax(320px, var(--editor-panel-fr))
+    minmax(0, var(--editor-panel-fr))
     var(--editor-divider-width)
-    minmax(320px, var(--preview-panel-fr));
+    minmax(0, var(--preview-panel-fr));
 }
 
 .editor-layout[data-editor-collapsed="true"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.editor-layout[data-preview-collapsed="true"] {
   grid-template-columns: minmax(0, 1fr);
 }
 
@@ -245,6 +249,26 @@ input:focus-visible {
   border-radius: 999px;
   background: color-mix(in srgb, var(--panel-strong) 88%, var(--accent-soft));
   cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.editor-layout__divider::before {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 3px;
+  background: var(--muted);
+  border-radius: 50%;
+  --grip-dot-spacing: 8px;
+  box-shadow:
+    0 var(--grip-dot-spacing) 0 var(--muted),
+    0 calc(var(--grip-dot-spacing) * 2) 0 var(--muted),
+    0 calc(var(--grip-dot-spacing) * -1) 0 var(--muted),
+    0 calc(var(--grip-dot-spacing) * -2) 0 var(--muted);
+  pointer-events: none;
 }
 
 .editor-layout[data-resizing="true"] .editor-layout__divider,
@@ -496,7 +520,6 @@ input:focus-visible {
 }
 
 #layout-warning-button,
-#toggle-preview-panel,
 #toggle-outline-panel-header {
   padding: 0.38rem 0.6rem;
   min-width: 2.1rem;
@@ -529,7 +552,8 @@ input:focus-visible {
 }
 
 .editor-layout[data-editor-collapsed="true"] .panel--editor .local-save-status,
-.editor-layout[data-editor-collapsed="true"] .panel--editor .editor {
+.editor-layout[data-editor-collapsed="true"] .panel--editor .editor,
+.editor-layout[data-editor-collapsed="true"] .panel--editor .editor-toolbar {
   display: none;
 }
 
