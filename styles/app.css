@@ -342,10 +342,52 @@ input:focus-visible {
 }
 
 .editor-toolbar button {
-  padding: 0.45rem 0.7rem;
+  padding: 0.45rem;
   border-radius: 999px;
   font-size: 0.9rem;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  min-height: 2rem;
+}
+
+.toolbar-item {
+  position: relative;
+  display: inline-flex;
+}
+
+.toolbar-tooltip {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 8px;
+  background: var(--panel-strong);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s, visibility 0.12s;
+}
+
+.toolbar-item:hover .toolbar-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0.3s;
+}
+
+.toolbar-item:focus-within .toolbar-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0.6s;
 }
 
 .preview-header,
