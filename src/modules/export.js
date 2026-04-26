@@ -495,7 +495,7 @@ export function buildMhtmlDocument({ title, html }) {
   ].join("\r\n");
 }
 
-export function buildExportBundle({ markdownSource, snapshotHtml, deckJson, odpBytes, onePageMhtml, offlineMhtml, filePrefix }) {
+export function buildExportBundle({ markdownSource, snapshotHtml, deckJson, odpBytes, onePageMhtml, offlineHtml, filePrefix }) {
   const prefix = filePrefix || "presentation";
   return buildZipArchive([
     { name: "deck.md", contents: markdownSource },
@@ -503,7 +503,7 @@ export function buildExportBundle({ markdownSource, snapshotHtml, deckJson, odpB
     { name: `${prefix}.html`, contents: snapshotHtml },
     { name: `${prefix}.odp`, contents: odpBytes },
     { name: `${prefix}-one-page.mhtml`, contents: onePageMhtml },
-    ...(offlineMhtml ? [{ name: `${prefix}-offline.mhtml`, contents: offlineMhtml }] : []),
+    ...(offlineHtml ? [{ name: `${prefix}-offline.html`, contents: offlineHtml }] : []),
   ]);
 }
 
@@ -975,6 +975,7 @@ export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
     <nav class="snapshot-controls one-page-controls" aria-label="One-page view controls">
       <button type="button" data-action="save-html">Save HTML</button>
       <button type="button" data-action="print">Print / Save PDF</button>
+      <button type="button" data-action="toggle-layout" aria-pressed="false">4 per page</button>
     </nav>
     <main class="presentation-shell" aria-label="All slides and supporting material">
       ${slidesMarkup}
@@ -1015,6 +1016,17 @@ export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
 
       document.querySelector('[data-action="save-html"]')?.addEventListener("click", saveHtmlDocument);
       document.querySelector('[data-action="print"]')?.addEventListener("click", () => window.print());
+      document.querySelector('[data-action="toggle-layout"]')?.addEventListener("click", function() {
+        const is4up = this.getAttribute("aria-pressed") === "true";
+        const next4up = !is4up;
+        this.setAttribute("aria-pressed", String(next4up));
+        this.textContent = next4up ? "1 per page" : "4 per page";
+        if (next4up) {
+          document.body.dataset.printLayout = "4up";
+        } else {
+          delete document.body.dataset.printLayout;
+        }
+      });
       renderMermaidBlocks();
     </script>
   </body>
@@ -1024,12 +1036,21 @@ export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
 export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, source }) {
   const slidesMarkup = renderedSlides
     .map(
-      (slide, index) => `
+      (slide, index) => {
+        const slideCardClass = slide.kind === "title" || slide.kind === "closing"
+          ? "slide-card slide-card--title"
+          : "slide-card";
+        return `
         <section class="slide${index === 0 ? " is-active" : ""}" data-slide-index="${index}" data-step-count="${slide.stepCount || 0}" data-kind="${slide.kind || "content"}" aria-label="Slide ${index + 1}">
           <div class="slide__content">
-            ${slide.html}
+            <article class="${slideCardClass}">
+              <div class="slide-card__content">
+                ${slide.html}
+              </div>
+            </article>
           </div>
-        </section>`,
+        </section>`;
+      },
     )
     .join("");
 
@@ -1049,8 +1070,27 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
     <title>${title}</title>
     ${buildThemeLinkTag(metadata)}
     <style>${cssText}</style>
+    <style>
+      .snapshot-viewer .slide__content {
+        overflow: hidden;
+      }
+      .snapshot-viewer .slide-card {
+        width: calc(var(--slide-width-px, 1280) * 1px);
+        height: calc(var(--slide-height-px, 720) * 1px);
+        max-width: none;
+        transform-origin: center center;
+        transform: scale(var(--snapshot-scale, 1));
+      }
+      @media print {
+        .snapshot-viewer .slide-card {
+          transform: none;
+          width: 100%;
+          height: auto;
+        }
+      }
+    </style>
   </head>
-  <body class="snapshot-body" data-theme="${metadata.theme || "default-high-contrast"}" style="${buildDeckStyleAttribute(metadata)}">
+  <body class="snapshot-body snapshot-viewer" data-theme="${metadata.theme || "default-high-contrast"}" style="${buildDeckStyleAttribute(metadata)}">
     <main class="presentation-shell" aria-live="polite">
       ${slidesMarkup}
       <nav class="snapshot-controls" aria-label="Presentation controls">
@@ -1094,6 +1134,15 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
         return content.scrollHeight > content.clientHeight + 1 || content.scrollWidth > content.clientWidth + 1;
       }
 
+      function applyViewportScale() {
+        const slideWidth =
+          parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--slide-width-px").trim()) || 1280;
+        const slideHeight =
+          parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--slide-height-px").trim()) || 720;
+        const scale = Math.min(window.innerWidth / slideWidth, window.innerHeight / slideHeight);
+        document.documentElement.style.setProperty("--snapshot-scale", String(scale));
+      }
+
       function calculateBodyScale(measure) {
         let scale = 1;
         let measurement = measure(scale);
@@ -1120,7 +1169,7 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
       }
 
       function prepareSlide(slide) {
-        const content = slide.querySelector(".slide__content");
+        const content = slide.querySelector(".slide-card__content");
         if (!content || slide.dataset.kind === "title" || slide.dataset.kind === "closing") return;
         let body = content.querySelector(":scope > .slide-card__body");
         if (!body) {
@@ -1153,6 +1202,7 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
       }
 
       function render() {
+        applyViewportScale();
         slides.forEach((slide, index) => {
           slide.classList.toggle("is-active", index === activeIndex);
           slide.hidden = index !== activeIndex;

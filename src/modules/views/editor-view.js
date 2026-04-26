@@ -175,7 +175,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   const aiPromptButton = createButton("AI Prompt");
   const helpButton = createButton("Help");
   const exportBundleButton = createButton("Export");
-  const onePageButton = createButton("1 Page View");
+  const onePageButton = createButton("1 Page View", "Opens all slides in a single scrollable page in a new tab — useful for printing or saving as PDF");
   const advancedToggle = createButton("Advanced");
   advancedToggle.setAttribute("aria-haspopup", "true");
   advancedToggle.setAttribute("aria-expanded", "false");
@@ -893,10 +893,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
         title: lastCompiled?.metadata.title || "Slide deck one-page view",
         html: onePageHtml,
       }),
-      offlineMhtml: buildMhtmlDocument({
-        title: lastCompiled?.metadata.title || "Slide deck offline presentation",
-        html: offlineHtml,
-      }),
+      offlineHtml,
       filePrefix,
     });
     downloadFile(
