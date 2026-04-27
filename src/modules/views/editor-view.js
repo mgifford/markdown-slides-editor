@@ -406,8 +406,22 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   }
 
   function setEditorSelection(start, end = start) {
-    editor.focus();
+    // preventScroll stops the browser from scrolling the page to reveal the
+    // textarea whenever focus is programmatically set (e.g. toolbar buttons).
+    editor.focus({ preventScroll: true });
     editor.setSelectionRange(start, end);
+    // Scroll the textarea so the cursor is visible.  We measure by temporarily
+    // truncating the value to the cursor position – the resulting scrollHeight
+    // equals the content height up to that point – then restore everything.
+    const savedValue = editor.value;
+    editor.value = savedValue.substring(0, start);
+    const cursorScrollTop = editor.scrollHeight;
+    editor.value = savedValue;
+    // Restoring value resets the browser selection to the end, so re-apply it.
+    editor.setSelectionRange(start, end);
+    // Position the cursor roughly in the upper third of the visible area so
+    // there is context both above and below.
+    editor.scrollTop = Math.max(0, cursorScrollTop - Math.round(editor.clientHeight * 0.3));
   }
 
   function jumpEditorToSlide(compiled, slideIndex) {
