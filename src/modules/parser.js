@@ -198,10 +198,11 @@ function createClosingSlide(metadata) {
 export function parseSource(source) {
   const { metadata, content } = extractMetadataAndContent(source);
 
-  const rawSlides = content
-    .split(/\n---\n/g)
-    .map((entry) => entry.trim())
-    .filter(Boolean);
+  const allParts = content.split(/\n---\n/g).map((entry) => entry.trim());
+  const firstNonEmpty = allParts.findIndex(Boolean);
+  const rawSlides = firstNonEmpty === -1
+    ? []
+    : allParts.slice(firstNonEmpty, allParts.findLastIndex(Boolean) + 1);
 
   const contentSlides = rawSlides.map((raw, index) => {
     const sections = {

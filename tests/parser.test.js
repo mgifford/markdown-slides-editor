@@ -603,3 +603,21 @@ Full script here.
   assert.equal(deck.slides[0].resources, "- [Link](https://example.com)");
   assert.equal(deck.slides[0].script, "Full script here.");
 });
+
+test("parseSource preserves blank slides in the middle so subsequent slide numbering stays correct", () => {
+  const source = `# Slide 1
+
+---
+
+---
+
+# Slide 3`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.slides.length, 3);
+  assert.equal(deck.slides[0].id, "slide-1");
+  assert.equal(deck.slides[1].id, "slide-2");
+  assert.equal(deck.slides[1].body, "");
+  assert.equal(deck.slides[2].id, "slide-3");
+  assert.equal(deck.slides[2].body, "# Slide 3");
+});
