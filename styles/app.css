@@ -1717,6 +1717,17 @@ input:focus-visible {
     box-shadow: none !important;
   }
 
+  /* 1-per-page: force each slide card onto its own page */
+  .one-page-body:not([data-print-layout="4up"]) .one-page-slide-card {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .one-page-body:not([data-print-layout="4up"]) .one-page-slide-card:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
   .one-page-slide-card__header {
     margin-bottom: 0.14in;
   }
@@ -1802,10 +1813,42 @@ input:focus-visible {
 
   .one-page-body[data-print-layout="4up"] .one-page-slide-card {
     margin: 0 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Restore slide aspect ratio in 4-up mode for thumbnail-style display */
+  .one-page-body[data-print-layout="4up"] .slide-card {
+    aspect-ratio: var(--slide-aspect-ratio) !important;
+    min-height: 0 !important;
+    overflow: hidden;
+  }
+
+  /* Force page break after every 4 slides (2 rows) in 4-up mode */
+  .one-page-body[data-print-layout="4up"] .one-page-slide-card:nth-child(4n) {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .one-page-body[data-print-layout="4up"] .one-page-slide-card:last-child {
+    break-after: auto;
+    page-break-after: auto;
   }
 
   /* Hide speaker notes and support cards in 4-up mode to save space */
   .one-page-body[data-print-layout="4up"] .one-page-support {
     display: none !important;
+  }
+
+  /* Preserve multi-column slide layouts in print regardless of page width */
+  .one-page-body .slide .layout-columns,
+  .one-page-body .slide .layout-media,
+  .one-page-body .slide .layout-media--right {
+    display: flex !important;
+  }
+
+  .one-page-body .slide .layout-columns__column[style] {
+    flex: 0 0 var(--column-basis) !important;
+    max-width: var(--column-basis) !important;
   }
 }
