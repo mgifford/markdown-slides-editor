@@ -945,8 +945,9 @@ input:focus-visible {
   font-size: inherit;
 }
 
-.slide-card ul {
-  padding-left: 1.25rem;
+.slide-card ul,
+.slide-card ol {
+  padding-left: 1.5em;
 }
 
 .slide-card ul ul,
@@ -955,7 +956,7 @@ input:focus-visible {
 .slide-card ol ol {
   font-size: calc(1em - 1px);
   color: color-mix(in srgb, var(--ink) 90%, var(--panel));
-  padding-left: 1.25rem;
+  padding-left: 1.5em;
   margin-top: 0.2em;
   margin-bottom: 0;
 }
