@@ -1479,6 +1479,10 @@ input:focus-visible {
   display: list-item !important;
 }
 
+.one-page-body .next[hidden]:not(li) {
+  display: block !important;
+}
+
 .one-page-body li.next.active,
 .one-page-body li.next.visited {
   background: transparent;

@@ -70,7 +70,7 @@ function escapeAttribute(value) {
 }
 
 function applyRevealState(container, revealStep) {
-  const progressiveItems = [...container.querySelectorAll("li.next")];
+  const progressiveItems = [...container.querySelectorAll(".next")];
   progressiveItems.forEach((item, index) => {
     const isVisible = index < revealStep;
     const isCurrent = index === revealStep - 1;

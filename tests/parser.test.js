@@ -621,3 +621,130 @@ test("parseSource preserves blank slides in the middle so subsequent slide numbe
   assert.equal(deck.slides[2].id, "slide-3");
   assert.equal(deck.slides[2].body, "# Slide 3");
 });
+
+test("renderMarkdown adds next class and increments stepCount for on-click column", () => {
+  const rendered = renderMarkdown(`# Slide
+
+::column-left
+Always visible.
+::
+
+::column-right on-click
+Revealed on click.
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-columns__column layout-columns__column--left"'), true);
+  assert.equal(rendered.html.includes('class="layout-columns__column layout-columns__column--right next"'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown counts multiple on-click columns as separate steps", () => {
+  const rendered = renderMarkdown(`# Slide
+
+::column-left on-click
+First column.
+::
+
+::column-right on-click
+Second column.
+::`);
+
+  assert.equal(rendered.stepCount, 2);
+  assert.equal(rendered.html.includes('layout-columns__column--left next'), true);
+  assert.equal(rendered.html.includes('layout-columns__column--right next'), true);
+});
+
+test("renderMarkdown adds next class and increments stepCount for on-click callout", () => {
+  const rendered = renderMarkdown(`# Slide
+
+::callout on-click
+Key takeaway revealed on click.
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-callout next"'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown adds next class and increments stepCount for on-click quote", () => {
+  const rendered = renderMarkdown(`# Slide
+
+::quote on-click
+Revealed quotation.
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-quote next"'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown adds next class and increments stepCount for on-click center", () => {
+  const rendered = renderMarkdown(`# Slide
+
+::center on-click
+Centered content revealed on click.
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-center next"'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown adds next class for on-click media-left block", () => {
+  const rendered = renderMarkdown(`# Slide
+
+::media-left on-click
+![Alt](https://example.com/img.jpg)
+---
+Text beside image.
+::`);
+
+  assert.equal(rendered.html.includes('layout-media--left next'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown combines on-click blocks and [>] list items in stepCount", () => {
+  const rendered = renderMarkdown(`# Slide
+
+- [>] First reveal
+- [>] Second reveal
+
+::callout on-click
+Third reveal.
+::`);
+
+  assert.equal(rendered.stepCount, 3);
+});
+
+test("renderMarkdown on-click column with custom width retains width style", () => {
+  const rendered = renderMarkdown(`# Slide
+
+::column-left-75% on-click
+Wide column on-click.
+::
+
+::column-right-300px
+Narrow always-visible.
+::`);
+
+  assert.equal(rendered.html.includes('layout-columns__column--left next'), true);
+  assert.equal(rendered.html.includes('--column-basis:75%'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("parseSource does not close ::notes section for nested on-click directives", () => {
+  const source = `# Slide
+
+Body.
+
+::notes
+See also:
+
+::callout on-click
+Nested callout in notes.
+::
+
+End of notes.
+::`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.slides[0].notes.includes("Nested callout in notes."), true);
+  assert.equal(deck.slides[0].notes.includes("End of notes."), true);
+});
