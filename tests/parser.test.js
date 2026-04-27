@@ -729,7 +729,7 @@ Narrow always-visible.
   assert.equal(rendered.stepCount, 1);
 });
 
-test("parseSource does not close ::notes section for nested on-click directives", () => {
+test("nested on-click directives inside notes section are parsed correctly", () => {
   const source = `# Slide
 
 Body.

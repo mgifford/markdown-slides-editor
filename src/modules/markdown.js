@@ -186,13 +186,14 @@ function splitOnDivider(lines) {
 function renderSpecialDirective(block, state) {
   const isProgressive = block.modifiers && block.modifiers.includes("on-click");
   const progressiveClass = isProgressive ? " next" : "";
-  if (isProgressive) state.stepCount += 1;
 
   if (block.directive === "center") {
+    if (isProgressive) state.stepCount += 1;
     return `<div class="layout-center${progressiveClass}">${renderLines(block.content, state)}</div>`;
   }
 
   if (block.directive === "svg") {
+    if (isProgressive) state.stepCount += 1;
     const rawSvg = collectInlineSvgBlock(block.content, 0);
     if (rawSvg) {
       return `<figure class="layout-svg${progressiveClass}">${sanitizeSvgMarkup(rawSvg.markup)}</figure>`;
@@ -206,6 +207,7 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "mermaid") {
+    if (isProgressive) state.stepCount += 1;
     const source = block.content.join("\n").trim();
     if (!source) {
       return `<figure class="layout-mermaid${progressiveClass}"><p>Mermaid diagram source is empty.</p></figure>`;
@@ -219,14 +221,17 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "callout") {
+    if (isProgressive) state.stepCount += 1;
     return `<aside class="layout-callout${progressiveClass}">${renderLines(block.content, state)}</aside>`;
   }
 
   if (block.directive === "quote") {
+    if (isProgressive) state.stepCount += 1;
     return `<blockquote class="layout-quote${progressiveClass}">${renderLines(block.content, state)}</blockquote>`;
   }
 
   if (block.directive === "media-left" || block.directive === "media-right") {
+    if (isProgressive) state.stepCount += 1;
     const { first, second } = splitOnDivider(block.content);
     const mediaHtml = renderLines(first, state);
     const bodyHtml = renderLines(second, state);
@@ -238,7 +243,6 @@ function renderSpecialDirective(block, state) {
     `;
   }
 
-  if (isProgressive) state.stepCount -= 1;
   return null;
 }
 

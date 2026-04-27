@@ -230,7 +230,7 @@ Any layout directive that renders a block element supports the `on-click` modifi
 - `::media-left on-click`
 - `::media-right on-click`
 
-Blocks marked with `on-click` are hidden when the slide first appears. Each click (or arrow-key advance) reveals the next `on-click` block in source order, following any `[>]` progressive list items on the same slide.
+Blocks marked with `on-click` are hidden when the slide first appears. Each click (or arrow-key advance) reveals the next `on-click` block in source order. `on-click` blocks and `[>]` progressive list items are interleaved by DOM order: the reveal sequence follows the source top-to-bottom, so a `[>]` list item that appears before an `on-click` block in the source will be revealed first.
 
 In the one-page handout export all `on-click` elements are always visible.
 
