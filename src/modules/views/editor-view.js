@@ -417,6 +417,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     editor.value = savedValue.substring(0, start);
     const cursorScrollTop = editor.scrollHeight;
     editor.value = savedValue;
+    // Restoring value resets the browser selection to the end, so re-apply it.
     editor.setSelectionRange(start, end);
     // Position the cursor roughly in the upper third of the visible area so
     // there is context both above and below.
