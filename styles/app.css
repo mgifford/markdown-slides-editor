@@ -716,6 +716,10 @@ input:focus-visible {
   font-size: inherit;
 }
 
+.slide-card a {
+  overflow-wrap: break-word;
+}
+
 .layout-center {
   display: grid;
   justify-items: center;
