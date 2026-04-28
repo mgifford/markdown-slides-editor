@@ -515,7 +515,7 @@ function buildAudienceScriptText() {
   var rs = 0;
   var frame = document.getElementById('audience-frame');
   function applyRevealState(container, step) {
-    var items = Array.from(container.querySelectorAll('li.next'));
+    var items = Array.from(container.querySelectorAll('.next'));
     items.forEach(function(item, i) {
       item.hidden = i >= step;
       item.classList.toggle('visited', i < step - 1);
@@ -705,7 +705,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
   var startPauseBtn = document.getElementById('start-pause-btn');
 
   function applyRevealState(container, step) {
-    var items = Array.from(container.querySelectorAll('li.next'));
+    var items = Array.from(container.querySelectorAll('.next'));
     items.forEach(function(item, i) {
       item.hidden = i >= step;
       item.classList.toggle('visited', i < step - 1);
@@ -1191,7 +1191,7 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
       }
 
       function applyRevealState(slide) {
-        const items = [...slide.querySelectorAll("li.next")];
+        const items = [...slide.querySelectorAll(".next")];
         items.forEach((item, index) => {
           const isVisible = index < revealStep;
           const isCurrent = index === revealStep - 1;

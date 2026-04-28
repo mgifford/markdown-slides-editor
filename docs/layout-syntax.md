@@ -113,6 +113,50 @@ Supported width values currently include common values like:
 - `rem` values such as `22rem`
 - viewport-width values such as `30vw`
 
+### Revealing a column on click
+
+Add the `on-click` modifier to reveal a column progressively, one click at a time. Columns with `on-click` are hidden initially and revealed in source order as the presenter advances.
+
+```md
+::column-left
+- Replaceable components
+- Auditable systems
+- Long-term flexibility
+::
+
+::column-right on-click
+- Replaceable components
+- Auditable systems
+- Long-term flexibility
+::
+```
+
+In this example the left column is always visible. The right column is hidden until the presenter clicks forward once.
+
+Both columns can have `on-click`:
+
+```md
+::column-left on-click
+First column, revealed on click one.
+::
+
+::column-right on-click
+Second column, revealed on click two.
+::
+```
+
+The `on-click` modifier also works with a custom-width column:
+
+```md
+::column-left-75% on-click
+Main content, revealed on first click.
+::
+
+::column-right-300px
+Always-visible sidebar.
+::
+```
+
 ## Media left or right
 
 Use `::media-left` or `::media-right` when you want an image or other visual beside text.
@@ -148,6 +192,14 @@ Important message or takeaway.
 ::
 ```
 
+Add `on-click` to reveal the callout on click:
+
+```md
+::callout on-click
+Revealed when the presenter advances.
+::
+```
+
 ## Quotes
 
 Use `::quote` for a pull quote or emphasized quotation.
@@ -157,6 +209,30 @@ Use `::quote` for a pull quote or emphasized quotation.
 Accessibility is a quality issue, not a feature request.
 ::
 ```
+
+Add `on-click` to reveal the quote on click:
+
+```md
+::quote on-click
+Revealed when the presenter advances.
+::
+```
+
+## The `on-click` modifier
+
+Any layout directive that renders a block element supports the `on-click` modifier:
+
+- `::column-left on-click`
+- `::column-right on-click`
+- `::callout on-click`
+- `::quote on-click`
+- `::center on-click`
+- `::media-left on-click`
+- `::media-right on-click`
+
+Blocks marked with `on-click` are hidden when the slide first appears. Each click (or arrow-key advance) reveals the next `on-click` block in source order. `on-click` blocks and `[>]` progressive list items are interleaved by DOM order: the reveal sequence follows the source top-to-bottom, so a `[>]` list item that appears before an `on-click` block in the source will be revealed first.
+
+In the one-page handout export all `on-click` elements are always visible.
 
 ## Accessibility guidance
 

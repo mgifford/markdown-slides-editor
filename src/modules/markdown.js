@@ -83,17 +83,21 @@ function renderInline(text) {
 }
 
 function collectDirectiveBlock(lines, startIndex) {
-  const directiveMatch = /^::([a-z0-9%-]+)\s*$/i.exec(lines[startIndex].trim());
+  const directiveMatch = /^::([a-z0-9%-]+)((?:\s+[\w-]+)*)\s*$/i.exec(lines[startIndex].trim());
   if (!directiveMatch) {
     return null;
   }
+
+  const modifiers = directiveMatch[2]
+    ? directiveMatch[2].trim().toLowerCase().split(/\s+/)
+    : [];
 
   let depth = 1;
   const content = [];
 
   for (let index = startIndex + 1; index < lines.length; index += 1) {
     const trimmed = lines[index].trim();
-    if (/^::[a-z0-9%-]+\s*$/i.test(trimmed)) {
+    if (/^::[a-z0-9%-]+(?:\s+[\w-]+)*\s*$/i.test(trimmed)) {
       depth += 1;
       content.push(lines[index]);
       continue;
@@ -104,6 +108,7 @@ function collectDirectiveBlock(lines, startIndex) {
       if (depth === 0) {
         return {
           directive: directiveMatch[1].toLowerCase(),
+          modifiers,
           content,
           endIndex: index,
         };
@@ -117,6 +122,7 @@ function collectDirectiveBlock(lines, startIndex) {
 
   return {
     directive: directiveMatch[1].toLowerCase(),
+    modifiers,
     content,
     endIndex: lines.length - 1,
   };
@@ -141,11 +147,14 @@ function renderColumns(lines, startIndex, state) {
     const column = parseColumnDirective(block.directive);
     if (!column) break;
 
+    const isProgressive = block.modifiers && block.modifiers.includes("on-click");
     const innerHtml = renderLines(block.content, state);
     const style = column.width ? ` style="--column-basis:${escapeAttribute(column.width)}"` : "";
+    const progressiveClass = isProgressive ? " next" : "";
     columns.push(
-      `<section class="layout-columns__column layout-columns__column--${column.side}"${style}>${innerHtml}</section>`,
+      `<section class="layout-columns__column layout-columns__column--${column.side}${progressiveClass}"${style}>${innerHtml}</section>`,
     );
+    if (isProgressive) state.stepCount += 1;
 
     index = block.endIndex + 1;
     while (index < lines.length && !lines[index].trim()) {
@@ -175,50 +184,59 @@ function splitOnDivider(lines) {
 }
 
 function renderSpecialDirective(block, state) {
+  const isProgressive = block.modifiers && block.modifiers.includes("on-click");
+  const progressiveClass = isProgressive ? " next" : "";
+
   if (block.directive === "center") {
-    return `<div class="layout-center">${renderLines(block.content, state)}</div>`;
+    if (isProgressive) state.stepCount += 1;
+    return `<div class="layout-center${progressiveClass}">${renderLines(block.content, state)}</div>`;
   }
 
   if (block.directive === "svg") {
+    if (isProgressive) state.stepCount += 1;
     const rawSvg = collectInlineSvgBlock(block.content, 0);
     if (rawSvg) {
-      return `<figure class="layout-svg">${sanitizeSvgMarkup(rawSvg.markup)}</figure>`;
+      return `<figure class="layout-svg${progressiveClass}">${sanitizeSvgMarkup(rawSvg.markup)}</figure>`;
     }
     // Support a bare <img> tag referencing an external SVG file.
     const firstNonEmpty = block.content.find((l) => l.trim());
     if (firstNonEmpty && /^<img\b/i.test(firstNonEmpty.trim())) {
-      return `<figure class="layout-svg">${sanitizeImgMarkup(firstNonEmpty.trim())}</figure>`;
+      return `<figure class="layout-svg${progressiveClass}">${sanitizeImgMarkup(firstNonEmpty.trim())}</figure>`;
     }
-    return `<figure class="layout-svg">${renderLines(block.content, state)}</figure>`;
+    return `<figure class="layout-svg${progressiveClass}">${renderLines(block.content, state)}</figure>`;
   }
 
   if (block.directive === "mermaid") {
+    if (isProgressive) state.stepCount += 1;
     const source = block.content.join("\n").trim();
     if (!source) {
-      return `<figure class="layout-mermaid"><p>Mermaid diagram source is empty.</p></figure>`;
+      return `<figure class="layout-mermaid${progressiveClass}"><p>Mermaid diagram source is empty.</p></figure>`;
     }
     state.mermaidCount += 1;
     return `
-      <figure class="layout-mermaid">
+      <figure class="layout-mermaid${progressiveClass}">
         <div class="mermaid" data-mermaid-id="mermaid-${state.mermaidCount}">${escapeHtml(source)}</div>
       </figure>
     `;
   }
 
   if (block.directive === "callout") {
-    return `<aside class="layout-callout">${renderLines(block.content, state)}</aside>`;
+    if (isProgressive) state.stepCount += 1;
+    return `<aside class="layout-callout${progressiveClass}">${renderLines(block.content, state)}</aside>`;
   }
 
   if (block.directive === "quote") {
-    return `<blockquote class="layout-quote">${renderLines(block.content, state)}</blockquote>`;
+    if (isProgressive) state.stepCount += 1;
+    return `<blockquote class="layout-quote${progressiveClass}">${renderLines(block.content, state)}</blockquote>`;
   }
 
   if (block.directive === "media-left" || block.directive === "media-right") {
+    if (isProgressive) state.stepCount += 1;
     const { first, second } = splitOnDivider(block.content);
     const mediaHtml = renderLines(first, state);
     const bodyHtml = renderLines(second, state);
     return `
-      <div class="layout-media layout-media--${block.directive === "media-left" ? "left" : "right"}">
+      <div class="layout-media layout-media--${block.directive === "media-left" ? "left" : "right"}${progressiveClass}">
         <div class="layout-media__visual">${mediaHtml}</div>
         <div class="layout-media__body">${bodyHtml}</div>
       </div>
@@ -279,7 +297,7 @@ function renderLines(lines, state) {
       continue;
     }
 
-    if (/^::column-(left|right)(?:-[0-9.]+(?:px|%|rem|vw)?)?\s*$/i.test(trimmed)) {
+    if (/^::column-(left|right)(?:-[0-9.]+(?:px|%|rem|vw)?)?(?:\s+[\w-]+)*\s*$/i.test(trimmed)) {
       flushList();
       const renderedColumns = renderColumns(lines, index, state);
       htmlParts.push(renderedColumns.html);
@@ -287,7 +305,7 @@ function renderLines(lines, state) {
       continue;
     }
 
-    if (/^::[a-z0-9%-]+\s*$/i.test(trimmed)) {
+    if (/^::[a-z0-9%-]+(?:\s+[\w-]+)*\s*$/i.test(trimmed)) {
       flushList();
       const block = collectDirectiveBlock(lines, index);
       if (block) {
