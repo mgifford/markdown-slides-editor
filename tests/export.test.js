@@ -357,3 +357,35 @@ test("buildOfflinePresentationHtml escapes closing script tags in the embedded J
   assert.equal(payloadMatch[1].includes("</script>"), false, "raw </script> must not appear inside deck-payload block");
   assert.equal(payloadMatch[1].includes("<\\/script>"), true, "escaped form should be present in deck-payload");
 });
+
+test("buildOfflinePresentationHtml escapes uppercase and mixed-case closing script tags in the payload", () => {
+  const html = buildOfflinePresentationHtml({
+    title: "Case test",
+    cssText: "",
+    themeStylesheetCss: "",
+    renderedSlides: [
+      // Intentionally testing XSS prevention: uppercase/mixed-case </script> in slide content
+      // must be escaped so they cannot prematurely close the <script type="application/json"> block.
+      { html: "<h1>One</h1>", stepCount: 0, notesHtml: "</SCRIPT><script>alert('xss')</SCRIPT>" },
+    ],
+    metadata: {},
+  });
+
+  // All case variants must be escaped – none should appear raw inside the payload script block
+  assert.equal(html.includes("</SCRIPT><script>alert"), false, "uppercase </SCRIPT> must be escaped");
+  assert.equal(html.includes("</Script>"), false, "mixed-case </Script> must be escaped");
+});
+
+test("buildOfflinePresentationHtml uses document.write to open the audience window (no blob URL)", () => {
+  const html = buildOfflinePresentationHtml({
+    title: "Audience window test",
+    cssText: "",
+    themeStylesheetCss: "",
+    renderedSlides: [{ html: "<h1>Slide</h1>", stepCount: 0 }],
+    metadata: {},
+  });
+
+  assert.equal(html.includes("URL.createObjectURL"), false, "should not use blob URLs that fail in file:// context");
+  assert.equal(html.includes("document.write"), true, "should use document.write for file:// compatibility");
+  assert.equal(html.includes("window.open('', 'offline-audience-window')"), true, "should open a blank named window");
+});
