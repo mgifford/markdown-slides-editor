@@ -455,6 +455,15 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     replaceEditorSelection(replacement, start + prefix.length, start + prefix.length + selected.length);
   }
 
+  function wrapBlockDirective(directive, placeholder) {
+    const start = editor.selectionStart || 0;
+    const end = editor.selectionEnd || 0;
+    const selected = source.slice(start, end);
+    const content = selected || placeholder;
+    const openTag = `::${directive}\n`;
+    insertBlock(`${openTag}${content}\n::\n`, openTag.length, content.length);
+  }
+
   function insertBlock(block, selectOffset = null, selectLength = 0) {
     const start = editor.selectionStart || 0;
     const end = editor.selectionEnd || 0;
@@ -502,7 +511,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
         insertBlock("Script:\nAdd fuller delivery text here.\n", 8, "Add fuller delivery text here.".length);
         return;
       case "center":
-        insertBlock("::center\nCentered text.\n::\n", 9, "Centered text.".length);
+        wrapBlockDirective("center", "Centered text.");
         return;
       case "columns":
         insertBlock("::column-left\nLeft column content\n::\n\n::column-right\nRight column content\n::\n", 14, "Left column content".length);
@@ -511,10 +520,10 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
         insertBlock("::media-right\n![Alt text](https://example.com/image.jpg)\n---\nSupporting text here.\n::\n", 25, "Alt text".length);
         return;
       case "callout":
-        insertBlock("::callout\nImportant takeaway.\n::\n", 11, "Important takeaway.".length);
+        wrapBlockDirective("callout", "Important takeaway.");
         return;
       case "quote":
-        insertBlock("::quote\nMemorable quote.\n::\n", 9, "Memorable quote.".length);
+        wrapBlockDirective("quote", "Memorable quote.");
         return;
       case "mermaid":
         insertBlock("::mermaid\nflowchart LR\n  A[Author] --> B[Deck]\n::\n", 11, "flowchart LR\n  A[Author] --> B[Deck]".length);
