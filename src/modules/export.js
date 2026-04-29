@@ -4,7 +4,10 @@ const textEncoder = new TextEncoder();
 const ODP_MIMETYPE = "application/vnd.oasis.opendocument.presentation";
 
 function escapeScriptText(value) {
-  return value.replaceAll("</script>", "<\\/script>");
+  // The HTML parser closes <script> elements at </script (case-insensitive), regardless of the
+  // type attribute. Escape ALL case variants to prevent premature element closure, while
+  // preserving the original casing so the stored value round-trips correctly.
+  return value.replace(/<\/script/gi, (match) => "<\\/" + match.slice(2));
 }
 
 function escapeXml(value) {
@@ -840,12 +843,13 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
   }
 
   function openAudienceWindow() {
-    var AUDIENCE_BLOB_URL_REVOKE_DELAY_MS = 60000;
     var html = buildAudienceHtml();
-    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    var url = URL.createObjectURL(blob);
-    audienceWindow = window.open(url, 'offline-audience-window');
-    setTimeout(function() { URL.revokeObjectURL(url); }, AUDIENCE_BLOB_URL_REVOKE_DELAY_MS);
+    audienceWindow = window.open('', 'offline-audience-window');
+    if (audienceWindow) {
+      audienceWindow.document.open('text/html', 'replace');
+      audienceWindow.document.write(html);
+      audienceWindow.document.close();
+    }
   }
 
   document.getElementById('prev-btn').addEventListener('click', function() { move(-1); });
