@@ -1534,6 +1534,39 @@ input:focus-visible {
   margin: 1rem auto;
 }
 
+/* Mobile portrait: drop fixed aspect-ratio so slide content is fully visible */
+@media screen and (orientation: portrait) and (max-width: 1024px) {
+  .snapshot-body .slide {
+    min-height: auto;
+    padding-block: 1.5rem 5rem;
+    align-items: start;
+  }
+
+  .snapshot-body .slide__content {
+    min-height: auto;
+    align-items: start;
+  }
+
+  .snapshot-body .slide-card {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: auto;
+    overflow: visible;
+  }
+
+  .snapshot-body .slide-card__content {
+    height: auto;
+    overflow: visible;
+    font-size: clamp(1rem, 4vw, 1.5rem);
+  }
+
+  .snapshot-controls button {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.5rem 1.25rem;
+  }
+}
+
 .one-page-body {
   padding: 0 1rem 3rem;
   background: var(--body-layer-1), var(--body-layer-2), var(--body-layer-3);
