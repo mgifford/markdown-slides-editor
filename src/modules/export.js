@@ -454,17 +454,11 @@ function buildOdpContentXml({ title, renderedSlides, metadata = {} }) {
       } else if (slide.kind === "closing") {
         titleText = slide.title || `Slide ${index + 1}`;
         const paragraphs = [];
-        const lines = [];
         if (slide.prompt) paragraphs.push({ text: slide.prompt, style: "PSubtitle" });
-        // if (slide.prompt) lines.push(slide.prompt);
-        if (slide.contactEmail) lines.push(`Email: ${slide.contactEmail}`);
         if (slide.contactEmail) paragraphs.push({ text: `Email: ${slide.contactEmail}`, style: "PMeta" });
         if (slide.contactUrl) paragraphs.push({ text: `Website: ${stripProtocol(slide.contactUrl)}`, style: "PMeta" });
-        // if (slide.contactUrl) lines.push(`Website: ${stripProtocol(slide.contactUrl)}`);
         if (slide.socialLinks) paragraphs.push({ text: `Social: ${slide.socialLinks}`, style: "PMeta" });
-        // if (slide.socialLinks) lines.push(`Social: ${slide.socialLinks}`);
         if (slide.presentationUrl) paragraphs.push({ text: `Slides: ${stripProtocol(slide.presentationUrl)}`, style: "PMeta" });
-        // if (slide.presentationUrl) lines.push(`Slides: ${stripProtocol(slide.presentationUrl)}`);
         const bodyXml = paragraphs.length
           ? paragraphs.map(({ text, style }) => `<text:p text:style-name="${style}">${escapeXml(text)}</text:p>`).join("")
           : '<text:p text:style-name="PMeta"></text:p>';
@@ -474,7 +468,6 @@ function buildOdpContentXml({ title, renderedSlides, metadata = {} }) {
           ${bodyXml}
         </draw:text-box>
       </draw:frame>`;
-        bodyLines = lines;
       } else {
         titleText = slide.headings?.find((heading) => heading.level === 1)?.text || `Slide ${index + 1}`;
         const bodyHtml = slide.html.replace(/<h1[^>]*>[\s\S]*?<\/h1>/i, "");
