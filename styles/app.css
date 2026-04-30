@@ -1044,9 +1044,17 @@ input:focus-visible {
   margin-bottom: 0.75rem;
 }
 
+.slide-card h1 + h2 {
+  margin-top: 0.15em;
+}
+
 .slide-card h3 {
   font-size: clamp(1.4rem, 2.6vw, 2.2rem);
   margin-bottom: 0.6rem;
+}
+
+.slide-card h2 + h3 {
+  margin-top: 0.15em;
 }
 
 .slide-card p,
