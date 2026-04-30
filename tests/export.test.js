@@ -62,9 +62,7 @@ test("buildSnapshotHtml includes theme data, step counts, and embedded source pa
     source: "# One",
   });
 
-  assert.equal(html.includes('<html lang="en-CA"'), true);
-  assert.equal(html.includes('data-theme="night-slate"'), true);
-  assert.equal(html.includes('<html lang="en-CA" data-theme="night-slate"'), true, "data-theme should be on <html> for :root CSS variable rules to apply");
+  assert.equal(html.includes('<html lang="en-CA" data-theme="night-slate">'), true, "data-theme should be on the <html> element so :root[data-theme] CSS rules apply");
   assert.equal(html.includes('href="https://example.com/theme.css"'), true);
   assert.equal(html.includes('data-step-count="2"'), true);
   assert.equal(html.includes('<script id="deck-source" type="application/json">'), true);
@@ -182,9 +180,7 @@ test("buildOnePageHtml opens as a readable handout with save controls and suppor
     },
   });
 
-  assert.equal(html.includes('<html lang="en-CA"'), true);
-  assert.equal(html.includes('data-theme="night-slate"'), true);
-  assert.equal(html.includes('<html lang="en-CA" data-theme="night-slate"'), true, "data-theme should be on <html> for :root CSS variable rules to apply");
+  assert.equal(html.includes('<html lang="en-CA" data-theme="night-slate">'), true, "data-theme should be on the <html> element so :root[data-theme] CSS rules apply");
   assert.equal(html.includes("one-page-body"), true);
   assert.equal(html.includes("one-page-slide-card"), true);
   assert.equal(html.includes('aria-label="Slide 1"'), true);
@@ -304,9 +300,7 @@ test("buildOfflinePresentationHtml produces a presenter-view HTML with embedded 
   });
 
   assert.equal(html.includes('<!doctype html>'), true);
-  assert.equal(html.includes('<html lang="en-CA"'), true);
-  assert.equal(html.includes('data-theme="night-slate"'), true);
-  assert.equal(html.includes('<html lang="en-CA" data-theme="night-slate"'), true, "data-theme should be on <html> for :root CSS variable rules to apply");
+  assert.equal(html.includes('<html lang="en-CA" data-theme="night-slate">'), true, "data-theme should be on the <html> element so :root[data-theme] CSS rules apply");
   assert.equal(html.includes("My Offline Deck"), true);
   assert.equal(html.includes("Offline Presentation"), true);
   assert.equal(html.includes("Open Audience Window"), true);
