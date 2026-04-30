@@ -21,7 +21,7 @@ import { applyPreviewScale } from "../slide-layout.js";
 import { addColorModeToggle, buildSupplementalHtml, compileSource, createButton, createDeckFrame, mountSlideInto } from "./shared.js";
 
 async function readCss() {
-  const response = await fetch(new URL("../../styles/app.css", import.meta.url));
+  const response = await fetch(new URL("../../../styles/app.css", import.meta.url));
   return response.text();
 }
 

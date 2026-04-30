@@ -62,15 +62,16 @@ test("buildSnapshotHtml includes theme data, step counts, and embedded source pa
     source: "# One",
   });
 
-  assert.equal(html.includes('<html lang="en-CA">'), true);
+  assert.equal(html.includes('<html lang="en-CA"'), true);
   assert.equal(html.includes('data-theme="night-slate"'), true);
+  assert.equal(html.includes('<html lang="en-CA" data-theme="night-slate"'), true, "data-theme should be on <html> for :root CSS variable rules to apply");
   assert.equal(html.includes('href="https://example.com/theme.css"'), true);
   assert.equal(html.includes('data-step-count="2"'), true);
   assert.equal(html.includes('<script id="deck-source" type="application/json">'), true);
   assert.equal(html.includes('"slideCount":2'), true);
   assert.equal(html.includes('class="snapshot-body snapshot-viewer"'), true, "body should have snapshot-viewer class for viewport scaling");
   assert.equal(html.includes("slide-card__content"), true, "slides should include slide-card wrapper");
-  assert.equal(html.includes("max-height: 100vh"), true, "slide-card should use viewport-filling max-height instead of transform scaling");
+  assert.equal(html.includes("max-height: calc(100vh - 3rem)"), true, "slide-card should use viewport-filling max-height minus nav bar height");
   assert.equal(html.includes("setProperty(\"--snapshot-scale\""), false, "snapshot should not use transform-based viewport scaling");
 });
 
@@ -85,6 +86,20 @@ test("buildSnapshotHtml escapes closing script tags inside embedded source", () 
 
   assert.equal(html.includes("</script><script>alert"), false);
   assert.equal(html.includes("<\\/script><script>alert"), true);
+});
+
+test("buildSnapshotHtml HTML-escapes lang and theme in html element attributes", () => {
+  const html = buildSnapshotHtml({
+    title: "Escape test",
+    cssText: "",
+    renderedSlides: [{ html: "<h1>One</h1>", stepCount: 0 }],
+    metadata: { lang: 'en" onload="alert(1)', theme: 'dark" onload="alert(2)' },
+    source: "",
+  });
+
+  assert.equal(html.includes('lang="en" onload="alert(1)"'), false, "lang must not inject attributes");
+  assert.equal(html.includes('data-theme="dark" onload="alert(2)"'), false, "theme must not inject attributes");
+  assert.equal(html.includes("&quot;"), true, "double quotes must be HTML-escaped");
 });
 
 test("buildExportBundle includes markdown, html, odp, and mhtml files in the zip payload", () => {
@@ -167,8 +182,9 @@ test("buildOnePageHtml opens as a readable handout with save controls and suppor
     },
   });
 
-  assert.equal(html.includes('<html lang="en-CA">'), true);
+  assert.equal(html.includes('<html lang="en-CA"'), true);
   assert.equal(html.includes('data-theme="night-slate"'), true);
+  assert.equal(html.includes('<html lang="en-CA" data-theme="night-slate"'), true, "data-theme should be on <html> for :root CSS variable rules to apply");
   assert.equal(html.includes("one-page-body"), true);
   assert.equal(html.includes("one-page-slide-card"), true);
   assert.equal(html.includes('aria-label="Slide 1"'), true);
@@ -288,8 +304,9 @@ test("buildOfflinePresentationHtml produces a presenter-view HTML with embedded 
   });
 
   assert.equal(html.includes('<!doctype html>'), true);
-  assert.equal(html.includes('<html lang="en-CA">'), true);
+  assert.equal(html.includes('<html lang="en-CA"'), true);
   assert.equal(html.includes('data-theme="night-slate"'), true);
+  assert.equal(html.includes('<html lang="en-CA" data-theme="night-slate"'), true, "data-theme should be on <html> for :root CSS variable rules to apply");
   assert.equal(html.includes("My Offline Deck"), true);
   assert.equal(html.includes("Offline Presentation"), true);
   assert.equal(html.includes("Open Audience Window"), true);
@@ -437,7 +454,7 @@ test("buildOfflinePresentationHtml HTML-escapes the title in attributes and text
   assert.equal(html.includes("&lt;script&gt;"), true, "title should be HTML-escaped in the rendered output");
 });
 
-test("buildOfflinePresentationHtml HTML-escapes theme and deckStyleAttr in body attributes", () => {
+test("buildOfflinePresentationHtml HTML-escapes theme and deckStyleAttr in html element attributes", () => {
   const html = buildOfflinePresentationHtml({
     title: "Attr test",
     cssText: "",
