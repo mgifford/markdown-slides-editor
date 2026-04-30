@@ -51,7 +51,7 @@ Supported deck structure:
 Currently supported front matter includes:
 
 - `title`
-- `lang` — BCP 47 language tag (e.g. `en`, `fr`, `es-MX`). Sets the HTML `lang` attribute on the presentation.
+- `lang` — BCP 47 language tag (e.g. `en`, `fr`, `es-MX`, `en-CA`). Sets the HTML `lang` attribute on the presentation and controls the spellcheck language in the editor.
 - `Language` — alternative to `lang`; accepts ISO 639-1 codes or full English language names (e.g. `French`, `Spanish`). Resolved to an ISO 639-1 language code automatically. Ignored when `lang` is also present.
 - `theme`
 - `themeStylesheet`
@@ -144,6 +144,7 @@ Generated closing slides can include:
 The editor view at `/` currently includes:
 
 - Markdown source editing
+- browser-native spellcheck (enabled automatically, language driven by `lang` front matter field)
 - live preview of the active slide
 - split-pane editing and preview by default on desktop widths
 - automatic preview sync based on caret position in the source editor

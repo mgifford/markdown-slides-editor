@@ -141,7 +141,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
           </span>
         </div>
         <p class="local-save-status">Saved locally in this browser on this device. Export to keep a copy elsewhere.</p>
-        <textarea id="source-editor" class="editor" spellcheck="false"></textarea>
+        <textarea id="source-editor" class="editor" spellcheck="true"></textarea>
       </section>
       <div class="editor-layout__divider" id="editor-layout-divider" role="separator" aria-orientation="vertical" aria-label="Resize editor and preview panels" tabindex="0"></div>
       <section class="panel panel--preview" aria-live="polite">
@@ -581,6 +581,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
 
   function publishState(compiled) {
     applyDeckTheme(compiled.metadata);
+    editor.lang = compiled.metadata.lang || "";
     aiPromptDefaults = createAiPromptDefaults(compiled);
     sync.postMessage({
       type: "deck-updated",
