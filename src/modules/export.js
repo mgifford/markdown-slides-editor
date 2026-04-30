@@ -10,6 +10,22 @@ function escapeScriptText(value) {
   return value.replace(/<\/script/gi, (match) => "<\\/" + match.slice(2));
 }
 
+function escapeStyleText(value) {
+  // <style> is a raw text element: the HTML parser closes it at the first </style token
+  // (case-insensitive). Escape any such sequence to prevent premature closure when CSS
+  // content from an external theme stylesheet contains it (e.g. in a comment).
+  return value.replace(/<\/style/gi, (match) => "<\\/" + match.slice(2));
+}
+
+function escapeHtmlAttr(value) {
+  // Minimal HTML escaping for attribute values and text nodes in the generated HTML templates.
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
 function escapeXml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -610,7 +626,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
     }),
   );
 
-  const allCss = cssText + (themeStylesheetCss ? "\n" + themeStylesheetCss : "");
+  const allCss = escapeStyleText(cssText + (themeStylesheetCss ? "\n" + themeStylesheetCss : ""));
 
   const slideCount = renderedSlides.length;
   const timerMinutes = String(Math.floor(duration)).padStart(2, "0");
@@ -619,12 +635,17 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
 
   const escapedAudienceScript = escapeScriptText(buildAudienceScriptText());
 
+  const safeTitle = escapeHtmlAttr(title);
+  const safeLang = escapeHtmlAttr(lang);
+  const safeTheme = escapeHtmlAttr(theme);
+  const safeDeckStyle = escapeHtmlAttr(deckStyleAttr);
+
   return `<!doctype html>
-<html lang="${lang}">
+<html lang="${safeLang}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${title} \u2013 Offline Presentation</title>
+    <title>${safeTitle} \u2013 Offline Presentation</title>
     <style id="offline-app-styles">${allCss}</style>
     <style>
       .offline-presenter-layout {
@@ -657,11 +678,11 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
       }
     </style>
   </head>
-  <body class="snapshot-body" data-theme="${theme}" style="${deckStyleAttr}">
+  <body class="snapshot-body" data-theme="${safeTheme}" style="${safeDeckStyle}">
     <header class="topbar">
       <div>
         <p class="eyebrow">Offline Presentation</p>
-        <h1>${title}</h1>
+        <h1>${safeTitle}</h1>
       </div>
       <div class="topbar__actions">
         <button type="button" id="open-audience-btn">Open Audience Window</button>
@@ -691,7 +712,17 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
     <script id="offline-audience-script" type="text/plain">${escapedAudienceScript}</script>
     <script>
 (function() {
-  var data = JSON.parse(document.getElementById('deck-payload').textContent);
+  var payloadEl = document.getElementById('deck-payload');
+  var data;
+  try {
+    data = JSON.parse(payloadEl ? payloadEl.textContent : '{}');
+  } catch (parseErr) {
+    var errContainer = document.getElementById('current-slide-frame');
+    if (errContainer) {
+      errContainer.innerHTML = '<p style="padding:1rem;color:red;">Error loading presentation data: ' + parseErr.message + '</p>';
+    }
+    return;
+  }
   var slides = data.slides;
   var activeSlideIndex = 0;
   var revealStep = 0;
