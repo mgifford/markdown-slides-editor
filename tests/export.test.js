@@ -473,3 +473,79 @@ test("buildOfflinePresentationHtml inline script wraps JSON.parse in try-catch f
   assert.equal(html.includes("try {"), true, "inline script should have try block for JSON.parse");
   assert.equal(html.includes("} catch (parseErr) {"), true, "inline script should handle JSON.parse errors");
 });
+
+test("buildOdpPresentation uses PTitleLarge for title-kind slides and PTitle for regular slides", () => {
+  const odp = buildOdpPresentation({
+    title: "My Talk",
+    renderedSlides: [
+      {
+        kind: "title",
+        title: "My Talk",
+        subtitle: "A subtitle",
+        date: "2026-05-01",
+        html: "",
+        headings: [{ level: 1, text: "My Talk" }],
+      },
+      {
+        html: "<h1>Regular Slide</h1><p>Body content here</p>",
+        headings: [{ level: 1, text: "Regular Slide" }],
+      },
+    ],
+    metadata: { slideWidth: 1280, slideHeight: 720 },
+  });
+
+  const zip = new TextDecoder().decode(odp);
+  assert.equal(zip.includes('text:style-name="PTitleLarge"'), true, "title-kind slide should use PTitleLarge style");
+  assert.equal(zip.includes('text:style-name="PTitle"'), true, "regular slide should use PTitle style");
+  assert.equal(zip.includes('text:style-name="PSubtitle"'), true, "subtitle should use PSubtitle style");
+  assert.equal(zip.includes('text:style-name="PMeta"'), true, "metadata lines should use PMeta style");
+  assert.equal(zip.includes("fo:font-size=\"32pt\""), true, "PTitleLarge should define a 32pt font");
+});
+
+test("buildOdpPresentation renders two-column layout as two side-by-side frames", () => {
+  const columnHtml =
+    '<h1>Columns Slide</h1>' +
+    '<div class="layout-columns">' +
+    '<section class="layout-columns__column layout-columns__column--left"><p>Left point</p><ul><li>Item A</li></ul></section>' +
+    '<section class="layout-columns__column layout-columns__column--right"><p>Right point</p><ul><li>Item B</li></ul></section>' +
+    "</div>";
+
+  const odp = buildOdpPresentation({
+    title: "Two Columns",
+    renderedSlides: [
+      {
+        html: columnHtml,
+        headings: [{ level: 1, text: "Columns Slide" }],
+      },
+    ],
+    metadata: { slideWidth: 1280, slideHeight: 720 },
+  });
+
+  const zip = new TextDecoder().decode(odp);
+  assert.equal(zip.includes("Left point"), true, "left column content should be present");
+  assert.equal(zip.includes("Right point"), true, "right column content should be present");
+  assert.equal(zip.includes("• Item A"), true, "left column bullet should be present");
+  assert.equal(zip.includes("• Item B"), true, "right column bullet should be present");
+  // Two separate draw:frame elements should appear for the body (left and right columns)
+  const frameCount = (zip.match(/presentation:class="outline"/g) || []).length;
+  assert.equal(frameCount, 2, "two-column slide should produce two body frames");
+});
+
+test("buildOdpPresentation applies PH2 and PH3 styles for headings inside slide body", () => {
+  const odp = buildOdpPresentation({
+    title: "Headings",
+    renderedSlides: [
+      {
+        html: "<h1>Slide</h1><h2>Section heading</h2><p>Body text</p><h3>Sub heading</h3><ul><li>Item</li></ul>",
+        headings: [{ level: 1, text: "Slide" }],
+      },
+    ],
+    metadata: { slideWidth: 1280, slideHeight: 720 },
+  });
+
+  const zip = new TextDecoder().decode(odp);
+  assert.equal(zip.includes('text:style-name="PH2"'), true, "H2 headings should use PH2 style");
+  assert.equal(zip.includes("Section heading"), true, "H2 text should be present");
+  assert.equal(zip.includes('text:style-name="PH3"'), true, "H3 headings should use PH3 style");
+  assert.equal(zip.includes("Sub heading"), true, "H3 text should be present");
+});

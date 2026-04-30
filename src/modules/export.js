@@ -291,6 +291,77 @@ function htmlToTextLines(value) {
     .filter(Boolean);
 }
 
+/**
+ * Convert slide body HTML into an array of `{ text, style }` objects suitable
+ * for ODP `<text:p>` elements.  H2 and H3 headings are tagged with distinct
+ * style names (`PH2` / `PH3`) so they render at the right size in Impress.
+ */
+// Sentinel prefixes written into the plain-text conversion to mark heading levels.
+// They must be unique strings that cannot appear in normal slide content.
+const ODP_H2_MARKER = "__H2__";
+const ODP_H3_MARKER = "__H3__";
+
+function htmlToOdpParagraphs(html) {
+  // Capture H2/H3 inner text before all other tags are stripped so we can
+  // assign the correct paragraph style.  Any residual tags inside the heading
+  // are removed by stripTags, which also strips bare `<` characters to ensure
+  // no angle-bracket sequences survive.  The overall normalized string receives
+  // the same treatment at the end of the chain.  All text values are
+  // additionally passed through escapeXml() at every call site before being
+  // written into the ODP XML.
+  const stripTags = (s) => s.replace(/<[^>]+>/g, "").replace(/</g, "");
+  const normalized = String(html)
+    .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, (_, inner) => "\n" + ODP_H2_MARKER + stripTags(inner) + "\n")
+    .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, (_, inner) => "\n" + ODP_H3_MARKER + stripTags(inner) + "\n")
+    .replace(/<li[^>]*>/gi, "\n• ")
+    .replace(/<(?:br|br\/)\s*>/gi, "\n")
+    .replace(/<\/(?:p|div|section|article|blockquote|ul|ol|li|h4|h5|h6|dt|dd|th|td|tr)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/</g, "");
+
+  const paragraphs = [];
+  for (const line of decodeHtmlEntities(normalized).split(/\n+/)) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed.startsWith(ODP_H2_MARKER)) {
+      paragraphs.push({ text: trimmed.slice(ODP_H2_MARKER.length).trim(), style: "PH2" });
+    } else if (trimmed.startsWith(ODP_H3_MARKER)) {
+      paragraphs.push({ text: trimmed.slice(ODP_H3_MARKER.length).trim(), style: "PH3" });
+    } else {
+      paragraphs.push({ text: trimmed, style: "PBody" });
+    }
+  }
+  return paragraphs;
+}
+
+// CSS class fragments used to identify the left/right column sections in rendered HTML.
+const LEFT_COLUMN_CLASS = "layout-columns__column--left";
+const RIGHT_COLUMN_CLASS = "layout-columns__column--right";
+const LEFT_COLUMN_RE = /<section[^>]*layout-columns__column--left[^>]*>([\s\S]*?)<\/section>/i;
+const RIGHT_COLUMN_RE = /<section[^>]*layout-columns__column--right[^>]*>([\s\S]*?)<\/section>/i;
+// Horizontal gap in centimetres between the two columns of a two-column slide.
+const COLUMN_GAP_CM = 0.4;
+
+/**
+ * Return `{ left, right }` arrays of `{ text, style }` objects when the HTML
+ * contains a two-column `layout-columns` layout; returns `null` otherwise.
+ */
+function extractColumnsFromHtml(bodyHtml) {
+  if (!bodyHtml.includes(LEFT_COLUMN_CLASS) && !bodyHtml.includes(RIGHT_COLUMN_CLASS)) {
+    return null;
+  }
+
+  const leftMatch = LEFT_COLUMN_RE.exec(bodyHtml);
+  const rightMatch = RIGHT_COLUMN_RE.exec(bodyHtml);
+
+  if (!leftMatch && !rightMatch) return null;
+
+  return {
+    left: leftMatch ? htmlToOdpParagraphs(leftMatch[1]) : [],
+    right: rightMatch ? htmlToOdpParagraphs(rightMatch[1]) : [],
+  };
+}
+
 function getDeckPageSize(metadata = {}) {
   const width = Number(metadata.slideWidth) > 0 ? Number(metadata.slideWidth) : 1280;
   const height = Number(metadata.slideHeight) > 0 ? Number(metadata.slideHeight) : 720;
@@ -349,54 +420,113 @@ function buildOdpStylesXml(metadata = {}) {
 
 function buildOdpContentXml({ title, renderedSlides, metadata = {} }) {
   const { widthCm, heightCm } = getDeckPageSize(metadata);
-  const titleWidth = Number((widthCm - 2).toFixed(2));
+  const marginCm = 1;
+  const titleX = marginCm;
+  const titleY = 0.9;
+  const titleHeight = 2.8;
+  const titleWidth = Number((widthCm - 2 * marginCm).toFixed(2));
+  const bodyX = marginCm;
+  const bodyY = Number((titleY + titleHeight + 0.5).toFixed(2));
   const bodyWidth = titleWidth;
-  const bodyHeight = Number((heightCm - 5.2).toFixed(2));
+  const bodyHeight = Number((heightCm - bodyY - marginCm).toFixed(2));
 
   const pagesMarkup = renderedSlides
     .map((slide, index) => {
       let titleText;
-      let bodyLines;
+      let bodyFramesXml;
 
       if (slide.kind === "title") {
         titleText = slide.title || `Slide ${index + 1}`;
-        const lines = [];
-        if (slide.subtitle) lines.push(slide.subtitle);
-        if (slide.date) lines.push(`Date: ${slide.date}`);
-        if (slide.location) lines.push(`Location: ${slide.location}`);
-        if (slide.speakers) lines.push(`Speakers: ${slide.speakers}`);
-        bodyLines = lines;
+        const paragraphs = [];
+        if (slide.subtitle) paragraphs.push({ text: slide.subtitle, style: "PSubtitle" });
+        if (slide.date) paragraphs.push({ text: `Date: ${slide.date}`, style: "PMeta" });
+        if (slide.location) paragraphs.push({ text: `Location: ${slide.location}`, style: "PMeta" });
+        if (slide.speakers) paragraphs.push({ text: `Speakers: ${slide.speakers}`, style: "PMeta" });
+        const bodyXml = paragraphs.length
+          ? paragraphs.map(({ text, style }) => `<text:p text:style-name="${style}">${escapeXml(text)}</text:p>`).join("")
+          : '<text:p text:style-name="PMeta"></text:p>';
+        bodyFramesXml = `
+      <draw:frame draw:style-name="gr-body" presentation:class="outline" svg:x="${bodyX}cm" svg:y="${bodyY}cm" svg:width="${bodyWidth}cm" svg:height="${bodyHeight}cm">
+        <draw:text-box>
+          ${bodyXml}
+        </draw:text-box>
+      </draw:frame>`;
       } else if (slide.kind === "closing") {
         titleText = slide.title || `Slide ${index + 1}`;
+        const paragraphs = [];
         const lines = [];
-        if (slide.prompt) lines.push(slide.prompt);
+        if (slide.prompt) paragraphs.push({ text: slide.prompt, style: "PSubtitle" });
+        // if (slide.prompt) lines.push(slide.prompt);
         if (slide.contactEmail) lines.push(`Email: ${slide.contactEmail}`);
-        if (slide.contactUrl) lines.push(`Website: ${stripProtocol(slide.contactUrl)}`);
-        if (slide.socialLinks) lines.push(`Social: ${slide.socialLinks}`);
-        if (slide.presentationUrl) lines.push(`Slides: ${stripProtocol(slide.presentationUrl)}`);
+        if (slide.contactEmail) paragraphs.push({ text: `Email: ${slide.contactEmail}`, style: "PMeta" });
+        if (slide.contactUrl) paragraphs.push({ text: `Website: ${stripProtocol(slide.contactUrl)}`, style: "PMeta" });
+        // if (slide.contactUrl) lines.push(`Website: ${stripProtocol(slide.contactUrl)}`);
+        if (slide.socialLinks) paragraphs.push({ text: `Social: ${slide.socialLinks}`, style: "PMeta" });
+        // if (slide.socialLinks) lines.push(`Social: ${slide.socialLinks}`);
+        if (slide.presentationUrl) paragraphs.push({ text: `Slides: ${stripProtocol(slide.presentationUrl)}`, style: "PMeta" });
+        // if (slide.presentationUrl) lines.push(`Slides: ${stripProtocol(slide.presentationUrl)}`);
+        const bodyXml = paragraphs.length
+          ? paragraphs.map(({ text, style }) => `<text:p text:style-name="${style}">${escapeXml(text)}</text:p>`).join("")
+          : '<text:p text:style-name="PMeta"></text:p>';
+        bodyFramesXml = `
+      <draw:frame draw:style-name="gr-body" presentation:class="outline" svg:x="${bodyX}cm" svg:y="${bodyY}cm" svg:width="${bodyWidth}cm" svg:height="${bodyHeight}cm">
+        <draw:text-box>
+          ${bodyXml}
+        </draw:text-box>
+      </draw:frame>`;
         bodyLines = lines;
       } else {
         titleText = slide.headings?.find((heading) => heading.level === 1)?.text || `Slide ${index + 1}`;
         const bodyHtml = slide.html.replace(/<h1[^>]*>[\s\S]*?<\/h1>/i, "");
-        bodyLines = htmlToTextLines(bodyHtml);
+
+        const columns = extractColumnsFromHtml(bodyHtml);
+        if (columns) {
+          // Two-column layout: place left and right content in side-by-side frames.
+          const colWidth = Number(((bodyWidth - COLUMN_GAP_CM) / 2).toFixed(2));
+          const rightColX = Number((bodyX + colWidth + COLUMN_GAP_CM).toFixed(2));
+
+          const leftXml = columns.left.length
+            ? columns.left.map(({ text, style }) => `<text:p text:style-name="${style}">${escapeXml(text)}</text:p>`).join("")
+            : '<text:p text:style-name="PBody"></text:p>';
+          const rightXml = columns.right.length
+            ? columns.right.map(({ text, style }) => `<text:p text:style-name="${style}">${escapeXml(text)}</text:p>`).join("")
+            : '<text:p text:style-name="PBody"></text:p>';
+
+          bodyFramesXml = `
+      <draw:frame draw:style-name="gr-body" presentation:class="outline" svg:x="${bodyX}cm" svg:y="${bodyY}cm" svg:width="${colWidth}cm" svg:height="${bodyHeight}cm">
+        <draw:text-box>
+          ${leftXml}
+        </draw:text-box>
+      </draw:frame>
+      <draw:frame draw:style-name="gr-body" presentation:class="outline" svg:x="${rightColX}cm" svg:y="${bodyY}cm" svg:width="${colWidth}cm" svg:height="${bodyHeight}cm">
+        <draw:text-box>
+          ${rightXml}
+        </draw:text-box>
+      </draw:frame>`;
+        } else {
+          const paragraphs = htmlToOdpParagraphs(bodyHtml);
+          const bodyXml = paragraphs.length
+            ? paragraphs.map(({ text, style }) => `<text:p text:style-name="${style}">${escapeXml(text)}</text:p>`).join("")
+            : '<text:p text:style-name="PBody"></text:p>';
+          bodyFramesXml = `
+      <draw:frame draw:style-name="gr-body" presentation:class="outline" svg:x="${bodyX}cm" svg:y="${bodyY}cm" svg:width="${bodyWidth}cm" svg:height="${bodyHeight}cm">
+        <draw:text-box>
+          ${bodyXml}
+        </draw:text-box>
+      </draw:frame>`;
+        }
       }
 
-      const bodyParagraphs = bodyLines.length
-        ? bodyLines.map((line) => `<text:p text:style-name="PBody">${escapeXml(line)}</text:p>`).join("")
-        : '<text:p text:style-name="PBody"></text:p>';
+      const titleStyleName = slide.kind === "title" ? "PTitleLarge" : "PTitle";
 
       return `
     <draw:page draw:name="page${index + 1}" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
-      <draw:frame draw:style-name="gr-title" presentation:class="title" svg:x="1cm" svg:y="0.9cm" svg:width="${titleWidth}cm" svg:height="2.8cm">
+      <draw:frame draw:style-name="gr-title" presentation:class="title" svg:x="${titleX}cm" svg:y="${titleY}cm" svg:width="${titleWidth}cm" svg:height="${titleHeight}cm">
         <draw:text-box>
-          <text:p text:style-name="PTitle">${escapeXml(titleText)}</text:p>
+          <text:p text:style-name="${titleStyleName}">${escapeXml(titleText)}</text:p>
         </draw:text-box>
       </draw:frame>
-      <draw:frame draw:style-name="gr-body" presentation:class="outline" svg:x="1cm" svg:y="4.2cm" svg:width="${bodyWidth}cm" svg:height="${bodyHeight}cm">
-        <draw:text-box>
-          ${bodyParagraphs}
-        </draw:text-box>
-      </draw:frame>
+      ${bodyFramesXml}
     </draw:page>`;
     })
     .join("");
@@ -424,12 +554,32 @@ function buildOdpContentXml({ title, renderedSlides, metadata = {} }) {
     <style:style style:name="gr-body" style:family="graphic">
       <style:graphic-properties draw:stroke="none" draw:fill="none" draw:auto-grow-height="true" draw:auto-grow-width="false"/>
     </style:style>
+    <style:style style:name="PTitleLarge" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="center" fo:margin-bottom="0.3cm"/>
+      <style:text-properties fo:font-size="32pt" fo:font-weight="bold"/>
+    </style:style>
     <style:style style:name="PTitle" style:family="paragraph">
-      <style:text-properties fo:font-size="24pt" fo:font-weight="bold"/>
+      <style:text-properties fo:font-size="28pt" fo:font-weight="bold"/>
+    </style:style>
+    <style:style style:name="PSubtitle" style:family="paragraph">
+      <style:paragraph-properties fo:margin-bottom="0.35cm"/>
+      <style:text-properties fo:font-size="20pt" fo:font-style="italic"/>
+    </style:style>
+    <style:style style:name="PMeta" style:family="paragraph">
+      <style:paragraph-properties fo:margin-bottom="0.2cm"/>
+      <style:text-properties fo:font-size="16pt"/>
+    </style:style>
+    <style:style style:name="PH2" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0.3cm" fo:margin-bottom="0.2cm"/>
+      <style:text-properties fo:font-size="22pt" fo:font-weight="bold"/>
+    </style:style>
+    <style:style style:name="PH3" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0.2cm" fo:margin-bottom="0.15cm"/>
+      <style:text-properties fo:font-size="19pt" fo:font-weight="bold"/>
     </style:style>
     <style:style style:name="PBody" style:family="paragraph">
       <style:paragraph-properties fo:margin-bottom="0.22cm"/>
-      <style:text-properties fo:font-size="16pt"/>
+      <style:text-properties fo:font-size="18pt"/>
     </style:style>
   </office:automatic-styles>
   <office:body>
