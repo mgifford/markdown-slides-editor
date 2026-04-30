@@ -100,6 +100,33 @@ test("buildSnapshotHtml HTML-escapes lang and theme in html element attributes",
   assert.equal(html.includes("&quot;"), true, "double quotes must be HTML-escaped");
 });
 
+test("buildSnapshotHtml inlines themeStylesheetCss as a <style> block instead of a <link> tag", () => {
+  const html = buildSnapshotHtml({
+    title: "Inline theme test",
+    cssText: "",
+    themeStylesheetCss: ".custom-theme { color: navy; }",
+    renderedSlides: [{ html: "<h1>One</h1>", stepCount: 0 }],
+    metadata: { themeStylesheet: "https://example.com/theme.css" },
+    source: "",
+  });
+
+  assert.equal(html.includes(".custom-theme { color: navy; }"), true, "theme CSS should be inlined in a <style> block");
+  assert.equal(html.includes('href="https://example.com/theme.css"'), false, "external theme link should not be present when CSS is inlined");
+});
+
+test("buildOnePageHtml inlines themeStylesheetCss as a <style> block instead of a <link> tag", () => {
+  const html = buildOnePageHtml({
+    title: "Inline theme test",
+    cssText: "",
+    themeStylesheetCss: ".custom-theme { background: navy; }",
+    renderedSlides: [{ html: "<h1>One</h1>" }],
+    metadata: { themeStylesheet: "https://example.com/theme.css" },
+  });
+
+  assert.equal(html.includes(".custom-theme { background: navy; }"), true, "theme CSS should be inlined in a <style> block");
+  assert.equal(html.includes('href="https://example.com/theme.css"'), false, "external theme link should not be present when CSS is inlined");
+});
+
 test("buildExportBundle includes markdown, html, odp, and one-page html files in the zip payload", () => {
   const bundle = buildExportBundle({
     markdownSource: "# Deck",

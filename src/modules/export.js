@@ -1202,7 +1202,7 @@ function buildOnePageSupportMarkup(slide) {
   return `<div class="one-page-support" aria-label="Supporting material">${sections.join("")}</div>`;
 }
 
-export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
+export function buildOnePageHtml({ title, cssText, themeStylesheetCss, renderedSlides, metadata }) {
   const slidesMarkup = renderedSlides
     .map(
       (slide, index) => {
@@ -1239,7 +1239,7 @@ export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>
-    ${buildThemeLinkTag(metadata)}
+    ${themeStylesheetCss ? `<style>${escapeStyleText(themeStylesheetCss)}</style>` : buildThemeLinkTag(metadata)}
     <style>${escapeStyleText(cssText)}</style>
     <style>
       .one-page-body .slide {
@@ -1326,7 +1326,7 @@ export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
 </html>`;
 }
 
-export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, source }) {
+export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, renderedSlides, metadata, source }) {
   const slidesMarkup = renderedSlides
     .map(
       (slide, index) => {
@@ -1365,7 +1365,7 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>
-    ${buildThemeLinkTag(metadata)}
+    ${themeStylesheetCss ? `<style>${escapeStyleText(themeStylesheetCss)}</style>` : buildThemeLinkTag(metadata)}
     <style>${escapeStyleText(cssText)}</style>
     <style>
       .snapshot-viewer .slide__content {

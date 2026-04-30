@@ -1016,6 +1016,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     const html = buildSnapshotHtml({
       title: lastCompiled?.metadata.title || "Slide deck snapshot",
       cssText,
+      themeStylesheetCss,
       renderedSlides: slidesForOffline,
       metadata: lastCompiled?.metadata || {},
       source,
@@ -1032,6 +1033,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     const onePageHtml = buildOnePageHtml({
       title: lastCompiled?.metadata.title || "Slide deck one-page view",
       cssText,
+      themeStylesheetCss,
       renderedSlides: slidesForOffline,
       metadata: lastCompiled?.metadata || {},
     });
@@ -1066,9 +1068,24 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
 
   onePageButton.addEventListener("click", async () => {
     const cssText = await readCss();
+
+    let themeStylesheetCss = "";
+    const themeStylesheetUrl = lastCompiled?.metadata?.themeStylesheet;
+    if (isValidThemeStylesheetUrl(themeStylesheetUrl)) {
+      try {
+        const themeResponse = await fetch(themeStylesheetUrl);
+        if (themeResponse.ok) {
+          themeStylesheetCss = await themeResponse.text();
+        }
+      } catch {
+        // Theme CSS fetch failed; file will omit the external theme
+      }
+    }
+
     const html = buildOnePageHtml({
       title: lastCompiled?.metadata.title || "Slide deck snapshot",
       cssText,
+      themeStylesheetCss,
       renderedSlides: lastCompiled?.renderedSlides || [],
       metadata: lastCompiled?.metadata || {},
     });
