@@ -75,9 +75,13 @@ function renderTitleSlide(slide) {
   };
 }
 
+function stripProtocol(value) {
+  return String(value).replace(/^https?:\/\//, "");
+}
+
 function renderContactValue(value, href) {
   if (!value) return "";
-  const safeValue = escapeHtml(value);
+  const safeValue = escapeHtml(stripProtocol(value));
   const safeHref = escapeHtml(href || value);
   return `<a href="${safeHref}">${safeValue}</a>`;
 }
