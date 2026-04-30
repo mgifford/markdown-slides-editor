@@ -1204,6 +1204,21 @@ export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
 
+      function computeSlide4upScale() {
+        const root = document.documentElement;
+        const slideWidthPx = parseFloat(getComputedStyle(root).getPropertyValue("--slide-width-px").trim()) || 1280;
+        const card = document.querySelector(".slide-card");
+        if (!card) return;
+        const containerWidth = card.clientWidth;
+        if (containerWidth > 0) {
+          root.style.setProperty("--slide-4up-scale", String(containerWidth / slideWidthPx));
+        }
+      }
+
+      window.addEventListener("resize", () => {
+        if (document.body.dataset.printLayout === "4up") computeSlide4upScale();
+      });
+
       document.querySelector('[data-action="save-html"]')?.addEventListener("click", saveHtmlDocument);
       document.querySelector('[data-action="print"]')?.addEventListener("click", () => window.print());
       document.querySelector('[data-action="toggle-layout"]')?.addEventListener("click", function() {
@@ -1213,6 +1228,7 @@ export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
         this.textContent = next4up ? "1 per page" : "4 per page";
         if (next4up) {
           document.body.dataset.printLayout = "4up";
+          computeSlide4upScale();
         } else {
           delete document.body.dataset.printLayout;
         }

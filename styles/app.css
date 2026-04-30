@@ -1644,6 +1644,27 @@ input:focus-visible {
   grid-template-columns: 1fr 1fr;
 }
 
+/* 4-up: slide card acts as thumbnail viewport (like preview-frame--compact) */
+.one-page-body[data-print-layout="4up"] .slide-card {
+  position: relative;
+  padding: 0;
+}
+
+/* 4-up: content renders at native slide dimensions and scales to fit */
+.one-page-body[data-print-layout="4up"] .slide-card__content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(var(--slide-width-px, 1280) * 1px);
+  height: calc(var(--slide-height-px, 720) * 1px);
+  padding: clamp(1.5rem, 3vw, 3rem);
+  max-width: none;
+  transform-origin: top left;
+  transform: scale(var(--slide-4up-scale, 0.5));
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
 .one-page-support {
   display: grid;
   gap: 0.85rem;
@@ -1930,9 +1951,7 @@ input:focus-visible {
   }
 
   .one-page-body a[href]::after {
-    content: " (" attr(href) ")";
-    font-size: 0.9em;
-    word-break: break-all;
+    content: none;
   }
 
   .one-page-body img {
@@ -1953,11 +1972,28 @@ input:focus-visible {
     page-break-inside: avoid;
   }
 
-  /* Restore slide aspect ratio in 4-up mode for thumbnail-style display */
+  /* Restore slide aspect ratio in 4-up mode and make it a thumbnail viewport */
   .one-page-body[data-print-layout="4up"] .slide-card {
+    position: relative !important;
+    padding: 0 !important;
     aspect-ratio: var(--slide-aspect-ratio) !important;
     min-height: 0 !important;
     overflow: hidden;
+  }
+
+  /* Scale content to fit the thumbnail: column = (100vw - gap) / 2 / native-slide-width */
+  .one-page-body[data-print-layout="4up"] .slide-card__content {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: calc(var(--slide-width-px, 1280) * 1px) !important;
+    height: calc(var(--slide-height-px, 720) * 1px) !important;
+    padding: clamp(1.5rem, 3vw, 3rem) !important;
+    max-width: none !important;
+    transform-origin: top left !important;
+    transform: scale(calc((100vw - 0.15in) / (var(--slide-width-px, 1280) * 2px))) !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
   }
 
   /* Force page break after every 4 slides (2 rows) in 4-up mode */
