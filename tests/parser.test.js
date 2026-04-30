@@ -1105,7 +1105,7 @@ plain text block
   assert.equal(rendered.html.includes('class="language-'), false);
 });
 
-test("renderMarkdown renders ::code escapes HTML entities in content", () => {
+test("renderMarkdown escapes HTML entities in ::code content", () => {
   const rendered = renderMarkdown(`::code html
 <div class="test">Hello &amp; World</div>
 ::`);
