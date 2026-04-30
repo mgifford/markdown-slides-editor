@@ -549,3 +549,90 @@ test("buildOdpPresentation applies PH2 and PH3 styles for headings inside slide 
   assert.equal(zip.includes('text:style-name="PH3"'), true, "H3 headings should use PH3 style");
   assert.equal(zip.includes("Sub heading"), true, "H3 text should be present");
 });
+
+test("buildOdpPresentation preserves H2 sub-headings and text that appear before/after the two-column block", () => {
+  // H2 sub-heading before the columns div and a paragraph after it must both
+  // appear in the output even though they are outside the column sections.
+  const html =
+    "<h1>Title</h1>" +
+    "<h2>Sub-heading</h2>" +
+    '<div class="layout-columns">' +
+    '<section class="layout-columns__column layout-columns__column--left"><p>Left text</p></section>' +
+    '<section class="layout-columns__column layout-columns__column--right"><p>Right text</p></section>' +
+    "</div>" +
+    "<p>After columns</p>";
+
+  const odp = buildOdpPresentation({
+    title: "Outer content",
+    renderedSlides: [{ html, headings: [{ level: 1, text: "Title" }] }],
+    metadata: { slideWidth: 1280, slideHeight: 720 },
+  });
+
+  const zip = new TextDecoder().decode(odp);
+  assert.equal(zip.includes("Sub-heading"), true, "H2 sub-heading before columns should be preserved");
+  assert.equal(zip.includes('text:style-name="PH2"'), true, "H2 outside columns should use PH2 style");
+  assert.equal(zip.includes("Left text"), true, "left column content should be present");
+  assert.equal(zip.includes("Right text"), true, "right column content should be present");
+  assert.equal(zip.includes("After columns"), true, "text after the columns block should be preserved");
+});
+
+test("buildOdpPresentation preserves H2 sub-headings inside columns even when nested divs are present", () => {
+  // Columns whose inner HTML contains nested <div> elements must not confuse
+  // the layout-columns wrapper search, and H2s before the wrapper must still
+  // appear in the output.
+  const html =
+    "<h1>Title</h1>" +
+    "<h2>Pre-column heading</h2>" +
+    '<div class="layout-columns">' +
+    '<section class="layout-columns__column layout-columns__column--left"><div><p>Nested left</p></div></section>' +
+    '<section class="layout-columns__column layout-columns__column--right"><p>Right item</p></section>' +
+    "</div>" +
+    "<p>Footer text</p>";
+
+  const odp = buildOdpPresentation({
+    title: "Nested divs",
+    renderedSlides: [{ html, headings: [{ level: 1, text: "Title" }] }],
+    metadata: { slideWidth: 1280, slideHeight: 720 },
+  });
+
+  const zip = new TextDecoder().decode(odp);
+  assert.equal(zip.includes("Pre-column heading"), true, "H2 before columns should survive nested inner divs");
+  assert.equal(zip.includes("Nested left"), true, "left column nested content should be present");
+  assert.equal(zip.includes("Footer text"), true, "footer text after columns should be preserved");
+});
+
+test("buildOdpPresentation includes img alt text and SVG placeholder in slide body", () => {
+  const html =
+    "<h1>Images</h1>" +
+    '<p><img src="https://example.com/chart.svg" alt="Sales chart" /></p>' +
+    '<figure class="layout-svg"><img src="./diagram.svg" alt="Architecture diagram" /></figure>' +
+    "<p>Body text</p>";
+
+  const odp = buildOdpPresentation({
+    title: "Images",
+    renderedSlides: [{ html, headings: [{ level: 1, text: "Images" }] }],
+    metadata: { slideWidth: 1280, slideHeight: 720 },
+  });
+
+  const zip = new TextDecoder().decode(odp);
+  assert.equal(zip.includes("[Image: Sales chart]"), true, "img alt text should be included as bracketed description");
+  assert.equal(zip.includes("[Image: Architecture diagram]"), true, "alt text from SVG figure img should be included");
+  assert.equal(zip.includes("Body text"), true, "regular body text after images should be present");
+});
+
+test("buildOdpPresentation includes SVG diagram placeholder for inline SVG blocks", () => {
+  const html =
+    "<h1>Diagram</h1>" +
+    '<figure class="layout-svg"><svg width="100" height="100"><circle cx="50" cy="50" r="40"/></svg></figure>' +
+    "<p>Caption text</p>";
+
+  const odp = buildOdpPresentation({
+    title: "SVG",
+    renderedSlides: [{ html, headings: [{ level: 1, text: "Diagram" }] }],
+    metadata: { slideWidth: 1280, slideHeight: 720 },
+  });
+
+  const zip = new TextDecoder().decode(odp);
+  assert.equal(zip.includes("[SVG diagram]"), true, "inline SVG should produce a placeholder paragraph");
+  assert.equal(zip.includes("Caption text"), true, "text after inline SVG should be present");
+});
