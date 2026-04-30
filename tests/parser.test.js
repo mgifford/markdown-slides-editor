@@ -392,6 +392,280 @@ presentationUrl: https://ox.ca/demo-deck
   assert.equal(rendered.renderedSlides[0].html.includes("api.qrserver.com"), true);
 });
 
+test("parseSource places title slide at titleSlideNumber position", () => {
+  const source = `---
+title: Demo deck
+titleSlide: true
+titleSlideNumber: 3
+---
+
+# Slide one
+
+---
+
+# Slide two
+
+---
+
+# Slide three
+
+---
+
+# Slide four`;
+
+  const deck = parseSource(source);
+  // 4 content slides + 1 title = 5 total
+  assert.equal(deck.slides.length, 5);
+  assert.equal(deck.slides[2].kind, "title");
+  assert.equal(deck.slides[0].id, "slide-1");
+  assert.equal(deck.slides[1].id, "slide-2");
+  assert.equal(deck.slides[3].id, "slide-3");
+  assert.equal(deck.slides[4].id, "slide-4");
+  // Indices must be sequential
+  deck.slides.forEach((slide, i) => assert.equal(slide.index, i));
+});
+
+test("parseSource defaults to first position when titleSlideNumber is absent", () => {
+  const source = `---
+title: Demo deck
+titleSlide: true
+---
+
+# Slide one`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.slides[0].kind, "title");
+  assert.equal(deck.slides[1].id, "slide-1");
+});
+
+test("parseSource places closing slide at closingSlideNumber: -1 (second to last)", () => {
+  const source = `---
+title: Demo deck
+closingSlide: true
+closingSlideNumber: -1
+closingTitle: Questions?
+---
+
+# Slide one
+
+---
+
+# Slide two
+
+---
+
+# Slide three`;
+
+  const deck = parseSource(source);
+  // 3 content slides + 1 closing = 4 total
+  assert.equal(deck.slides.length, 4);
+  assert.equal(deck.slides[2].kind, "closing");
+  assert.equal(deck.slides[3].id, "slide-3");
+  deck.slides.forEach((slide, i) => assert.equal(slide.index, i));
+});
+
+test("parseSource places closing slide at positive closingSlideNumber position", () => {
+  const source = `---
+title: Demo deck
+closingSlide: true
+closingSlideNumber: 2
+closingTitle: Questions?
+---
+
+# Slide one
+
+---
+
+# Slide two
+
+---
+
+# Slide three`;
+
+  const deck = parseSource(source);
+  // Closing at position 2 (1-indexed) → index 1
+  assert.equal(deck.slides.length, 4);
+  assert.equal(deck.slides[1].kind, "closing");
+  assert.equal(deck.slides[0].id, "slide-1");
+  assert.equal(deck.slides[2].id, "slide-2");
+  assert.equal(deck.slides[3].id, "slide-3");
+  deck.slides.forEach((slide, i) => assert.equal(slide.index, i));
+});
+
+test("parseSource handles both titleSlideNumber and closingSlideNumber together", () => {
+  const source = `---
+title: Demo deck
+titleSlide: true
+titleSlideNumber: 2
+closingSlide: true
+closingSlideNumber: -1
+closingTitle: Questions?
+---
+
+# Slide one
+
+---
+
+# Slide two
+
+---
+
+# Slide three`;
+
+  const deck = parseSource(source);
+  // 3 content + title + closing = 5 total
+  assert.equal(deck.slides.length, 5);
+  // title at index 1 (titleSlideNumber: 2)
+  assert.equal(deck.slides[1].kind, "title");
+  // closing at 2nd to last → index 3
+  assert.equal(deck.slides[3].kind, "closing");
+  // content slide order
+  assert.equal(deck.slides[0].id, "slide-1");
+  assert.equal(deck.slides[2].id, "slide-2");
+  assert.equal(deck.slides[4].id, "slide-3");
+  deck.slides.forEach((slide, i) => assert.equal(slide.index, i));
+});
+
+test("getSlideIndexForSourceOffset respects titleSlideNumber", () => {
+  const source = `---
+title: Demo deck
+titleSlide: true
+titleSlideNumber: 3
+---
+
+# Slide one
+
+---
+
+# Slide two
+
+---
+
+# Slide three
+
+---
+
+# Slide four`;
+
+  // Cursor at "Slide one" → content slide 0 → display index 0 (title is after it)
+  assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide one")), 0);
+  // Cursor at "Slide two" → content slide 1 → display index 1 (title is after it)
+  assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide two")), 1);
+  // Cursor at "Slide three" → content slide 2 → display index 3 (title inserted before at index 2)
+  assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide three")), 3);
+  // Cursor at "Slide four" → content slide 3 → display index 4
+  assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide four")), 4);
+});
+
+test("getSlideIndexForSourceOffset respects closingSlideNumber: -1", () => {
+  const source = `---
+title: Demo deck
+closingSlide: true
+closingSlideNumber: -1
+---
+
+# Slide one
+
+---
+
+# Slide two
+
+---
+
+# Slide three`;
+
+  // Closing is at index 3 (before last content slide, which is index 3... wait)
+  // 3 content slides + closing = 4 slides
+  // closing at -1: inserted before last → [c0, c1, closing, c2]
+  // Cursor at "Slide one" → content 0 → display 0
+  assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide one")), 0);
+  // Cursor at "Slide two" → content 1 → display 1
+  assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide two")), 1);
+  // Cursor at "Slide three" → content 2 → display 3 (closing inserted before it)
+  assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide three")), 3);
+});
+
+test("getSourceOffsetForSlideIndex respects titleSlideNumber", () => {
+  const source = `---
+title: Demo deck
+titleSlide: true
+titleSlideNumber: 3
+---
+
+# Slide one
+
+---
+
+# Slide two
+
+---
+
+# Slide three`;
+
+  const deck = parseSource(source);
+  // slide 0 → "Slide one" (content before title)
+  assert.equal(getSourceOffsetForSlideIndex(source, 0, deck), source.indexOf("# Slide one"));
+  // slide 1 → "Slide two" (content before title)
+  assert.equal(getSourceOffsetForSlideIndex(source, 1, deck), source.indexOf("# Slide two"));
+  // slide 2 → title slide → returns 0
+  assert.equal(getSourceOffsetForSlideIndex(source, 2, deck), 0);
+  // slide 3 → "Slide three" (content after title)
+  assert.equal(getSourceOffsetForSlideIndex(source, 3, deck), source.indexOf("# Slide three"));
+});
+
+test("getSourceOffsetForSlideIndex respects closingSlideNumber: -1", () => {
+  const source = `---
+title: Demo deck
+closingSlide: true
+closingSlideNumber: -1
+---
+
+# Slide one
+
+---
+
+# Slide two
+
+---
+
+# Slide three`;
+
+  const deck = parseSource(source);
+  // [c0(0), c1(1), closing(2), c2(3)]
+  assert.equal(getSourceOffsetForSlideIndex(source, 0, deck), source.indexOf("# Slide one"));
+  assert.equal(getSourceOffsetForSlideIndex(source, 1, deck), source.indexOf("# Slide two"));
+  assert.equal(getSourceOffsetForSlideIndex(source, 2, deck), 0);  // closing slide → 0
+  assert.equal(getSourceOffsetForSlideIndex(source, 3, deck), source.indexOf("# Slide three"));
+});
+
+test("source/slide mapping round-trip with repositioned title and closing slides", () => {
+  const source = `---
+title: Demo deck
+titleSlide: true
+titleSlideNumber: 2
+closingSlide: true
+closingSlideNumber: -1
+---
+
+# Slide one
+
+---
+
+# Slide two
+
+---
+
+# Slide three`;
+
+  const deck = parseSource(source);
+  // Slides: [c0(0), title(1), c1(2), closing(3), c2(4)]
+  // Only content slides participate in round-trip (generated slides return 0)
+  for (const slideIndex of [0, 2, 4]) {
+    const offset = getSourceOffsetForSlideIndex(source, slideIndex, deck);
+    assert.equal(getSlideIndexForSourceOffset(source, offset), slideIndex);
+  }
+});
+
 test("updateFrontMatterValue adds and updates theme metadata", () => {
   const base = "# Slide";
   const withTheme = updateFrontMatterValue(base, "theme", "night-slate");
