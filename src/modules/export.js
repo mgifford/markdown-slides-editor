@@ -27,6 +27,21 @@ function escapeHtmlAttr(value) {
     .replaceAll('"', "&quot;");
 }
 
+/**
+ * Returns a self-contained `<style>` block when `themeStylesheetCss` is provided
+ * (so the exported file works offline), or falls back to an external `<link>` tag
+ * when only the URL is available in metadata.
+ *
+ * @param {string} themeStylesheetCss - Pre-fetched theme CSS text (may be empty/undefined).
+ * @param {object} metadata - Deck metadata (used for the fallback link tag).
+ */
+function buildThemeHeadTag(themeStylesheetCss, metadata) {
+  if (themeStylesheetCss) {
+    return `<style>${escapeStyleText(themeStylesheetCss)}</style>`;
+  }
+  return buildThemeLinkTag(metadata);
+}
+
 function escapeXml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -1239,7 +1254,7 @@ export function buildOnePageHtml({ title, cssText, themeStylesheetCss, renderedS
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>
-    ${themeStylesheetCss ? `<style>${escapeStyleText(themeStylesheetCss)}</style>` : buildThemeLinkTag(metadata)}
+    ${buildThemeHeadTag(themeStylesheetCss, metadata)}
     <style>${escapeStyleText(cssText)}</style>
     <style>
       .one-page-body .slide {
@@ -1365,7 +1380,7 @@ export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, rendered
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>
-    ${themeStylesheetCss ? `<style>${escapeStyleText(themeStylesheetCss)}</style>` : buildThemeLinkTag(metadata)}
+    ${buildThemeHeadTag(themeStylesheetCss, metadata)}
     <style>${escapeStyleText(cssText)}</style>
     <style>
       .snapshot-viewer .slide__content {

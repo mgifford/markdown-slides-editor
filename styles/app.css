@@ -529,7 +529,7 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
-
+.sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
