@@ -446,6 +446,9 @@ input:focus-visible {
   background: transparent;
   box-shadow: none;
   padding: 0;
+  /* Reserve space at the bottom so live captions don't overlay slide content.
+     --caption-bar-height is set dynamically via JS when captions are visible. */
+  padding-bottom: var(--caption-bar-height, 0px);
   display: grid;
   place-items: center;
 }
@@ -456,16 +459,18 @@ input:focus-visible {
   /* Prevent the slide from ever exceeding the visible viewport height.
      The width calculation already targets 100vh, but mobile browsers and
      sub-pixel rounding can push the rendered height slightly over.
-     max-height acts as a hard clamp; aspect-ratio then trims the width. */
-  max-height: 100vh;
+     max-height acts as a hard clamp; aspect-ratio then trims the width.
+     --caption-bar-height (set dynamically) further reduces the available
+     height so live captions never overlap slide content. */
+  max-height: calc(100vh - var(--caption-bar-height, 0px));
 }
 
 @supports (height: 100dvh) {
   /* dvh (dynamic viewport height) accounts for retractable browser UI chrome
      on mobile, giving a more accurate bound than static vh. */
   .audience-shell .slide-card {
-    max-height: 100dvh;
-    width: min(100%, calc(100dvh * var(--slide-aspect-ratio)));
+    max-height: calc(100dvh - var(--caption-bar-height, 0px));
+    width: min(100%, calc((100dvh - var(--caption-bar-height, 0px)) * var(--slide-aspect-ratio)));
   }
 }
 
