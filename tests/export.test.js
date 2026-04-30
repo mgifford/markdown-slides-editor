@@ -266,8 +266,8 @@ test("buildOdpPresentation formats closing slide metadata without concatenation"
 
   const zip = new TextDecoder().decode(odp);
   assert.equal(zip.includes("What are you building?"), true, "closing prompt should be present");
-  assert.equal(zip.includes("Website: https://example.com/"), true, "website label and value should be separated");
-  assert.equal(zip.includes("Slides: https://example.com/slides/"), true, "slides label and value should be separated");
+  assert.equal(zip.includes("Website: example.com/"), true, "website label and value should be separated");
+  assert.equal(zip.includes("Slides: example.com/slides/"), true, "slides label and value should be separated");
   assert.equal(zip.includes("Websitehttps"), false, "website label should not be concatenated with URL");
 });
 

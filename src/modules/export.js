@@ -1,4 +1,5 @@
 import { buildDeckStyleAttribute, buildThemeLinkTag } from "./theme.js";
+import { stripProtocol } from "./utils.js";
 
 const textEncoder = new TextEncoder();
 const ODP_MIMETYPE = "application/vnd.oasis.opendocument.presentation";
@@ -455,9 +456,9 @@ function buildOdpContentXml({ title, renderedSlides, metadata = {} }) {
         const paragraphs = [];
         if (slide.prompt) paragraphs.push({ text: slide.prompt, style: "PSubtitle" });
         if (slide.contactEmail) paragraphs.push({ text: `Email: ${slide.contactEmail}`, style: "PMeta" });
-        if (slide.contactUrl) paragraphs.push({ text: `Website: ${slide.contactUrl}`, style: "PMeta" });
+        if (slide.contactUrl) paragraphs.push({ text: `Website: ${stripProtocol(slide.contactUrl)}`, style: "PMeta" });
         if (slide.socialLinks) paragraphs.push({ text: `Social: ${slide.socialLinks}`, style: "PMeta" });
-        if (slide.presentationUrl) paragraphs.push({ text: `Slides: ${slide.presentationUrl}`, style: "PMeta" });
+        if (slide.presentationUrl) paragraphs.push({ text: `Slides: ${stripProtocol(slide.presentationUrl)}`, style: "PMeta" });
         const bodyXml = paragraphs.length
           ? paragraphs.map(({ text, style }) => `<text:p text:style-name="${style}">${escapeXml(text)}</text:p>`).join("")
           : '<text:p text:style-name="PMeta"></text:p>';

@@ -1,4 +1,5 @@
 import { renderMarkdown } from "./markdown.js";
+import { stripProtocol } from "./utils.js";
 
 function escapeHtml(value) {
   return String(value)
@@ -77,7 +78,7 @@ function renderTitleSlide(slide) {
 
 function renderContactValue(value, href) {
   if (!value) return "";
-  const safeValue = escapeHtml(value);
+  const safeValue = escapeHtml(stripProtocol(value));
   const safeHref = escapeHtml(href || value);
   return `<a href="${safeHref}">${safeValue}</a>`;
 }
