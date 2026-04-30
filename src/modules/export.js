@@ -303,12 +303,14 @@ const ODP_H3_MARKER = "__H3__";
 function htmlToOdpParagraphs(html) {
   // Capture H2/H3 inner text before all other tags are stripped so we can
   // assign the correct paragraph style.  Any residual tags inside the heading
-  // are removed by the nested replace.  All resulting text lines are later
-  // passed through escapeXml() before being written into the ODP XML, so any
-  // stray HTML characters are safely neutralised at the output stage.
+  // are removed by the nested replace, followed by an explicit strip of any
+  // bare `<` that could not be matched as a complete tag.  All resulting text
+  // lines are additionally passed through escapeXml() at every call site before
+  // being written into the ODP XML, providing a second layer of protection.
+  const stripTags = (s) => s.replace(/<[^>]+>/g, "").replace(/</g, "");
   const normalized = String(html)
-    .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, (_, inner) => "\n" + ODP_H2_MARKER + inner.replace(/<[^>]+>/g, "") + "\n")
-    .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, (_, inner) => "\n" + ODP_H3_MARKER + inner.replace(/<[^>]+>/g, "") + "\n")
+    .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, (_, inner) => "\n" + ODP_H2_MARKER + stripTags(inner) + "\n")
+    .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, (_, inner) => "\n" + ODP_H3_MARKER + stripTags(inner) + "\n")
     .replace(/<li[^>]*>/gi, "\n• ")
     .replace(/<(?:br|br\/)\s*>/gi, "\n")
     .replace(/<\/(?:p|div|section|article|blockquote|ul|ol|li|h4|h5|h6|dt|dd|th|td|tr)>/gi, "\n")
