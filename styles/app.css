@@ -947,7 +947,7 @@ input:focus-visible {
 }
 
 .slide-card h1 {
-  font-size: clamp(2.5rem, 5.5vw, 4.5rem);
+  font-size: clamp(2rem, 4vw, 3.5rem);
   margin-top: 0;
   margin-bottom: 1rem;
 }
