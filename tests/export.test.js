@@ -390,3 +390,75 @@ test("buildOfflinePresentationHtml uses document.write to open the audience wind
   assert.equal(html.includes("document.write"), true, "should use document.write for file:// compatibility");
   assert.equal(html.includes("window.open('', 'offline-audience-window')"), true, "should open a blank named window");
 });
+
+test("buildOfflinePresentationHtml escapes </style> in embedded CSS to prevent premature style block closure", () => {
+  const maliciousCss = ".a { color: red; } </style><script>alert('xss')</script><style>";
+  const html = buildOfflinePresentationHtml({
+    title: "CSS escape test",
+    cssText: maliciousCss,
+    themeStylesheetCss: "",
+    renderedSlides: [{ html: "<h1>One</h1>", stepCount: 0 }],
+    metadata: {},
+  });
+
+  // The raw </style> must not appear inside the <style> block
+  const styleMatch = html.match(/<style id="offline-app-styles">([\s\S]*?)<\/style>/);
+  assert.ok(styleMatch, "offline-app-styles style block should be present");
+  assert.equal(styleMatch[1].includes("</style>"), false, "raw </style> must not appear inside the style block");
+  assert.equal(styleMatch[1].includes("<\\/style>"), true, "escaped form should be present in the style block");
+});
+
+test("buildOfflinePresentationHtml escapes </style> in external theme CSS", () => {
+  const html = buildOfflinePresentationHtml({
+    title: "Theme CSS escape test",
+    cssText: ".base { color: black; }",
+    themeStylesheetCss: ".theme { color: red; } </style><script>alert('theme-xss')</script><style>",
+    renderedSlides: [{ html: "<h1>One</h1>", stepCount: 0 }],
+    metadata: {},
+  });
+
+  const styleMatch = html.match(/<style id="offline-app-styles">([\s\S]*?)<\/style>/);
+  assert.ok(styleMatch, "offline-app-styles style block should be present");
+  assert.equal(styleMatch[1].includes("</style>"), false, "raw </style> from theme CSS must be escaped");
+});
+
+test("buildOfflinePresentationHtml HTML-escapes the title in attributes and text content", () => {
+  const xssTitle = 'Deck <script>alert("xss")</script> title';
+  const html = buildOfflinePresentationHtml({
+    title: xssTitle,
+    cssText: "",
+    themeStylesheetCss: "",
+    renderedSlides: [{ html: "<h1>One</h1>", stepCount: 0 }],
+    metadata: {},
+  });
+
+  // The raw script tag must not appear unescaped in the rendered HTML outside the JSON payload
+  assert.equal(html.includes('<script>alert("xss")</script>'), false, "raw script tag must not appear in the HTML output");
+  assert.equal(html.includes("&lt;script&gt;"), true, "title should be HTML-escaped in the rendered output");
+});
+
+test("buildOfflinePresentationHtml HTML-escapes theme and deckStyleAttr in body attributes", () => {
+  const html = buildOfflinePresentationHtml({
+    title: "Attr test",
+    cssText: "",
+    themeStylesheetCss: "",
+    renderedSlides: [{ html: "<h1>One</h1>", stepCount: 0 }],
+    metadata: { theme: 'night-slate" onload="alert(1)' },
+  });
+
+  assert.equal(html.includes('data-theme="night-slate" onload="alert(1)"'), false, "theme must not inject attributes");
+  assert.equal(html.includes("&quot;"), true, "double quotes in theme must be HTML-escaped");
+});
+
+test("buildOfflinePresentationHtml inline script wraps JSON.parse in try-catch for graceful error handling", () => {
+  const html = buildOfflinePresentationHtml({
+    title: "Error handling test",
+    cssText: "",
+    themeStylesheetCss: "",
+    renderedSlides: [{ html: "<h1>One</h1>", stepCount: 0 }],
+    metadata: {},
+  });
+
+  assert.equal(html.includes("try {"), true, "inline script should have try block for JSON.parse");
+  assert.equal(html.includes("} catch (parseErr) {"), true, "inline script should handle JSON.parse errors");
+});

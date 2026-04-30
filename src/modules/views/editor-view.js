@@ -33,6 +33,60 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
+async function blobToDataUrl(blob) {
+  const buffer = await blob.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, Math.min(i + chunkSize, bytes.length)));
+  }
+  return `data:${blob.type || "application/octet-stream"};base64,${btoa(binary)}`;
+}
+
+async function embedImagesInHtml(html) {
+  if (!html || !html.includes("<img")) return html;
+  const matches = [];
+  const imgRegex = /<img\b([^>]*)>/gi;
+  let m;
+  while ((m = imgRegex.exec(html)) !== null) {
+    matches.push({ index: m.index, full: m[0], attrs: m[1] });
+  }
+  if (!matches.length) return html;
+  const processed = await Promise.all(
+    matches.map(async (match) => {
+      const srcMatch = /\bsrc="([^"]+)"/i.exec(match.attrs) || /\bsrc='([^']+)'/i.exec(match.attrs);
+      if (!srcMatch) return match.full;
+      const src = srcMatch[1];
+      if (src.startsWith("data:") || src.startsWith("blob:")) return match.full;
+      try {
+        const absoluteUrl = new URL(src, document.baseURI).href;
+        const response = await fetch(absoluteUrl);
+        if (!response.ok) return match.full;
+        const dataUrl = await blobToDataUrl(await response.blob());
+        return match.full.replace(srcMatch[0], `src="${dataUrl}"`);
+      } catch {
+        return match.full;
+      }
+    }),
+  );
+  let result = html;
+  for (let i = matches.length - 1; i >= 0; i--) {
+    const { index, full } = matches[i];
+    result = result.slice(0, index) + processed[i] + result.slice(index + full.length);
+  }
+  return result;
+}
+
+async function embedImagesInRenderedSlides(slides) {
+  return Promise.all(
+    slides.map(async (slide) => ({
+      ...slide,
+      html: await embedImagesInHtml(slide.html || ""),
+    })),
+  );
+}
+
 export function createAppView(root, { initialSource, onSourceChange, onResetDeck, onClearLocalData }) {
   let source = initialSource;
   let activeSlideIndex = 0;
@@ -957,10 +1011,13 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
       }
     }
 
+    const renderedSlides = lastCompiled?.renderedSlides || [];
+    const slidesForOffline = await embedImagesInRenderedSlides(renderedSlides);
+
     const html = buildSnapshotHtml({
       title: lastCompiled?.metadata.title || "Slide deck snapshot",
       cssText,
-      renderedSlides: lastCompiled?.renderedSlides || [],
+      renderedSlides,
       metadata: lastCompiled?.metadata || {},
       source,
     });
@@ -976,14 +1033,14 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     const onePageHtml = buildOnePageHtml({
       title: lastCompiled?.metadata.title || "Slide deck one-page view",
       cssText,
-      renderedSlides: lastCompiled?.renderedSlides || [],
+      renderedSlides,
       metadata: lastCompiled?.metadata || {},
     });
     const offlineHtml = buildOfflinePresentationHtml({
       title: lastCompiled?.metadata.title || "Slide deck",
       cssText,
       themeStylesheetCss,
-      renderedSlides: lastCompiled?.renderedSlides || [],
+      renderedSlides: slidesForOffline,
       metadata: lastCompiled?.metadata || {},
     });
     const zipFilename = buildExportFilename(lastCompiled?.metadata.title || "deck-export", lastCompiled?.metadata.date);
