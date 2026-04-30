@@ -63,6 +63,11 @@ export function createPresentationView(root, initialSource) {
   // Prevents re-broadcasting and avoids infinite loops when multiple audience
   // windows are open at the same time.
   let isSyncHandling = false;
+  // Primary-window flag — declared early so the sync subscriber (registered
+  // below) can safely close over it; the value is set by checkForExistingPrimary.
+  const windowId = generateWindowId();
+  let isPrimary = false;
+  let heartbeatTimer = null;
   let captionsState = {
     enabled: false,
     available: false,
@@ -284,22 +289,23 @@ export function createPresentationView(root, initialSource) {
   // The primary tab refreshes `ts` every HEARTBEAT_INTERVAL_MS.
   // A tab whose heartbeat is older than HEARTBEAT_STALE_MS is considered gone.
 
-  const windowId = generateWindowId();
-  let isPrimary = false;
-  let heartbeatTimer = null;
-
   // Build the paused-state overlay (hidden by default).
   const pausedOverlay = document.createElement("div");
   pausedOverlay.className = "audience-paused-overlay";
   pausedOverlay.setAttribute("role", "status");
   pausedOverlay.setAttribute("aria-live", "polite");
   pausedOverlay.hidden = true;
-  pausedOverlay.innerHTML =
-    '<p class="audience-paused-message">This audience window is <strong>paused</strong> — another tab is already showing the live presentation.</p>' +
-    '<button type="button" class="audience-takeover-button">Take over as primary window</button>';
+  const pausedMessage = document.createElement("p");
+  pausedMessage.className = "audience-paused-message";
+  const pausedStrong = document.createElement("strong");
+  pausedStrong.textContent = "paused";
+  pausedMessage.append("This audience window is ", pausedStrong, " — another tab is already showing the live presentation.");
+  const takeoverButton = document.createElement("button");
+  takeoverButton.type = "button";
+  takeoverButton.className = "audience-takeover-button";
+  takeoverButton.textContent = "Take over as primary window";
+  pausedOverlay.append(pausedMessage, takeoverButton);
   frame.appendChild(pausedOverlay);
-
-  const takeoverButton = pausedOverlay.querySelector(".audience-takeover-button");
 
   function claimPrimary() {
     isPrimary = true;
@@ -330,6 +336,9 @@ export function createPresentationView(root, initialSource) {
 
   takeoverButton.addEventListener("click", () => {
     claimPrimary();
+    // Announce the change to assistive technology via the existing sr-only
+    // status node so screen-reader users know the takeover succeeded.
+    statusNode.textContent = "This window is now the primary audience window.";
     render();
   });
 
