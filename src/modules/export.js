@@ -1302,6 +1302,24 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
         border-top: 1px solid var(--border, #333);
         z-index: 100;
       }
+      /* Mobile portrait: let slide content flow at natural height */
+      @media screen and (orientation: portrait) and (max-width: 1024px) {
+        .snapshot-viewer .slide-card {
+          max-height: none;
+          width: 100%;
+          aspect-ratio: auto;
+          overflow: visible;
+        }
+        .snapshot-viewer .slide-card__content {
+          height: auto;
+          overflow: visible;
+        }
+        .snapshot-controls button {
+          min-height: 44px;
+          min-width: 44px;
+          padding: 0.5rem 1.25rem;
+        }
+      }
       @media print {
         .snapshot-viewer .slide-card {
           max-height: none;
@@ -1447,6 +1465,22 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
         if (action === "prev") move(-1);
         if (action === "next") move(1);
       });
+
+      let touchStartX = 0;
+      let touchStartY = 0;
+      const SWIPE_MIN_DISTANCE = 40;
+      const SWIPE_DIRECTION_THRESHOLD = 1.5;
+      document.addEventListener("touchstart", (event) => {
+        touchStartX = event.changedTouches[0].clientX;
+        touchStartY = event.changedTouches[0].clientY;
+      }, { passive: true });
+      document.addEventListener("touchend", (event) => {
+        const dx = event.changedTouches[0].clientX - touchStartX;
+        const dy = event.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) > Math.abs(dy) * SWIPE_DIRECTION_THRESHOLD && Math.abs(dx) > SWIPE_MIN_DISTANCE) {
+          move(dx < 0 ? 1 : -1);
+        }
+      }, { passive: true });
 
       window.addEventListener("resize", render);
 
