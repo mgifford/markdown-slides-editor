@@ -1044,6 +1044,10 @@ input:focus-visible {
   margin-bottom: 0.75rem;
 }
 
+.slide-card h1:has(+ h2) {
+  margin-bottom: 0;
+}
+
 .slide-card h1 + h2 {
   margin-top: 0;
   margin-bottom: 0;
