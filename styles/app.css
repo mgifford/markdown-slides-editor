@@ -314,6 +314,16 @@ input:focus-visible {
   resize: vertical;
   color: var(--ink);
   line-height: 1.55;
+  /* Prevent page scroll when the textarea reaches its own scroll limit */
+  overscroll-behavior: contain;
+  /* Prevent Mobile Safari from zooming in when the field is focused */
+  font-size: max(1rem, 16px);
+}
+
+@supports (min-height: 100dvh) {
+  .editor {
+    min-height: 68dvh;
+  }
 }
 
 .local-save-status {
@@ -451,6 +461,12 @@ input:focus-visible {
   padding-bottom: var(--caption-bar-height, 0px);
   display: grid;
   place-items: center;
+}
+
+@supports (min-height: 100dvh) {
+  .audience-shell .presentation-frame {
+    min-height: 100dvh;
+  }
 }
 
 .audience-shell .slide-card {
@@ -669,6 +685,13 @@ input:focus-visible {
   padding: 1rem;
   display: grid;
   place-items: center;
+}
+
+@supports (min-height: 100dvh) {
+  .preview-frame,
+  .presentation-frame {
+    min-height: 60dvh;
+  }
 }
 
 .preview-layout {
@@ -1277,6 +1300,7 @@ input:focus-visible {
   border-radius: 18px;
   padding: 1rem;
   min-height: 7rem;
+  overscroll-behavior: contain;
 }
 
 .support-section + .support-section {
@@ -1564,11 +1588,23 @@ input:focus-visible {
   place-items: center;
 }
 
+@supports (min-height: 100dvh) {
+  .snapshot-body .slide {
+    min-height: 100dvh;
+  }
+}
+
 .snapshot-body .slide__content {
   display: grid;
   place-items: center;
   width: 100%;
   min-height: 100vh;
+}
+
+@supports (min-height: 100dvh) {
+  .snapshot-body .slide__content {
+    min-height: 100dvh;
+  }
 }
 
 .snapshot-controls {
@@ -1774,7 +1810,12 @@ input:focus-visible {
 
 @media (max-width: 1100px) {
   .presenter-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Move the sidebar (notes/timer) to a full-width row below the slide previews */
+  .presenter-layout .presenter-sidebar {
+    grid-column: 1 / -1;
   }
 
   .preview-layout {
@@ -1849,6 +1890,54 @@ input:focus-visible {
     min-height: 52vh;
   }
 
+  /* Bottom-sheet pattern for floating menus on mobile */
+  .theme-menu__panel,
+  .advanced-menu__panel {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    border-radius: 24px 24px 0 0;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  @supports (max-height: 80dvh) {
+    .theme-menu__panel,
+    .advanced-menu__panel {
+      max-height: 80dvh;
+    }
+  }
+
+}
+
+/* Landscape small-screen optimization: maximize vertical space by hiding topbar */
+@media (max-height: 500px) and (orientation: landscape) {
+  .topbar {
+    display: none;
+  }
+
+  .app-shell {
+    padding: 0.25rem;
+  }
+
+  /* On landscape mobile, show editor+preview side by side even when < 800px */
+  .editor-layout:not([data-editor-collapsed="true"]):not([data-preview-collapsed="true"]) {
+    grid-template-columns:
+      minmax(0, var(--editor-panel-fr))
+      var(--editor-divider-width)
+      minmax(0, var(--preview-panel-fr));
+  }
+
+  .editor-layout__divider {
+    display: flex;
+  }
+
+  .mobile-pane-tabs {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

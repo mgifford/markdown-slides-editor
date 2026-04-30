@@ -27,6 +27,21 @@ function escapeHtmlAttr(value) {
     .replaceAll('"', "&quot;");
 }
 
+/**
+ * Returns a self-contained `<style>` block when `themeStylesheetCss` is provided
+ * (so the exported file works offline), or falls back to an external `<link>` tag
+ * when only the URL is available in metadata.
+ *
+ * @param {string} themeStylesheetCss - Pre-fetched theme CSS text (may be empty/undefined).
+ * @param {object} metadata - Deck metadata containing optional `themeStylesheet` URL for fallback link tag.
+ */
+function buildThemeHeadTag(themeStylesheetCss, metadata) {
+  if (themeStylesheetCss) {
+    return `<style>${escapeStyleText(themeStylesheetCss)}</style>`;
+  }
+  return buildThemeLinkTag(metadata);
+}
+
 function escapeXml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -801,6 +816,20 @@ function buildAudienceScriptText() {
       render(); notifyPresenter();
     }
   });
+  var audienceTouchStartX = 0;
+  var audienceTouchStartY = 0;
+  document.addEventListener('touchstart', function(event) {
+    audienceTouchStartX = event.changedTouches[0].clientX;
+    audienceTouchStartY = event.changedTouches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', function(event) {
+    var dx = event.changedTouches[0].clientX - audienceTouchStartX;
+    var dy = event.changedTouches[0].clientY - audienceTouchStartY;
+    if (Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > 40) {
+      move(dx < 0 ? 1 : -1);
+      notifyPresenter();
+    }
+  }, { passive: true });
   if (window.opener) {
     try { window.opener.postMessage({ type: 'audience-ready' }, '*'); } catch(e) {}
   }
@@ -869,6 +898,11 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
         box-sizing: border-box;
         overflow: hidden;
       }
+      @supports (height: 100dvh) {
+        .offline-presenter-layout {
+          height: calc(100dvh - var(--topbar-height, 3.5rem));
+        }
+      }
       .offline-panel {
         display: flex;
         flex-direction: column;
@@ -886,6 +920,42 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
         grid-column: 1 / -1;
         max-height: 14rem;
         overflow-y: auto;
+        overscroll-behavior: contain;
+      }
+      /* On narrow screens, stack to single column and hide the next-slide panel */
+      @media (max-width: 800px) {
+        .offline-presenter-layout {
+          grid-template-columns: 1fr;
+          height: auto;
+          min-height: calc(100vh - var(--topbar-height, 3.5rem));
+          overflow-y: auto;
+        }
+        @supports (min-height: 100dvh) {
+          .offline-presenter-layout {
+            min-height: calc(100dvh - var(--topbar-height, 3.5rem));
+          }
+        }
+        .offline-panel--next {
+          display: none;
+        }
+        .offline-panel--notes {
+          max-height: none;
+        }
+      }
+      /* Landscape small-screen: hide topbar to maximize vertical space */
+      @media (max-height: 500px) and (orientation: landscape) {
+        .topbar {
+          display: none;
+        }
+        .offline-presenter-layout {
+          height: 100vh;
+          padding: 0.25rem;
+        }
+        @supports (height: 100dvh) {
+          .offline-presenter-layout {
+            height: 100dvh;
+          }
+        }
       }
     </style>
   </head>
@@ -988,6 +1058,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
     notesEl.innerHTML = buildSupplementalHtml(slides[activeSlideIndex]);
     slideCounter.textContent = (activeSlideIndex + 1) + ' / ' + slides.length;
     publishState();
+    runVisualIntegrityTest();
   }
 
   function move(delta) {
@@ -1126,6 +1197,44 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
     }
   });
 
+  // Touch swipe navigation for mobile presenter use
+  var touchStartX = 0;
+  var touchStartY = 0;
+  document.addEventListener('touchstart', function(event) {
+    touchStartX = event.changedTouches[0].clientX;
+    touchStartY = event.changedTouches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', function(event) {
+    var dx = event.changedTouches[0].clientX - touchStartX;
+    var dy = event.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > 40) {
+      move(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
+
+  // Visual integrity test: reduce --presentation-text-zoom if slide content overflows
+  function runVisualIntegrityTest() {
+    var content = currentFrame.querySelector('.slide-card__content');
+    var card = currentFrame.querySelector('.slide-card');
+    if (!content || !card) return;
+    var root = document.documentElement;
+    var zoom = parseFloat(root.style.getPropertyValue('--presentation-text-zoom') || getComputedStyle(root).getPropertyValue('--presentation-text-zoom') || '1') || 1;
+    function detectOverflow() {
+      return {
+        vertical: content.scrollHeight > content.clientHeight + 1,
+        horizontal: card.scrollWidth > card.clientWidth + 1
+      };
+    }
+    var state = detectOverflow();
+    while ((state.vertical || state.horizontal) && zoom > 0.5) {
+      zoom = Math.max(0.5, parseFloat((zoom - 0.1).toFixed(1)));
+      root.style.setProperty('--presentation-text-zoom', zoom);
+      state = detectOverflow();
+    }
+  }
+
+  window.addEventListener('resize', runVisualIntegrityTest);
+
   window.addEventListener('message', function(event) {
     if (!event.data) return;
     if (event.data.type === 'audience-navigate') {
@@ -1175,7 +1284,7 @@ function buildOnePageSupportMarkup(slide) {
   return `<div class="one-page-support" aria-label="Supporting material">${sections.join("")}</div>`;
 }
 
-export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
+export function buildOnePageHtml({ title, cssText, themeStylesheetCss, renderedSlides, metadata }) {
   const slidesMarkup = renderedSlides
     .map(
       (slide, index) => {
@@ -1212,7 +1321,7 @@ export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>
-    ${buildThemeLinkTag(metadata)}
+    ${buildThemeHeadTag(themeStylesheetCss, metadata)}
     <style>${escapeStyleText(cssText)}</style>
     <style>
       .one-page-body .slide {
@@ -1299,7 +1408,7 @@ export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
 </html>`;
 }
 
-export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, source }) {
+export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, renderedSlides, metadata, source }) {
   const slidesMarkup = renderedSlides
     .map(
       (slide, index) => {
@@ -1338,7 +1447,7 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>
-    ${buildThemeLinkTag(metadata)}
+    ${buildThemeHeadTag(themeStylesheetCss, metadata)}
     <style>${escapeStyleText(cssText)}</style>
     <style>
       .snapshot-viewer .slide__content {
