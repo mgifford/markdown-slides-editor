@@ -33,7 +33,7 @@ function escapeHtmlAttr(value) {
  * when only the URL is available in metadata.
  *
  * @param {string} themeStylesheetCss - Pre-fetched theme CSS text (may be empty/undefined).
- * @param {object} metadata - Deck metadata (used for the fallback link tag).
+ * @param {object} metadata - Deck metadata containing optional `themeStylesheet` URL for fallback link tag.
  */
 function buildThemeHeadTag(themeStylesheetCss, metadata) {
   if (themeStylesheetCss) {

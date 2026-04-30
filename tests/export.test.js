@@ -127,6 +127,29 @@ test("buildOnePageHtml inlines themeStylesheetCss as a <style> block instead of 
   assert.equal(html.includes('href="https://example.com/theme.css"'), false, "external theme link should not be present when CSS is inlined");
 });
 
+test("buildSnapshotHtml falls back to external <link> when themeStylesheetCss is not provided", () => {
+  const html = buildSnapshotHtml({
+    title: "Fallback link test",
+    cssText: "",
+    renderedSlides: [{ html: "<h1>One</h1>", stepCount: 0 }],
+    metadata: { themeStylesheet: "https://example.com/theme.css" },
+    source: "",
+  });
+
+  assert.equal(html.includes('href="https://example.com/theme.css"'), true, "should emit an external link when no CSS text is provided");
+});
+
+test("buildOnePageHtml falls back to external <link> when themeStylesheetCss is not provided", () => {
+  const html = buildOnePageHtml({
+    title: "Fallback link test",
+    cssText: "",
+    renderedSlides: [{ html: "<h1>One</h1>" }],
+    metadata: { themeStylesheet: "https://example.com/theme.css" },
+  });
+
+  assert.equal(html.includes('href="https://example.com/theme.css"'), true, "should emit an external link when no CSS text is provided");
+});
+
 test("buildExportBundle includes markdown, html, odp, and one-page html files in the zip payload", () => {
   const bundle = buildExportBundle({
     markdownSource: "# Deck",
