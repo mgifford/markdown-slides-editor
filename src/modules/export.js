@@ -734,6 +734,20 @@ function buildAudienceScriptText() {
       render(); notifyPresenter();
     }
   });
+  var audienceTouchStartX = 0;
+  var audienceTouchStartY = 0;
+  document.addEventListener('touchstart', function(event) {
+    audienceTouchStartX = event.changedTouches[0].clientX;
+    audienceTouchStartY = event.changedTouches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', function(event) {
+    var dx = event.changedTouches[0].clientX - audienceTouchStartX;
+    var dy = event.changedTouches[0].clientY - audienceTouchStartY;
+    if (Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > 40) {
+      move(dx < 0 ? 1 : -1);
+      notifyPresenter();
+    }
+  }, { passive: true });
   if (window.opener) {
     try { window.opener.postMessage({ type: 'audience-ready' }, '*'); } catch(e) {}
   }
@@ -802,6 +816,11 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
         box-sizing: border-box;
         overflow: hidden;
       }
+      @supports (height: 100dvh) {
+        .offline-presenter-layout {
+          height: calc(100dvh - var(--topbar-height, 3.5rem));
+        }
+      }
       .offline-panel {
         display: flex;
         flex-direction: column;
@@ -819,6 +838,42 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
         grid-column: 1 / -1;
         max-height: 14rem;
         overflow-y: auto;
+        overscroll-behavior: contain;
+      }
+      /* On narrow screens, stack to single column and hide the next-slide panel */
+      @media (max-width: 800px) {
+        .offline-presenter-layout {
+          grid-template-columns: 1fr;
+          height: auto;
+          min-height: calc(100vh - var(--topbar-height, 3.5rem));
+          overflow-y: auto;
+        }
+        @supports (min-height: 100dvh) {
+          .offline-presenter-layout {
+            min-height: calc(100dvh - var(--topbar-height, 3.5rem));
+          }
+        }
+        .offline-panel--next {
+          display: none;
+        }
+        .offline-panel--notes {
+          max-height: none;
+        }
+      }
+      /* Landscape small-screen: hide topbar to maximize vertical space */
+      @media (max-height: 500px) and (orientation: landscape) {
+        .topbar {
+          display: none;
+        }
+        .offline-presenter-layout {
+          height: 100vh;
+          padding: 0.25rem;
+        }
+        @supports (height: 100dvh) {
+          .offline-presenter-layout {
+            height: 100dvh;
+          }
+        }
       }
     </style>
   </head>
@@ -921,6 +976,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
     notesEl.innerHTML = buildSupplementalHtml(slides[activeSlideIndex]);
     slideCounter.textContent = (activeSlideIndex + 1) + ' / ' + slides.length;
     publishState();
+    runVisualIntegrityTest();
   }
 
   function move(delta) {
@@ -1058,6 +1114,40 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
       renderPresenter();
     }
   });
+
+  // Touch swipe navigation for mobile presenter use
+  var touchStartX = 0;
+  var touchStartY = 0;
+  document.addEventListener('touchstart', function(event) {
+    touchStartX = event.changedTouches[0].clientX;
+    touchStartY = event.changedTouches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', function(event) {
+    var dx = event.changedTouches[0].clientX - touchStartX;
+    var dy = event.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > 40) {
+      move(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
+
+  // Visual integrity test: reduce --presentation-text-zoom if slide content overflows
+  function runVisualIntegrityTest() {
+    var content = currentFrame.querySelector('.slide-card__content');
+    var card = currentFrame.querySelector('.slide-card');
+    if (!content || !card) return;
+    var root = document.documentElement;
+    var zoom = parseFloat(root.style.getPropertyValue('--presentation-text-zoom') || getComputedStyle(root).getPropertyValue('--presentation-text-zoom') || '1') || 1;
+    var overflows = content.scrollHeight > content.clientHeight + 1;
+    var outOfBounds = card.getBoundingClientRect().right > window.innerWidth + 1;
+    while ((overflows || outOfBounds) && zoom > 0.5) {
+      zoom = Math.max(0.5, parseFloat((zoom - 0.1).toFixed(1)));
+      root.style.setProperty('--presentation-text-zoom', zoom);
+      overflows = content.scrollHeight > content.clientHeight + 1;
+      outOfBounds = card.getBoundingClientRect().right > window.innerWidth + 1;
+    }
+  }
+
+  window.addEventListener('resize', runVisualIntegrityTest);
 
   window.addEventListener('message', function(event) {
     if (!event.data) return;
