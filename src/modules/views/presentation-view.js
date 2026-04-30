@@ -214,6 +214,12 @@ export function createPresentationView(root, initialSource) {
 
   document.addEventListener("keydown", (event) => {
     if (event.metaKey || event.ctrlKey || event.altKey) return;
+    // While this window is paused (not primary) suppress all presentation
+    // keyboard shortcuts so slides don't silently scroll behind the overlay.
+    // Returning early also lets the browser handle Space/Enter normally on
+    // the focused "Take over" button without the Space handler below firing
+    // event.preventDefault() and swallowing the button activation.
+    if (!isPrimary) return;
 
     if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
       event.preventDefault();
@@ -313,7 +319,16 @@ export function createPresentationView(root, initialSource) {
     pausedOverlay.hidden = true;
     if (!heartbeatTimer) {
       heartbeatTimer = setInterval(() => {
-        if (isPrimary) writePrimary(windowId);
+        if (!isPrimary) return;
+        const current = readPrimary();
+        // If a different, live window has since taken over, yield the primary
+        // role and show the paused overlay instead of continuing to overwrite
+        // the new primary's localStorage entry.
+        if (current && current.id !== windowId && !isPrimaryStale(current)) {
+          enterPausedMode();
+          return;
+        }
+        writePrimary(windowId);
       }, HEARTBEAT_INTERVAL_MS);
     }
   }
@@ -321,6 +336,12 @@ export function createPresentationView(root, initialSource) {
   function enterPausedMode() {
     isPrimary = false;
     pausedOverlay.hidden = false;
+    // Stop heartbeating so this window no longer overwrites the active
+    // primary's localStorage entry while it is paused.
+    if (heartbeatTimer) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
+    }
   }
 
   function checkForExistingPrimary() {
@@ -351,13 +372,19 @@ export function createPresentationView(root, initialSource) {
   });
 
   // Re-check whenever another tab updates the primary key so a paused window
-  // can automatically reclaim primary if the live window is closed.
+  // can automatically reclaim primary if the live window is closed, and so
+  // the active primary can yield when another window takes over.
   window.addEventListener("storage", (event) => {
     if (event.key !== AUDIENCE_PRIMARY_KEY) return;
     const existing = readPrimary();
     if (!isPrimary && isPrimaryStale(existing)) {
+      // No live primary any more — reclaim.
       claimPrimary();
       render();
+    } else if (isPrimary && existing && existing.id !== windowId && !isPrimaryStale(existing)) {
+      // A different window just took over — yield immediately without waiting
+      // for the next heartbeat tick.
+      enterPausedMode();
     }
   });
 
