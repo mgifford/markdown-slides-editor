@@ -303,10 +303,11 @@ const ODP_H3_MARKER = "__H3__";
 function htmlToOdpParagraphs(html) {
   // Capture H2/H3 inner text before all other tags are stripped so we can
   // assign the correct paragraph style.  Any residual tags inside the heading
-  // are removed by the nested replace, followed by an explicit strip of any
-  // bare `<` that could not be matched as a complete tag.  All resulting text
-  // lines are additionally passed through escapeXml() at every call site before
-  // being written into the ODP XML, providing a second layer of protection.
+  // are removed by stripTags, which also strips bare `<` characters to ensure
+  // no angle-bracket sequences survive.  The overall normalized string receives
+  // the same treatment at the end of the chain.  All text values are
+  // additionally passed through escapeXml() at every call site before being
+  // written into the ODP XML.
   const stripTags = (s) => s.replace(/<[^>]+>/g, "").replace(/</g, "");
   const normalized = String(html)
     .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, (_, inner) => "\n" + ODP_H2_MARKER + stripTags(inner) + "\n")
@@ -314,7 +315,8 @@ function htmlToOdpParagraphs(html) {
     .replace(/<li[^>]*>/gi, "\n• ")
     .replace(/<(?:br|br\/)\s*>/gi, "\n")
     .replace(/<\/(?:p|div|section|article|blockquote|ul|ol|li|h4|h5|h6|dt|dd|th|td|tr)>/gi, "\n")
-    .replace(/<[^>]+>/g, "");
+    .replace(/<[^>]+>/g, "")
+    .replace(/</g, "");
 
   const paragraphs = [];
   for (const line of decodeHtmlEntities(normalized).split(/\n+/)) {
@@ -336,6 +338,8 @@ const LEFT_COLUMN_CLASS = "layout-columns__column--left";
 const RIGHT_COLUMN_CLASS = "layout-columns__column--right";
 const LEFT_COLUMN_RE = /<section[^>]*layout-columns__column--left[^>]*>([\s\S]*?)<\/section>/i;
 const RIGHT_COLUMN_RE = /<section[^>]*layout-columns__column--right[^>]*>([\s\S]*?)<\/section>/i;
+// Horizontal gap in centimetres between the two columns of a two-column slide.
+const COLUMN_GAP_CM = 0.4;
 
 /**
  * Return `{ left, right }` arrays of `{ text, style }` objects when the HTML
@@ -470,9 +474,8 @@ function buildOdpContentXml({ title, renderedSlides, metadata = {} }) {
         const columns = extractColumnsFromHtml(bodyHtml);
         if (columns) {
           // Two-column layout: place left and right content in side-by-side frames.
-          const colGap = 0.4;
-          const colWidth = Number(((bodyWidth - colGap) / 2).toFixed(2));
-          const rightColX = Number((bodyX + colWidth + colGap).toFixed(2));
+          const colWidth = Number(((bodyWidth - COLUMN_GAP_CM) / 2).toFixed(2));
+          const rightColX = Number((bodyX + colWidth + COLUMN_GAP_CM).toFixed(2));
 
           const leftXml = columns.left.length
             ? columns.left.map(({ text, style }) => `<text:p text:style-name="${style}">${escapeXml(text)}</text:p>`).join("")
