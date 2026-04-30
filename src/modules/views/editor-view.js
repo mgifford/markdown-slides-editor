@@ -2,7 +2,6 @@ import {
   buildExportFilename,
   buildShortExportFilename,
   buildExportBundle,
-  buildMhtmlDocument,
   buildOdpPresentation,
   buildOnePageHtml,
   buildOfflinePresentationHtml,
@@ -1054,10 +1053,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
         renderedSlides: lastCompiled?.renderedSlides || [],
         metadata: lastCompiled?.metadata || {},
       }),
-      onePageMhtml: buildMhtmlDocument({
-        title: lastCompiled?.metadata.title || "Slide deck one-page view",
-        html: onePageHtml,
-      }),
+      onePageHtml,
       offlineHtml,
       filePrefix,
     });
