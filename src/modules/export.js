@@ -328,6 +328,19 @@ function htmlToOdpParagraphs(html) {
   const normalized = String(html)
     .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, (_, inner) => "\n" + ODP_H2_MARKER + stripTags(inner) + "\n")
     .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, (_, inner) => "\n" + ODP_H3_MARKER + stripTags(inner) + "\n")
+    // Preserve alt text from <img> tags (including external SVG references) as
+    // a bracketed description so the content is not silently lost in the export.
+    .replace(/<img\b[^>]*>/gi, (imgTag) => {
+      const altMatch = /\balt\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(imgTag);
+      if (altMatch) {
+        const altText = altMatch[1] !== undefined ? altMatch[1] : altMatch[2];
+        if (altText) return `\n[Image: ${altText}]\n`;
+      }
+      return "";
+    })
+    // Replace inline SVG blocks with a short placeholder so the reader knows
+    // an SVG diagram was present at that point in the slide.
+    .replace(/<svg\b[\s\S]*?<\/svg>/gi, "\n[SVG diagram]\n")
     .replace(/<li[^>]*>/gi, "\n• ")
     .replace(/<(?:br|br\/)\s*>/gi, "\n")
     .replace(/<\/(?:p|div|section|article|blockquote|ul|ol|li|h4|h5|h6|dt|dd|th|td|tr)>/gi, "\n")
@@ -358,8 +371,52 @@ const RIGHT_COLUMN_RE = /<section[^>]*layout-columns__column--right[^>]*>([\s\S]
 const COLUMN_GAP_CM = 0.4;
 
 /**
- * Return `{ left, right }` arrays of `{ text, style }` objects when the HTML
- * contains a two-column `layout-columns` layout; returns `null` otherwise.
+ * Find the `<div class="layout-columns">…</div>` wrapper in `html` by tracking
+ * div nesting depth so that nested `<div>` elements inside the columns do not
+ * cause a premature match.  Returns `{ pre, post }` HTML strings for the
+ * content before and after the columns wrapper, or `null` when no wrapper is
+ * found.
+ */
+function findColumnsBlock(html) {
+  const openRe = /<div\b[^>]*\blayout-columns\b[^>]*>/i;
+  const openMatch = openRe.exec(html);
+  if (!openMatch) return null;
+
+  let depth = 1;
+  let pos = openMatch.index + openMatch[0].length;
+
+  while (pos < html.length && depth > 0) {
+    const sub = html.slice(pos);
+    const openTag = /<div\b/i.exec(sub);
+    const closeTag = /<\/div>/i.exec(sub);
+
+    if (!closeTag) break;
+
+    if (openTag && openTag.index < closeTag.index) {
+      depth += 1;
+      pos += openTag.index + openTag[0].length;
+    } else {
+      depth -= 1;
+      if (depth === 0) {
+        return {
+          pre: html.slice(0, openMatch.index),
+          post: html.slice(pos + closeTag.index + closeTag[0].length),
+        };
+      }
+      pos += closeTag.index + closeTag[0].length;
+    }
+  }
+
+  // Fallback: return everything before the opening tag; post is unknown.
+  return { pre: html.slice(0, openMatch.index), post: "" };
+}
+
+/**
+ * Return `{ left, right, pre, post }` arrays of `{ text, style }` objects when
+ * the HTML contains a two-column `layout-columns` layout; returns `null`
+ * otherwise.  `pre` / `post` contain paragraphs extracted from content that
+ * appears before / after the columns wrapper so that H2 sub-headings and
+ * trailing text are not silently discarded.
  */
 function extractColumnsFromHtml(bodyHtml) {
   if (!bodyHtml.includes(LEFT_COLUMN_CLASS) && !bodyHtml.includes(RIGHT_COLUMN_CLASS)) {
@@ -371,9 +428,13 @@ function extractColumnsFromHtml(bodyHtml) {
 
   if (!leftMatch && !rightMatch) return null;
 
+  const outer = findColumnsBlock(bodyHtml);
+
   return {
     left: leftMatch ? htmlToOdpParagraphs(leftMatch[1]) : [],
     right: rightMatch ? htmlToOdpParagraphs(rightMatch[1]) : [],
+    pre: outer ? htmlToOdpParagraphs(outer.pre) : [],
+    post: outer ? htmlToOdpParagraphs(outer.post) : [],
   };
 }
 
@@ -490,14 +551,20 @@ function buildOdpContentXml({ title, renderedSlides, metadata = {} }) {
         const columns = extractColumnsFromHtml(bodyHtml);
         if (columns) {
           // Two-column layout: place left and right content in side-by-side frames.
+          // Content that appears before the columns wrapper (e.g. H2 sub-headings)
+          // is prepended to the left column; content after the wrapper is appended
+          // to the right column so that no text is silently discarded.
           const colWidth = Number(((bodyWidth - COLUMN_GAP_CM) / 2).toFixed(2));
           const rightColX = Number((bodyX + colWidth + COLUMN_GAP_CM).toFixed(2));
 
-          const leftXml = columns.left.length
-            ? columns.left.map(({ text, style }) => `<text:p text:style-name="${style}">${escapeXml(text)}</text:p>`).join("")
+          const leftParas = [...columns.pre, ...columns.left];
+          const rightParas = [...columns.right, ...columns.post];
+
+          const leftXml = leftParas.length
+            ? leftParas.map(({ text, style }) => `<text:p text:style-name="${style}">${escapeXml(text)}</text:p>`).join("")
             : '<text:p text:style-name="PBody"></text:p>';
-          const rightXml = columns.right.length
-            ? columns.right.map(({ text, style }) => `<text:p text:style-name="${style}">${escapeXml(text)}</text:p>`).join("")
+          const rightXml = rightParas.length
+            ? rightParas.map(({ text, style }) => `<text:p text:style-name="${style}">${escapeXml(text)}</text:p>`).join("")
             : '<text:p text:style-name="PBody"></text:p>';
 
           bodyFramesXml = `

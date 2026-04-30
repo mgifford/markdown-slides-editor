@@ -529,6 +529,12 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
+/* When the hidden attribute is set in JS, display: flex must be explicitly
+   overridden — author stylesheets take precedence over the UA [hidden] rule. */
+.audience-paused-overlay[hidden] {
+  display: none;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
