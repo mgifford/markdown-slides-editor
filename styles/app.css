@@ -861,6 +861,90 @@ input:focus-visible {
   user-select: none;
 }
 
+/* Code block directive */
+.layout-code {
+  margin: 0;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.layout-code pre {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  background: color-mix(in srgb, var(--ink) 8%, var(--panel-strong));
+  border-radius: 12px;
+}
+
+.layout-code pre code {
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "Menlo", monospace;
+  font-size: 0.85em;
+  line-height: 1.5;
+  white-space: pre;
+  color: var(--ink);
+}
+
+/* Table directive */
+.layout-table {
+  margin: 0;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.layout-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.layout-table th,
+.layout-table td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.layout-table thead th {
+  background: color-mix(in srgb, var(--accent-soft) 45%, var(--panel-strong));
+  font-weight: 600;
+}
+
+.layout-table tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--panel-strong) 60%, transparent);
+}
+
+.slide-card .layout-table tr.next[hidden] {
+  display: none;
+}
+
+/* Figure directive (image + caption) */
+.layout-figure {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+}
+
+.layout-figure img {
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.layout-figure figcaption {
+  font-size: 0.85em;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Step directive: transparent progressive wrapper, no extra visual styling */
+.layout-step {
+  display: contents;
+}
+
 .slide-card--title {
   display: grid;
   align-items: center;
@@ -1505,8 +1589,12 @@ input:focus-visible {
   display: list-item !important;
 }
 
-.one-page-body .next[hidden]:not(li) {
+.one-page-body .next[hidden]:not(li):not(span) {
   display: block !important;
+}
+
+.one-page-body span.next[hidden] {
+  display: inline !important;
 }
 
 .one-page-body li.next.active,
