@@ -283,46 +283,106 @@ export function parseSource(source) {
     };
   });
 
-  const slides = [];
   const titleSlide = createTitleSlide(metadata);
-  if (titleSlide) slides.push(titleSlide);
-  slides.push(...contentSlides.map((slide, index) => ({
-    ...slide,
-    index: slides.length + index,
-  })));
   const closingSlide = createClosingSlide(metadata);
-  if (closingSlide) {
-    closingSlide.index = slides.length;
-    slides.push(closingSlide);
+
+  const result = contentSlides.slice();
+
+  if (titleSlide) {
+    const rawNum = parseInt(metadata.titleSlideNumber);
+    const titlePos = (!isNaN(rawNum) && rawNum >= 1) ? rawNum - 1 : 0;
+    result.splice(Math.min(titlePos, result.length), 0, titleSlide);
   }
+
+  if (closingSlide) {
+    const rawNum = parseInt(metadata.closingSlideNumber);
+    let closingPos;
+    if (!isNaN(rawNum) && rawNum > 0) {
+      closingPos = Math.min(rawNum - 1, result.length);
+    } else if (!isNaN(rawNum) && rawNum < 0) {
+      closingPos = Math.max(0, result.length + rawNum);
+    } else {
+      closingPos = result.length;
+    }
+    result.splice(closingPos, 0, closingSlide);
+  }
+
+  result.forEach((slide, i) => { slide.index = i; });
 
   return {
     metadata,
-    slides,
+    slides: result,
   };
 }
 
 export function getSlideIndexForSourceOffset(source, offset = 0) {
   const normalized = normalizeSource(source);
   const safeOffset = Math.max(0, Math.min(offset, normalized.length));
-  const titleSlideOffset = /^\s*---\n[\s\S]*?\n---\n?/m.test(normalized) && /\btitleSlide:\s*true\b/i.test(normalized) ? 1 : 0;
 
   const contentStart = getFrontMatterContentStart(normalized);
+  const frontMatter = normalized.slice(0, contentStart);
   const content = normalized.slice(contentStart);
   const relativeOffset = Math.max(0, safeOffset - contentStart);
 
+  const hasTitleSlide = contentStart > 0 && /\btitleSlide:\s*true\b/i.test(frontMatter);
+  const hasClosingSlide = contentStart > 0 && /\bclosingSlide:\s*true\b/i.test(frontMatter);
+
   if (!content.trim()) {
-    return titleSlideOffset;
+    return hasTitleSlide ? 1 : 0;
   }
 
   const separatorPattern = /\n---\n/g;
-  let slideIndex = 0;
+  let contentSlideIndex = 0;
   let match;
   while ((match = separatorPattern.exec(content)) && match.index < relativeOffset) {
-    slideIndex += 1;
+    contentSlideIndex += 1;
   }
 
-  return titleSlideOffset + slideIndex;
+  if (!hasTitleSlide && !hasClosingSlide) {
+    return contentSlideIndex;
+  }
+
+  // Count total separators by continuing the scan from where the loop stopped.
+  // If match is non-null, it is the first separator after the cursor (found but not counted).
+  let totalSeparators = contentSlideIndex;
+  if (match !== null) {
+    totalSeparators += 1;
+    while (separatorPattern.exec(content) !== null) {
+      totalSeparators += 1;
+    }
+  }
+  const totalContentSlides = totalSeparators + 1;
+
+  // Determine where the title slide is inserted (0-indexed position in content array).
+  let titlePos = -1;
+  if (hasTitleSlide) {
+    const m = frontMatter.match(/\btitleSlideNumber:\s*(\d+)/i);
+    const titleNum = m ? (parseInt(m[1]) || 1) : 1;
+    titlePos = Math.min(titleNum - 1, totalContentSlides);
+  }
+
+  // Title is before content slide contentSlideIndex when its insertion point <= contentSlideIndex.
+  const titleBefore = titlePos >= 0 && titlePos <= contentSlideIndex;
+  const posAfterTitle = contentSlideIndex + (titleBefore ? 1 : 0);
+
+  // Determine where the closing slide is inserted in the intermediate array (after title).
+  let closingBefore = false;
+  if (hasClosingSlide) {
+    const totalAfterTitle = totalContentSlides + (hasTitleSlide ? 1 : 0);
+    const m = frontMatter.match(/\bclosingSlideNumber:\s*(-?\d+)/i);
+    const closingNum = m ? (parseInt(m[1]) || 0) : 0;
+    let closingInsertPos;
+    if (closingNum > 0) {
+      closingInsertPos = Math.min(closingNum - 1, totalAfterTitle);
+    } else if (closingNum < 0) {
+      closingInsertPos = Math.max(0, totalAfterTitle + closingNum);
+    } else {
+      closingInsertPos = totalAfterTitle;
+    }
+    closingBefore = closingInsertPos <= posAfterTitle;
+  }
+
+  return posAfterTitle + (closingBefore ? 1 : 0);
 }
 
 export function getSourceOffsetForSlideIndex(source, slideIndex, deck = null) {
@@ -361,8 +421,11 @@ export function getSourceOffsetForSlideIndex(source, slideIndex, deck = null) {
     contentSlideStarts.push(match.index + 5);
   }
 
-  const hasTitleSlide = compiledDeck.slides[0]?.kind === "title";
-  const contentSlideIndex = Math.max(0, safeSlideIndex - (hasTitleSlide ? 1 : 0));
+  const generatedSlidesBefore = compiledDeck.slides
+    .slice(0, safeSlideIndex)
+    .filter(s => s.kind === "title" || s.kind === "closing")
+    .length;
+  const contentSlideIndex = Math.max(0, safeSlideIndex - generatedSlidesBefore);
   const rawStart = contentSlideStarts[Math.min(contentSlideIndex, contentSlideStarts.length - 1)] || 0;
   const nextRawStart = contentSlideStarts[contentSlideIndex + 1] ?? content.length;
   const segment = content.slice(rawStart, nextRawStart);
