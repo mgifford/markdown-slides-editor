@@ -1045,7 +1045,8 @@ input:focus-visible {
 }
 
 .slide-card h1 + h2 {
-  margin-top: 0.15em;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .slide-card h3 {
