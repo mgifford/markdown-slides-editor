@@ -1137,13 +1137,17 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
     if (!content || !card) return;
     var root = document.documentElement;
     var zoom = parseFloat(root.style.getPropertyValue('--presentation-text-zoom') || getComputedStyle(root).getPropertyValue('--presentation-text-zoom') || '1') || 1;
-    var overflows = content.scrollHeight > content.clientHeight + 1;
-    var outOfBounds = card.getBoundingClientRect().right > window.innerWidth + 1;
-    while ((overflows || outOfBounds) && zoom > 0.5) {
+    function detectOverflow() {
+      return {
+        vertical: content.scrollHeight > content.clientHeight + 1,
+        horizontal: card.scrollWidth > card.clientWidth + 1
+      };
+    }
+    var state = detectOverflow();
+    while ((state.vertical || state.horizontal) && zoom > 0.5) {
       zoom = Math.max(0.5, parseFloat((zoom - 0.1).toFixed(1)));
       root.style.setProperty('--presentation-text-zoom', zoom);
-      overflows = content.scrollHeight > content.clientHeight + 1;
-      outOfBounds = card.getBoundingClientRect().right > window.innerWidth + 1;
+      state = detectOverflow();
     }
   }
 
