@@ -12,6 +12,46 @@ import { toggleColorMode } from "../color-mode.js";
 import { applyDeckTheme } from "../theme.js";
 import { compileSource, mountSlideInto } from "./shared.js";
 
+const AUDIENCE_PRIMARY_KEY = "markdown-slides-editor.audience-primary";
+const HEARTBEAT_INTERVAL_MS = 1000;
+const HEARTBEAT_STALE_MS = 3000;
+
+function generateWindowId() {
+  return Math.random().toString(36).slice(2);
+}
+
+function readPrimary() {
+  try {
+    const raw = localStorage.getItem(AUDIENCE_PRIMARY_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writePrimary(id) {
+  try {
+    localStorage.setItem(AUDIENCE_PRIMARY_KEY, JSON.stringify({ id, ts: Date.now() }));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function clearPrimary(id) {
+  try {
+    const current = readPrimary();
+    if (current?.id === id) {
+      localStorage.removeItem(AUDIENCE_PRIMARY_KEY);
+    }
+  } catch {
+    // ignore
+  }
+}
+
+function isPrimaryStale(primary) {
+  return !primary || Date.now() - primary.ts > HEARTBEAT_STALE_MS;
+}
+
 export function createPresentationView(root, initialSource) {
   let source = initialSource;
   let activeSlideIndex = 0;
@@ -19,6 +59,10 @@ export function createPresentationView(root, initialSource) {
   let textZoom = 1;
   let compiled = compileSource(source);
   const sync = createSyncChannel();
+  // Guard flag: true while this window is processing an incoming sync message.
+  // Prevents re-broadcasting and avoids infinite loops when multiple audience
+  // windows are open at the same time.
+  let isSyncHandling = false;
   let captionsState = {
     enabled: false,
     available: false,
@@ -119,7 +163,14 @@ export function createPresentationView(root, initialSource) {
     captionNode.textContent = captionsState.text;
     updateCaptionSpacing();
     updateHash();
-    sync.postMessage({ type: "slide-changed", activeSlideIndex, revealStep, source, textZoom, timestamp: Date.now() });
+    // Only broadcast when this window is the primary and is the initiator
+    // (keyboard nav, TOC click, etc.).  Skip broadcasting when we are merely
+    // reacting to a sync message, or when this window is paused, so that
+    // multiple open audience windows do not create a feedback loop that causes
+    // rapid flickering between slide numbers.
+    if (!isSyncHandling && isPrimary) {
+      sync.postMessage({ type: "slide-changed", activeSlideIndex, revealStep, source, textZoom, timestamp: Date.now() });
+    }
   }
 
   function move(delta) {
@@ -199,22 +250,109 @@ export function createPresentationView(root, initialSource) {
   });
 
   sync.subscribe((message) => {
-    if (message.type === "deck-updated" || message.type === "slide-changed") {
-      source = message.source || source;
-      activeSlideIndex = message.activeSlideIndex ?? activeSlideIndex;
-      revealStep = message.type === "slide-changed" ? message.revealStep ?? revealStep : 0;
-      if (typeof message.textZoom === "number") {
-        textZoom = message.textZoom;
+    // Ignore incoming sync messages when this window is paused (not primary).
+    if (!isPrimary) return;
+    isSyncHandling = true;
+    try {
+      if (message.type === "deck-updated" || message.type === "slide-changed") {
+        source = message.source || source;
+        activeSlideIndex = message.activeSlideIndex ?? activeSlideIndex;
+        revealStep = message.type === "slide-changed" ? message.revealStep ?? revealStep : 0;
+        if (typeof message.textZoom === "number") {
+          textZoom = message.textZoom;
+        }
+        render();
       }
-      render();
-    }
-    if (message.type === "caption-update") {
-      captionNode.hidden = !message.text;
-      captionNode.textContent = message.text || "";
-      updateCaptionSpacing();
+      if (message.type === "caption-update") {
+        captionNode.hidden = !message.text;
+        captionNode.textContent = message.text || "";
+        updateCaptionSpacing();
+      }
+    } finally {
+      isSyncHandling = false;
     }
   });
 
+  // ── Primary-window coordination ──────────────────────────────────────────
+  // When multiple audience tabs are open, only the "primary" tab responds to
+  // the presenter sync channel.  Secondary tabs show a paused notice so users
+  // can easily identify which window the presenter is controlling.
+  //
+  // Coordination uses a short-lived localStorage heartbeat:
+  //   key  : AUDIENCE_PRIMARY_KEY
+  //   value: { id: string, ts: number }
+  // The primary tab refreshes `ts` every HEARTBEAT_INTERVAL_MS.
+  // A tab whose heartbeat is older than HEARTBEAT_STALE_MS is considered gone.
+
+  const windowId = generateWindowId();
+  let isPrimary = false;
+  let heartbeatTimer = null;
+
+  // Build the paused-state overlay (hidden by default).
+  const pausedOverlay = document.createElement("div");
+  pausedOverlay.className = "audience-paused-overlay";
+  pausedOverlay.setAttribute("role", "status");
+  pausedOverlay.setAttribute("aria-live", "polite");
+  pausedOverlay.hidden = true;
+  pausedOverlay.innerHTML =
+    '<p class="audience-paused-message">This audience window is <strong>paused</strong> — another tab is already showing the live presentation.</p>' +
+    '<button type="button" class="audience-takeover-button">Take over as primary window</button>';
+  frame.appendChild(pausedOverlay);
+
+  const takeoverButton = pausedOverlay.querySelector(".audience-takeover-button");
+
+  function claimPrimary() {
+    isPrimary = true;
+    writePrimary(windowId);
+    pausedOverlay.hidden = true;
+    if (!heartbeatTimer) {
+      heartbeatTimer = setInterval(() => {
+        if (isPrimary) writePrimary(windowId);
+      }, HEARTBEAT_INTERVAL_MS);
+    }
+  }
+
+  function enterPausedMode() {
+    isPrimary = false;
+    pausedOverlay.hidden = false;
+  }
+
+  function checkForExistingPrimary() {
+    const existing = readPrimary();
+    if (!isPrimaryStale(existing) && existing.id !== windowId) {
+      // Another live primary exists — start paused.
+      enterPausedMode();
+    } else {
+      // No live primary (or stale): claim the role.
+      claimPrimary();
+    }
+  }
+
+  takeoverButton.addEventListener("click", () => {
+    claimPrimary();
+    render();
+  });
+
+  window.addEventListener("beforeunload", () => {
+    clearPrimary(windowId);
+    if (heartbeatTimer) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
+    }
+  });
+
+  // Re-check whenever another tab updates the primary key so a paused window
+  // can automatically reclaim primary if the live window is closed.
+  window.addEventListener("storage", (event) => {
+    if (event.key !== AUDIENCE_PRIMARY_KEY) return;
+    const existing = readPrimary();
+    if (!isPrimary && isPrimaryStale(existing)) {
+      claimPrimary();
+      render();
+    }
+  });
+
+  checkForExistingPrimary();
   applyHashPosition();
   render();
   captionMonitor.start();
