@@ -641,7 +641,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
   const safeDeckStyle = escapeHtmlAttr(deckStyleAttr);
 
   return `<!doctype html>
-<html lang="${safeLang}">
+<html lang="${safeLang}" data-theme="${safeTheme}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -678,7 +678,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
       }
     </style>
   </head>
-  <body class="snapshot-body" data-theme="${safeTheme}" style="${safeDeckStyle}">
+  <body class="snapshot-body" style="${safeDeckStyle}">
     <header class="topbar">
       <div>
         <p class="eyebrow">Offline Presentation</p>
@@ -852,7 +852,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
     var endScript = '<' + '/script>';
     var h = [
       '<!doctype html>',
-      '<html lang="' + escapeHtml(data.lang) + '">',
+      '<html lang="' + escapeHtml(data.lang) + '" data-theme="' + escapeHtml(data.theme) + '">',
       '<head>',
       '<meta charset="UTF-8"/>',
       '<meta name="viewport" content="width=device-width, initial-scale=1.0"/>',
@@ -860,7 +860,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
       '<style>' + css + '</style>',
       '<style>html,body{margin:0;padding:0;}.presentation-frame{position:fixed;inset:0;}</style>',
       '</head>',
-      '<body class="snapshot-body" data-theme="' + escapeHtml(data.theme) + '" style="' + escapeHtml(data.deckStyleAttr) + '">',
+      '<body class="snapshot-body" style="' + escapeHtml(data.deckStyleAttr) + '">',
       '<main class="presentation-layout">',
       '<p id="presentation-status" class="sr-only" aria-live="polite"></p>',
       '<div id="audience-frame" class="presentation-frame"></div>',
@@ -991,8 +991,12 @@ export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
     )
     .join("");
 
+  const safeOnePageLang = escapeHtmlAttr(metadata.lang || "en");
+  const safeOnePageTheme = escapeHtmlAttr(metadata.theme || "default-high-contrast");
+  const safeOnePageDeckStyle = escapeHtmlAttr(buildDeckStyleAttribute(metadata));
+
   return `<!doctype html>
-<html lang="${metadata.lang || "en"}">
+<html lang="${safeOnePageLang}" data-theme="${safeOnePageTheme}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1006,7 +1010,7 @@ export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
       }
     </style>
   </head>
-  <body class="snapshot-body one-page-body" data-theme="${metadata.theme || "default-high-contrast"}" style="${buildDeckStyleAttribute(metadata)}">
+  <body class="snapshot-body one-page-body" style="${safeOnePageDeckStyle}">
     <nav class="snapshot-controls one-page-controls" aria-label="One-page view controls">
       <button type="button" data-action="save-html">Save HTML</button>
       <button type="button" data-action="print">Print / Save PDF</button>
@@ -1097,8 +1101,12 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
     }),
   );
 
+  const safeSnapshotLang = escapeHtmlAttr(metadata.lang || "en");
+  const safeSnapshotTheme = escapeHtmlAttr(metadata.theme || "default-high-contrast");
+  const safeSnapshotDeckStyle = escapeHtmlAttr(buildDeckStyleAttribute(metadata));
+
   return `<!doctype html>
-<html lang="${metadata.lang || "en"}">
+<html lang="${safeSnapshotLang}" data-theme="${safeSnapshotTheme}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1109,14 +1117,17 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
       .snapshot-viewer .slide__content {
         overflow: hidden;
       }
+      .snapshot-viewer .slide {
+        padding-bottom: 3rem;
+      }
       .snapshot-viewer .slide-card {
-        max-height: 100vh;
+        max-height: calc(100vh - 3rem);
         border-radius: 0;
       }
       @supports (height: 100dvh) {
         .snapshot-viewer .slide-card {
-          max-height: 100dvh;
-          width: min(100%, calc(100dvh * var(--slide-aspect-ratio, 1.7778)));
+          max-height: calc(100dvh - 3rem);
+          width: min(100%, calc((100dvh - 3rem) * var(--slide-aspect-ratio, 1.7778)));
         }
       }
       .snapshot-controls {
@@ -1138,7 +1149,7 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
       }
     </style>
   </head>
-  <body class="snapshot-body snapshot-viewer" data-theme="${metadata.theme || "default-high-contrast"}" style="${buildDeckStyleAttribute(metadata)}">
+  <body class="snapshot-body snapshot-viewer" style="${safeSnapshotDeckStyle}">
     <main class="presentation-shell" aria-live="polite">
       ${slidesMarkup}
       <nav class="snapshot-controls" aria-label="Presentation controls">
