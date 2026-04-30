@@ -295,12 +295,20 @@ function htmlToTextLines(value) {
  * for ODP `<text:p>` elements.  H2 and H3 headings are tagged with distinct
  * style names (`PH2` / `PH3`) so they render at the right size in Impress.
  */
+// Sentinel prefixes written into the plain-text conversion to mark heading levels.
+// They must be unique strings that cannot appear in normal slide content.
+const ODP_H2_MARKER = "__H2__";
+const ODP_H3_MARKER = "__H3__";
+
 function htmlToOdpParagraphs(html) {
   // Capture H2/H3 inner text before all other tags are stripped so we can
-  // assign the correct paragraph style.
+  // assign the correct paragraph style.  Any residual tags inside the heading
+  // are removed by the nested replace.  All resulting text lines are later
+  // passed through escapeXml() before being written into the ODP XML, so any
+  // stray HTML characters are safely neutralised at the output stage.
   const normalized = String(html)
-    .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, (_, inner) => "\n__H2__" + inner.replace(/<[^>]+>/g, "") + "\n")
-    .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, (_, inner) => "\n__H3__" + inner.replace(/<[^>]+>/g, "") + "\n")
+    .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, (_, inner) => "\n" + ODP_H2_MARKER + inner.replace(/<[^>]+>/g, "") + "\n")
+    .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, (_, inner) => "\n" + ODP_H3_MARKER + inner.replace(/<[^>]+>/g, "") + "\n")
     .replace(/<li[^>]*>/gi, "\n• ")
     .replace(/<(?:br|br\/)\s*>/gi, "\n")
     .replace(/<\/(?:p|div|section|article|blockquote|ul|ol|li|h4|h5|h6|dt|dd|th|td|tr)>/gi, "\n")
@@ -310,10 +318,10 @@ function htmlToOdpParagraphs(html) {
   for (const line of decodeHtmlEntities(normalized).split(/\n+/)) {
     const trimmed = line.trim();
     if (!trimmed) continue;
-    if (trimmed.startsWith("__H2__")) {
-      paragraphs.push({ text: trimmed.slice(6).trim(), style: "PH2" });
-    } else if (trimmed.startsWith("__H3__")) {
-      paragraphs.push({ text: trimmed.slice(6).trim(), style: "PH3" });
+    if (trimmed.startsWith(ODP_H2_MARKER)) {
+      paragraphs.push({ text: trimmed.slice(ODP_H2_MARKER.length).trim(), style: "PH2" });
+    } else if (trimmed.startsWith(ODP_H3_MARKER)) {
+      paragraphs.push({ text: trimmed.slice(ODP_H3_MARKER.length).trim(), style: "PH3" });
     } else {
       paragraphs.push({ text: trimmed, style: "PBody" });
     }
@@ -321,20 +329,23 @@ function htmlToOdpParagraphs(html) {
   return paragraphs;
 }
 
+// CSS class fragments used to identify the left/right column sections in rendered HTML.
+const LEFT_COLUMN_CLASS = "layout-columns__column--left";
+const RIGHT_COLUMN_CLASS = "layout-columns__column--right";
+const LEFT_COLUMN_RE = /<section[^>]*layout-columns__column--left[^>]*>([\s\S]*?)<\/section>/i;
+const RIGHT_COLUMN_RE = /<section[^>]*layout-columns__column--right[^>]*>([\s\S]*?)<\/section>/i;
+
 /**
  * Return `{ left, right }` arrays of `{ text, style }` objects when the HTML
  * contains a two-column `layout-columns` layout; returns `null` otherwise.
  */
 function extractColumnsFromHtml(bodyHtml) {
-  if (
-    !bodyHtml.includes("layout-columns__column--left") &&
-    !bodyHtml.includes("layout-columns__column--right")
-  ) {
+  if (!bodyHtml.includes(LEFT_COLUMN_CLASS) && !bodyHtml.includes(RIGHT_COLUMN_CLASS)) {
     return null;
   }
 
-  const leftMatch = /<section[^>]*layout-columns__column--left[^>]*>([\s\S]*?)<\/section>/i.exec(bodyHtml);
-  const rightMatch = /<section[^>]*layout-columns__column--right[^>]*>([\s\S]*?)<\/section>/i.exec(bodyHtml);
+  const leftMatch = LEFT_COLUMN_RE.exec(bodyHtml);
+  const rightMatch = RIGHT_COLUMN_RE.exec(bodyHtml);
 
   if (!leftMatch && !rightMatch) return null;
 
