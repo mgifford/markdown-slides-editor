@@ -1069,3 +1069,189 @@ End of notes.
   assert.equal(deck.slides[0].notes.includes("Nested callout in notes."), true);
   assert.equal(deck.slides[0].notes.includes("End of notes."), true);
 });
+
+test("renderMarkdown renders ::code directive with language class", () => {
+  const rendered = renderMarkdown(`::code javascript
+function hello() {
+  return "world";
+}
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-code"'), true);
+  assert.equal(rendered.html.includes('class="language-javascript"'), true);
+  assert.equal(rendered.html.includes("function hello()"), true);
+  // Content must be escaped, not executed as HTML
+  assert.equal(rendered.html.includes("&lt;"), false);
+  assert.equal(rendered.stepCount, 0);
+});
+
+test("renderMarkdown renders ::code on-click with language and progressive class", () => {
+  const rendered = renderMarkdown(`::code python on-click
+print("hello")
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-code next"'), true);
+  assert.equal(rendered.html.includes('class="language-python"'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown renders ::code without a language", () => {
+  const rendered = renderMarkdown(`::code
+plain text block
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-code"'), true);
+  assert.equal(rendered.html.includes("<code>"), true);
+  assert.equal(rendered.html.includes('class="language-'), false);
+});
+
+test("renderMarkdown escapes HTML entities in ::code content", () => {
+  const rendered = renderMarkdown(`::code html
+<div class="test">Hello &amp; World</div>
+::`);
+
+  assert.equal(rendered.html.includes("&lt;div"), true);
+  assert.equal(rendered.html.includes("&amp;amp;"), true);
+});
+
+test("renderMarkdown renders ::table directive with header and data rows", () => {
+  const rendered = renderMarkdown(`::table
+| Name | Role |
+| --- | --- |
+| Alice | Engineer |
+| Bob | Designer |
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-table"'), true);
+  assert.equal(rendered.html.includes("<table>"), true);
+  assert.equal(rendered.html.includes("<thead>"), true);
+  assert.equal(rendered.html.includes("<th>Name</th>"), true);
+  assert.equal(rendered.html.includes("<th>Role</th>"), true);
+  assert.equal(rendered.html.includes("<td>Alice</td>"), true);
+  assert.equal(rendered.html.includes("<td>Designer</td>"), true);
+  assert.equal(rendered.stepCount, 0);
+});
+
+test("renderMarkdown renders ::table with progressive rows using [>] prefix", () => {
+  const rendered = renderMarkdown(`::table
+| Feature | Status |
+| --- | --- |
+| Ready | Done |
+| [>] Upcoming | Planned |
+::`);
+
+  assert.equal(rendered.html.includes('class="next"'), true);
+  // The [>] prefix should be stripped from the cell content
+  assert.equal(rendered.html.includes("[&gt;]"), false);
+  assert.equal(rendered.html.includes("<td>Upcoming</td>"), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown renders ::table on-click makes whole table progressive", () => {
+  const rendered = renderMarkdown(`::table on-click
+| A | B |
+| --- | --- |
+| 1 | 2 |
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-table next"'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown renders ::figure directive with image and caption", () => {
+  const rendered = renderMarkdown(`::figure
+![A diagram](diagram.png)
+---
+Caption text here.
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-figure"'), true);
+  assert.equal(rendered.html.includes("<figcaption>"), true);
+  assert.equal(rendered.html.includes("Caption text here."), true);
+  assert.equal(rendered.html.includes('src="diagram.png"'), true);
+  assert.equal(rendered.stepCount, 0);
+});
+
+test("renderMarkdown renders ::figure on-click adds progressive class", () => {
+  const rendered = renderMarkdown(`::figure on-click
+![A chart](chart.png)
+---
+Chart caption.
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-figure next"'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown renders ::figure without caption", () => {
+  const rendered = renderMarkdown(`::figure
+![No caption image](img.png)
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-figure"'), true);
+  assert.equal(rendered.html.includes("<figcaption>"), false);
+});
+
+test("renderMarkdown renders ::step directive as transparent wrapper", () => {
+  const rendered = renderMarkdown(`::step
+Some content.
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-step"'), true);
+  assert.equal(rendered.html.includes("Some content."), true);
+  assert.equal(rendered.stepCount, 0);
+});
+
+test("renderMarkdown renders ::step on-click as progressive wrapper", () => {
+  const rendered = renderMarkdown(`::step on-click
+Reveal this block.
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-step next"'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown renders inline {>text} fragment as progressive span", () => {
+  const rendered = renderMarkdown(`A paragraph with {>a hidden part} revealed later.`);
+
+  assert.equal(rendered.html.includes('<span class="next">a hidden part</span>'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown counts multiple inline fragments in stepCount", () => {
+  const rendered = renderMarkdown(`First {>one} then {>two} then {>three}.`);
+
+  assert.equal(rendered.html.includes('<span class="next">one</span>'), true);
+  assert.equal(rendered.html.includes('<span class="next">two</span>'), true);
+  assert.equal(rendered.html.includes('<span class="next">three</span>'), true);
+  assert.equal(rendered.stepCount, 3);
+});
+
+test("renderMarkdown inline fragment supports inline markup inside the fragment", () => {
+  const rendered = renderMarkdown(`See {>**bold fragment**} here.`);
+
+  assert.equal(rendered.html.includes('<span class="next"><strong>bold fragment</strong></span>'), true);
+});
+
+test("renderMarkdown inline fragments in list items count toward stepCount", () => {
+  const rendered = renderMarkdown(`- Item with {>a fragment} inside`);
+
+  assert.equal(rendered.html.includes('<span class="next">a fragment</span>'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown combines new directives and [>] list items in stepCount", () => {
+  const rendered = renderMarkdown(`::code javascript on-click
+const x = 1;
+::
+
+::step on-click
+Revealed step.
+::
+
+- [>] List item reveal
+
+A paragraph with {>inline fragment}.`);
+
+  assert.equal(rendered.stepCount, 4);
+});

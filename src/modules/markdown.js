@@ -72,14 +72,31 @@ function collectInlineSvgBlock(lines, startIndex) {
   };
 }
 
-function renderInline(text) {
-  let html = escapeHtml(text);
+function renderInlineMarkup(escapedHtml) {
+  let html = escapedHtml;
   html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
   html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/\*([^*]+)\*/g, "<em>$1</em>");
   html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
   return html;
+}
+
+function renderInline(text, state) {
+  // Handle inline progressive fragments {>...} before HTML-escaping so that
+  // the > character does not get mangled to &gt; before we can match it.
+  const FRAGMENT_RE = /\{>([^}]*)\}/g;
+  let result = "";
+  let lastIndex = 0;
+  let match;
+  while ((match = FRAGMENT_RE.exec(text)) !== null) {
+    result += renderInlineMarkup(escapeHtml(text.slice(lastIndex, match.index)));
+    result += `<span class="next">${renderInlineMarkup(escapeHtml(match[1]))}</span>`;
+    if (state) state.stepCount += 1;
+    lastIndex = match.index + match[0].length;
+  }
+  result += renderInlineMarkup(escapeHtml(text.slice(lastIndex)));
+  return result;
 }
 
 function collectDirectiveBlock(lines, startIndex) {
@@ -183,6 +200,18 @@ function splitOnDivider(lines) {
   };
 }
 
+function parseTableRow(line) {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("|")) return null;
+  const cells = trimmed.split("|").slice(1);
+  if (cells.length > 0 && cells[cells.length - 1].trim() === "") cells.pop();
+  return cells.map((c) => c.trim());
+}
+
+function isTableSeparatorRow(cells) {
+  return cells.length > 0 && cells.every((c) => /^:?-+:?$/.test(c));
+}
+
 function renderSpecialDirective(block, state) {
   const isProgressive = block.modifiers && block.modifiers.includes("on-click");
   const progressiveClass = isProgressive ? " next" : "";
@@ -243,10 +272,61 @@ function renderSpecialDirective(block, state) {
     `;
   }
 
+  if (block.directive === "code") {
+    if (isProgressive) state.stepCount += 1;
+    const lang = block.modifiers.find((m) => m !== "on-click") || "";
+    const langAttr = lang ? ` class="language-${escapeAttribute(lang)}"` : "";
+    const source = block.content.join("\n");
+    return `<figure class="layout-code${progressiveClass}"><pre><code${langAttr}>${escapeHtml(source)}</code></pre></figure>`;
+  }
+
+  if (block.directive === "table") {
+    if (isProgressive) state.stepCount += 1;
+    const rows = block.content.map(parseTableRow).filter(Boolean);
+    if (rows.length === 0) {
+      return `<figure class="layout-table${progressiveClass}"></figure>`;
+    }
+    const headerCells = rows[0];
+    const hasSeparator = rows.length > 1 && isTableSeparatorRow(rows[1]);
+    const dataRows = hasSeparator ? rows.slice(2) : rows.slice(1);
+    const rawDataLines = block.content
+      .filter((l) => l.trim().startsWith("|"))
+      .slice(hasSeparator ? 2 : 1);
+    const theadHtml = `<thead><tr>${headerCells.map((c) => `<th>${renderInline(c, state)}</th>`).join("")}</tr></thead>`;
+    const tbodyRows = dataRows.map((cells, rowIndex) => {
+      const rawLine = rawDataLines[rowIndex] || "";
+      const isRowProgressive = rawLine.trim().startsWith("| [>] ");
+      const rowCells = isRowProgressive
+        ? [cells[0].replace(/^\[>\]\s*/, ""), ...cells.slice(1)]
+        : cells;
+      if (isRowProgressive) state.stepCount += 1;
+      const rowClass = isRowProgressive ? ' class="next"' : "";
+      return `<tr${rowClass}>${rowCells.map((c) => `<td>${renderInline(c, state)}</td>`).join("")}</tr>`;
+    });
+    const tbodyHtml = `<tbody>${tbodyRows.join("")}</tbody>`;
+    return `<figure class="layout-table${progressiveClass}"><table>${theadHtml}${tbodyHtml}</table></figure>`;
+  }
+
+  if (block.directive === "figure") {
+    if (isProgressive) state.stepCount += 1;
+    const { first, second } = splitOnDivider(block.content);
+    const mediaHtml = renderLines(first, state);
+    const captionText = second.join("\n").trim();
+    const captionHtml = captionText
+      ? `<figcaption>${renderInline(captionText, state)}</figcaption>`
+      : "";
+    return `<figure class="layout-figure${progressiveClass}">${mediaHtml}${captionHtml}</figure>`;
+  }
+
+  if (block.directive === "step") {
+    if (isProgressive) state.stepCount += 1;
+    return `<div class="layout-step${progressiveClass}">${renderLines(block.content, state)}</div>`;
+  }
+
   return null;
 }
 
-function buildNestedListHtml(items, type, currentDepth) {
+function buildNestedListHtml(items, type, currentDepth, state) {
   const parts = [];
   parts.push(`<${type}>`);
 
@@ -261,10 +341,10 @@ function buildNestedListHtml(items, type, currentDepth) {
     const classes = item.isProgressive ? ' class="next"' : "";
     if (children.length > 0) {
       parts.push(
-        `<li${classes}>${renderInline(item.text)}${buildNestedListHtml(children, type, currentDepth + 1)}</li>`,
+        `<li${classes}>${renderInline(item.text, state)}${buildNestedListHtml(children, type, currentDepth + 1, state)}</li>`,
       );
     } else {
-      parts.push(`<li${classes}>${renderInline(item.text)}</li>`);
+      parts.push(`<li${classes}>${renderInline(item.text, state)}</li>`);
     }
     i = j;
   }
@@ -280,7 +360,7 @@ function renderLines(lines, state) {
 
   function flushList() {
     if (listItems.length === 0) return;
-    htmlParts.push(buildNestedListHtml(listItems, listType, 0));
+    htmlParts.push(buildNestedListHtml(listItems, listType, 0, state));
     listItems = [];
     listType = null;
   }
@@ -332,7 +412,7 @@ function renderLines(lines, state) {
       const level = headingMatch[1].length;
       const text = headingMatch[2].trim();
       state.headings.push({ level, text });
-      htmlParts.push(`<h${level}>${renderInline(text)}</h${level}>`);
+      htmlParts.push(`<h${level}>${renderInline(text, state)}</h${level}>`);
       index += 1;
       continue;
     }
@@ -374,7 +454,7 @@ function renderLines(lines, state) {
     }
 
     flushList();
-    htmlParts.push(`<p>${renderInline(line)}</p>`);
+    htmlParts.push(`<p>${renderInline(line, state)}</p>`);
     index += 1;
   }
 
