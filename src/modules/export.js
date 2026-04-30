@@ -1,4 +1,5 @@
 import { buildDeckStyleAttribute, buildThemeLinkTag } from "./theme.js";
+import { stripProtocol } from "./utils.js";
 
 const textEncoder = new TextEncoder();
 const ODP_MIMETYPE = "application/vnd.oasis.opendocument.presentation";
@@ -370,9 +371,9 @@ function buildOdpContentXml({ title, renderedSlides, metadata = {} }) {
         const lines = [];
         if (slide.prompt) lines.push(slide.prompt);
         if (slide.contactEmail) lines.push(`Email: ${slide.contactEmail}`);
-        if (slide.contactUrl) lines.push(`Website: ${slide.contactUrl.replace(/^https?:\/\//, "")}`);
+        if (slide.contactUrl) lines.push(`Website: ${stripProtocol(slide.contactUrl)}`);
         if (slide.socialLinks) lines.push(`Social: ${slide.socialLinks}`);
-        if (slide.presentationUrl) lines.push(`Slides: ${slide.presentationUrl.replace(/^https?:\/\//, "")}`);
+        if (slide.presentationUrl) lines.push(`Slides: ${stripProtocol(slide.presentationUrl)}`);
         bodyLines = lines;
       } else {
         titleText = slide.headings?.find((heading) => heading.level === 1)?.text || `Slide ${index + 1}`;

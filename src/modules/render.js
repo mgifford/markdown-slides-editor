@@ -1,4 +1,5 @@
 import { renderMarkdown } from "./markdown.js";
+import { stripProtocol } from "./utils.js";
 
 function escapeHtml(value) {
   return String(value)
@@ -73,10 +74,6 @@ function renderTitleSlide(slide) {
     stepCount: 0,
     notesHtml: "",
   };
-}
-
-function stripProtocol(value) {
-  return String(value).replace(/^https?:\/\//, "");
 }
 
 function renderContactValue(value, href) {
