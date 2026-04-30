@@ -1017,7 +1017,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     const html = buildSnapshotHtml({
       title: lastCompiled?.metadata.title || "Slide deck snapshot",
       cssText,
-      renderedSlides,
+      renderedSlides: slidesForOffline,
       metadata: lastCompiled?.metadata || {},
       source,
     });
@@ -1033,7 +1033,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     const onePageHtml = buildOnePageHtml({
       title: lastCompiled?.metadata.title || "Slide deck one-page view",
       cssText,
-      renderedSlides,
+      renderedSlides: slidesForOffline,
       metadata: lastCompiled?.metadata || {},
     });
     const offlineHtml = buildOfflinePresentationHtml({
