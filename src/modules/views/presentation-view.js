@@ -62,6 +62,22 @@ export function createPresentationView(root, initialSource) {
   const outlineNode = frame.querySelector("#presentation-outline");
   const captionNode = frame.querySelector("#live-caption-display");
 
+  // Keep a ResizeObserver so --caption-bar-height stays accurate even when
+  // the caption text wraps across multiple lines as the presentation progresses.
+  const captionResizeObserver = new ResizeObserver(updateCaptionSpacing);
+  captionResizeObserver.observe(captionNode);
+
+  function updateCaptionSpacing() {
+    if (!captionNode.hidden && captionNode.textContent) {
+      // Measure how much of the viewport the caption element occupies from its
+      // top edge down to the bottom (including the fixed bottom gap).
+      const rect = captionNode.getBoundingClientRect();
+      const reserved = window.innerHeight - rect.top;
+      frameNode.style.setProperty("--caption-bar-height", `${Math.max(0, reserved)}px`);
+    } else {
+      frameNode.style.removeProperty("--caption-bar-height");
+    }
+  }
   function applyHashPosition() {
     compiled = compileSource(source);
     const position = parsePresentationHash(window.location.hash, compiled);
@@ -101,6 +117,7 @@ export function createPresentationView(root, initialSource) {
       .join("");
     captionNode.hidden = !captionsState.available || !captionsState.text;
     captionNode.textContent = captionsState.text;
+    updateCaptionSpacing();
     updateHash();
     sync.postMessage({ type: "slide-changed", activeSlideIndex, revealStep, source, textZoom, timestamp: Date.now() });
   }
@@ -194,6 +211,7 @@ export function createPresentationView(root, initialSource) {
     if (message.type === "caption-update") {
       captionNode.hidden = !message.text;
       captionNode.textContent = message.text || "";
+      updateCaptionSpacing();
     }
   });
 
