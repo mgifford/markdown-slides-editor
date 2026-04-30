@@ -1079,17 +1079,30 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
         overflow: hidden;
       }
       .snapshot-viewer .slide-card {
-        width: calc(var(--slide-width-px, 1280) * 1px);
-        height: calc(var(--slide-height-px, 720) * 1px);
-        max-width: none;
-        transform-origin: center center;
-        transform: scale(var(--snapshot-scale, 1));
+        max-height: 100vh;
+        border-radius: 0;
+      }
+      @supports (height: 100dvh) {
+        .snapshot-viewer .slide-card {
+          max-height: 100dvh;
+          width: min(100%, calc(100dvh * var(--slide-aspect-ratio, 1.7778)));
+        }
+      }
+      .snapshot-controls {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: 0;
+        padding: 0.5rem 1rem;
+        background: color-mix(in srgb, var(--panel-strong, #1e1e2e) 90%, transparent);
+        backdrop-filter: blur(8px);
+        border-top: 1px solid var(--border, #333);
+        z-index: 100;
       }
       @media print {
         .snapshot-viewer .slide-card {
-          transform: none;
-          width: 100%;
-          height: auto;
+          max-height: none;
         }
       }
     </style>
@@ -1136,15 +1149,6 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
 
       function contentOverflows(content) {
         return content.scrollHeight > content.clientHeight + 1 || content.scrollWidth > content.clientWidth + 1;
-      }
-
-      function applyViewportScale() {
-        const slideWidth =
-          parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--slide-width-px").trim()) || 1280;
-        const slideHeight =
-          parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--slide-height-px").trim()) || 720;
-        const scale = Math.min(window.innerWidth / slideWidth, window.innerHeight / slideHeight);
-        document.documentElement.style.setProperty("--snapshot-scale", String(scale));
       }
 
       function calculateBodyScale(measure) {
@@ -1206,7 +1210,6 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
       }
 
       function render() {
-        applyViewportScale();
         slides.forEach((slide, index) => {
           slide.classList.toggle("is-active", index === activeIndex);
           slide.hidden = index !== activeIndex;
