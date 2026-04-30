@@ -666,6 +666,53 @@ closingSlideNumber: -1
   }
 });
 
+test("slide index mapping is correct with titleSlideNumber:4 and closingSlideNumber:-1 (regression)", () => {
+  // Reproduces the navigation-loop bug: navigating to the title or closing slide
+  // in the editor would reset activeSlideIndex to 0 because
+  // getSourceOffsetForSlideIndex returns 0 for generated slides, causing
+  // setEditorSelection(0) to fire a 'select' event that reset the index.
+  const contentSlides = Array.from({ length: 6 }, (_, i) => `# Slide ${i + 1}`).join("\n\n---\n\n");
+  const source = `---
+title: Demo
+titleSlide: true
+titleSlideNumber: 4
+closingSlide: true
+closingSlideNumber: -1
+---
+
+${contentSlides}`;
+
+  const deck = parseSource(source);
+  // Slides: [c0(0), c1(1), c2(2), title(3), c3(4), c4(5), closing(6), c5(7)]
+  assert.equal(deck.slides.length, 8);
+  assert.equal(deck.slides[3].kind, "title");
+  assert.equal(deck.slides[3].index, 3);
+  assert.equal(deck.slides[6].kind, "closing");
+  assert.equal(deck.slides[6].index, 6);
+
+  // Generated slides must return 0 from getSourceOffsetForSlideIndex
+  assert.equal(getSourceOffsetForSlideIndex(source, 3, deck), 0, "title slide offset should be 0");
+  assert.equal(getSourceOffsetForSlideIndex(source, 6, deck), 0, "closing slide offset should be 0");
+
+  // Content slides before the title slide map to rendered indices 0-2
+  assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide 1")), 0);
+  assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide 2")), 1);
+  assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide 3")), 2);
+  // Content slides after the title slide map to rendered indices 4+
+  assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide 4")), 4);
+  assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide 5")), 5);
+  // Content slide after the closing slide maps to rendered index 7
+  assert.equal(getSlideIndexForSourceOffset(source, source.indexOf("# Slide 6")), 7);
+
+  // Round-trip for content slides (title/closing slides are excluded since they
+  // have no source content and always return offset 0)
+  for (const slideIndex of [0, 1, 2, 4, 5, 7]) {
+    const offset = getSourceOffsetForSlideIndex(source, slideIndex, deck);
+    assert.equal(getSlideIndexForSourceOffset(source, offset), slideIndex,
+      `round-trip failed for slide index ${slideIndex}`);
+  }
+});
+
 test("updateFrontMatterValue adds and updates theme metadata", () => {
   const base = "# Slide";
   const withTheme = updateFrontMatterValue(base, "theme", "night-slate");

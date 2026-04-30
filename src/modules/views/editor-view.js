@@ -425,8 +425,6 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   }
 
   function jumpEditorToSlide(compiled, slideIndex) {
-    const sourceOffset = getSourceOffsetForSlideIndex(source, slideIndex, compiled);
-
     if (editorCollapsed) {
       editorCollapsed = false;
     }
@@ -434,6 +432,18 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
       mobilePane = "editor";
     }
     applyPanelState();
+
+    // Generated slides (title/closing) have no source content.
+    // getSourceOffsetForSlideIndex returns 0 for them, and calling
+    // setEditorSelection(0) fires a `select` event that causes
+    // syncPreviewToEditorSelection to reset activeSlideIndex to 0 (slide 1).
+    // Leave the cursor where it is when the target slide is generated.
+    const targetSlide = compiled.renderedSlides?.[slideIndex];
+    if (targetSlide?.kind === "title" || targetSlide?.kind === "closing") {
+      return;
+    }
+
+    const sourceOffset = getSourceOffsetForSlideIndex(source, slideIndex, compiled);
     setEditorSelection(sourceOffset);
   }
 
