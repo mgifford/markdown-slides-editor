@@ -70,7 +70,8 @@ test("buildSnapshotHtml includes theme data, step counts, and embedded source pa
   assert.equal(html.includes('"slideCount":2'), true);
   assert.equal(html.includes('class="snapshot-body snapshot-viewer"'), true, "body should have snapshot-viewer class for viewport scaling");
   assert.equal(html.includes("slide-card__content"), true, "slides should include slide-card wrapper");
-  assert.equal(html.includes('setProperty("--snapshot-scale"'), true, "JS should set the viewport scale CSS variable");
+  assert.equal(html.includes("max-height: 100vh"), true, "slide-card should use viewport-filling max-height instead of transform scaling");
+  assert.equal(html.includes("setProperty(\"--snapshot-scale\""), false, "snapshot should not use transform-based viewport scaling");
 });
 
 test("buildSnapshotHtml escapes closing script tags inside embedded source", () => {
