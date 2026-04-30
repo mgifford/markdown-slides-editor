@@ -718,6 +718,8 @@ input:focus-visible {
   font-size: calc(clamp(1.5rem, 2.8vw, 2.25rem) * var(--presentation-text-zoom, 1) * var(--panel-span-scale, 1));
   line-height: 1.45;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .slide-card__body {
@@ -753,6 +755,7 @@ input:focus-visible {
   justify-items: center;
   min-height: 0;
   overflow: hidden;
+  flex: 1 1 0;
 }
 
 .layout-svg img,
