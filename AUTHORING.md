@@ -207,7 +207,7 @@ The primary export action downloads a ZIP bundle containing:
 | `deck.json` | Machine-readable deck for workflows and integrations |
 | `presentation.html` | Portable snapshot for presenting or sharing |
 | `presentation.odp` | OpenDocument Presentation for PowerPoint import |
-| `presentation-one-page.mhtml` | Single-file one-page handout |
+| `presentation-one-page.html` | Single-file one-page handout |
 | `presentation-offline.html` | Self-contained offline presenter |
 
 `Advanced` also includes `Email Deck`, which opens a mail draft with the editor URL and, when the deck is short enough, the Markdown source. This is a practical mobile-to-desktop handoff aid and may be limited by mail client body-size limits.

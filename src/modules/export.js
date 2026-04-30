@@ -514,14 +514,14 @@ export function buildMhtmlDocument({ title, html }) {
   ].join("\r\n");
 }
 
-export function buildExportBundle({ markdownSource, snapshotHtml, deckJson, odpBytes, onePageMhtml, offlineHtml, filePrefix }) {
+export function buildExportBundle({ markdownSource, snapshotHtml, deckJson, odpBytes, onePageHtml, offlineHtml, filePrefix }) {
   const prefix = filePrefix || "presentation";
   return buildZipArchive([
     { name: "deck.md", contents: markdownSource },
     { name: "deck.json", contents: deckJson },
     { name: `${prefix}.html`, contents: snapshotHtml },
     { name: `${prefix}.odp`, contents: odpBytes },
-    { name: `${prefix}-one-page.mhtml`, contents: onePageMhtml },
+    { name: `${prefix}-one-page.html`, contents: onePageHtml },
     ...(offlineHtml ? [{ name: `${prefix}-offline.html`, contents: offlineHtml }] : []),
   ]);
 }
@@ -1002,7 +1002,7 @@ export function buildOnePageHtml({ title, cssText, renderedSlides, metadata }) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>
     ${buildThemeLinkTag(metadata)}
-    <style>${cssText}</style>
+    <style>${escapeStyleText(cssText)}</style>
     <style>
       .one-page-body .slide {
         display: grid !important;
@@ -1112,7 +1112,7 @@ export function buildSnapshotHtml({ title, cssText, renderedSlides, metadata, so
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>
     ${buildThemeLinkTag(metadata)}
-    <style>${cssText}</style>
+    <style>${escapeStyleText(cssText)}</style>
     <style>
       .snapshot-viewer .slide__content {
         overflow: hidden;

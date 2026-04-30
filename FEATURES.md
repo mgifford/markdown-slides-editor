@@ -260,7 +260,7 @@ Current bundle contents:
 - `deck.json`
 - `presentation.html`
 - `presentation.odp`
-- `presentation-one-page.mhtml`
+- `presentation-one-page.html`
 - `presentation-offline.html`
 
 ZIP filenames are generated from the deck title plus date when available.
@@ -294,12 +294,12 @@ Current one-page behaviors:
 - **4 per page** toggle: switch between 1-slide-per-page and a 2×2 four-up layout; speaker notes are hidden in 4-up mode to save space
 - multi-column slide layouts are preserved regardless of browser window width
 
-### ODP and MHTML output
+### ODP and one-page HTML output
 
 Current additional export formats:
 
 - ODP for OpenDocument Presentation handoff and PowerPoint import
-- MHTML (`presentation-one-page.mhtml`) for one-file archival/transfer of the one-page handout view
+- HTML (`presentation-one-page.html`) for print-friendly one-page handout view (replaces the previous MHTML format for universal browser compatibility)
 - HTML (`presentation-offline.html`) for fully offline presenter-and-audience presentation
 
 ### Offline presenter HTML
