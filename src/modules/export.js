@@ -4,6 +4,17 @@ import { stripProtocol } from "./utils.js";
 const textEncoder = new TextEncoder();
 const ODP_MIMETYPE = "application/vnd.oasis.opendocument.presentation";
 
+/** Return the CSS class string for a rendered slide's outermost article element. */
+function getSlideCardClass(slide) {
+  if (slide.kind === "title" || slide.kind === "closing") return "slide-card slide-card--title";
+  if (slide.isImageHero) return "slide-card slide-card--image-hero";
+  return "slide-card";
+}
+
+/** Embedded-script version of getSlideCardClass for use inside generated HTML. */
+const SLIDE_CARD_CLASS_FN =
+  "function slideCardCls(s){if(s.kind==='title'||s.kind==='closing')return 'slide-card slide-card--title';if(s.isImageHero)return 'slide-card slide-card--image-hero';return 'slide-card';}";
+
 function escapeScriptText(value) {
   // The HTML parser closes <script> elements at </script (case-insensitive), regardless of the
   // type attribute. Escape ALL case variants to prevent premature element closure, while
@@ -759,6 +770,7 @@ function buildAudienceScriptText() {
   var activeIndex = 0;
   var rs = 0;
   var frame = document.getElementById('audience-frame');
+  ${SLIDE_CARD_CLASS_FN}
   function applyRevealState(container, step) {
     var items = Array.from(container.querySelectorAll('.next'));
     items.forEach(function(item, i) {
@@ -772,7 +784,7 @@ function buildAudienceScriptText() {
       container.innerHTML = '<article class="slide-card empty-state"><div class="slide-card__content"><p>No slide</p></div></article>';
       return;
     }
-    var cls = (slide.kind === 'title' || slide.kind === 'closing') ? 'slide-card slide-card--title' : slide.isImageHero ? 'slide-card slide-card--image-hero' : 'slide-card';
+    var cls = slideCardCls(slide);
     container.innerHTML = '<article class="' + cls + '"><div class="slide-card__content">' + slide.html + '</div></article>';
     applyRevealState(container, step);
   }
@@ -1019,6 +1031,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
   var slideCounter = document.getElementById('slide-counter');
   var timerDisplay = document.getElementById('timer-display');
   var startPauseBtn = document.getElementById('start-pause-btn');
+  ${SLIDE_CARD_CLASS_FN}
 
   function applyRevealState(container, step) {
     var items = Array.from(container.querySelectorAll('.next'));
@@ -1034,7 +1047,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
       container.innerHTML = '<article class="slide-card empty-state"><div class="slide-card__content"><p>No slide</p></div></article>';
       return;
     }
-    var cls = (slide.kind === 'title' || slide.kind === 'closing') ? 'slide-card slide-card--title' : slide.isImageHero ? 'slide-card slide-card--image-hero' : 'slide-card';
+    var cls = slideCardCls(slide);
     container.innerHTML = '<article class="' + cls + '"><div class="slide-card__content">' + slide.html + '</div></article>';
     applyRevealState(container, step);
   }
@@ -1289,11 +1302,7 @@ export function buildOnePageHtml({ title, cssText, themeStylesheetCss, renderedS
   const slidesMarkup = renderedSlides
     .map(
       (slide, index) => {
-        const slideCardClass = slide.kind === "title" || slide.kind === "closing"
-          ? "slide-card slide-card--title"
-          : slide.isImageHero
-            ? "slide-card slide-card--image-hero"
-            : "slide-card";
+        const slideCardClass = getSlideCardClass(slide);
         return `
         <section class="one-page-slide-card" aria-label="Slide ${index + 1}">
           <header class="one-page-slide-card__header">
@@ -1415,11 +1424,7 @@ export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, rendered
   const slidesMarkup = renderedSlides
     .map(
       (slide, index) => {
-        const slideCardClass = slide.kind === "title" || slide.kind === "closing"
-          ? "slide-card slide-card--title"
-          : slide.isImageHero
-            ? "slide-card slide-card--image-hero"
-            : "slide-card";
+        const slideCardClass = getSlideCardClass(slide);
         return `
         <section class="slide${index === 0 ? " is-active" : ""}" data-slide-index="${index}" data-step-count="${slide.stepCount || 0}" data-kind="${slide.kind || "content"}" aria-label="Slide ${index + 1}">
           <div class="slide__content">

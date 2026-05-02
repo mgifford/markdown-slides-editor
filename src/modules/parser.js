@@ -195,6 +195,9 @@ function createClosingSlide(metadata) {
   };
 }
 
+// Matches an opening :: directive line, e.g. `::image-hero text-bottom-left`.
+const DIRECTIVE_OPEN_RE = /^::[a-z0-9%-]+(?:\s+[\w-]+)*\s*$/i;
+
 /**
  * Split deck content into individual slide strings on `\n---\n` boundaries,
  * but skip any `---` line that appears inside a `:: ... ::` directive block.
@@ -211,7 +214,7 @@ function splitSlideContent(content) {
     const trimmed = line.trim();
 
     // Opening directive: ::name [modifiers]
-    if (/^::[a-z0-9%-]+(?:\s+[\w-]+)*\s*$/i.test(trimmed)) {
+    if (DIRECTIVE_OPEN_RE.test(trimmed)) {
       depth += 1;
       current.push(line);
       continue;
@@ -255,7 +258,7 @@ function countSlideSeparatorsUpTo(content, relativeOffset) {
     const trimmed = line.trim();
     const lineLen = line.length + (i < lines.length - 1 ? 1 : 0); // +1 for \n
 
-    if (/^::[a-z0-9%-]+(?:\s+[\w-]+)*\s*$/i.test(trimmed)) {
+    if (DIRECTIVE_OPEN_RE.test(trimmed)) {
       depth += 1;
     } else if (trimmed === "::") {
       depth = Math.max(0, depth - 1);
