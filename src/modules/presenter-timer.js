@@ -76,3 +76,13 @@ export function getPresenterTimerTone(timerState) {
   if (progress <= 0.2) return "caution";
   return "safe";
 }
+
+export function getPaceIndicator(timerState, slideIndex, slideCount) {
+  if (!timerState.started || slideCount <= 1) return null;
+  const timeElapsedRatio = 1 - getPresenterTimerProgress(timerState);
+  const slideProgress = slideIndex / (slideCount - 1);
+  const pace = slideProgress - timeElapsedRatio;
+  if (pace > 0.2) return "rabbit";
+  if (pace < -0.2) return "turtle";
+  return null;
+}

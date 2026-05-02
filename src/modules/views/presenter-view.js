@@ -18,6 +18,7 @@ import {
   adjustPresenterTimerMinutes,
   createPresenterTimerState,
   formatPresenterTimerMinutes,
+  getPaceIndicator,
   getPresenterTimerProgress,
   getPresenterTimerTone,
   resetPresenterTimer,
@@ -158,7 +159,11 @@ export function createPresenterView(root, initialSource) {
         </div>
       </section>
     </main>
-    <div id="presenter-timer-progress" class="presenter-timer-progress" aria-hidden="true"></div>
+    <div class="presenter-progress-bars">
+      <div id="presenter-pace-indicator" class="presenter-pace-indicator" hidden aria-live="polite" aria-label="Presentation pace indicator"></div>
+      <div id="presenter-timer-progress" class="presenter-timer-progress" aria-hidden="true"></div>
+      <div id="presenter-slide-progress" class="presenter-slide-progress" aria-hidden="true"></div>
+    </div>
   `;
 
   root.replaceChildren(frame);
@@ -179,6 +184,8 @@ export function createPresenterView(root, initialSource) {
   const minusMinuteButton = frame.querySelector("#presenter-minus-minute");
   const plusMinuteButton = frame.querySelector("#presenter-plus-minute");
   const progressNode = frame.querySelector("#presenter-timer-progress");
+  const slideProgressNode = frame.querySelector("#presenter-slide-progress");
+  const paceNode = frame.querySelector("#presenter-pace-indicator");
   const timerAutoStartToggle = document.createElement("label");
   timerAutoStartToggle.className = "timer-autostart-toggle";
   timerAutoStartToggle.innerHTML = `<input id="presenter-timer-autostart" type="checkbox" checked /> Auto-start after first slide`;
@@ -348,6 +355,19 @@ export function createPresenterView(root, initialSource) {
     pauseTimerButton.textContent = timerState.started ? (timerState.paused ? "Resume" : "Pause") : "Start";
     progressNode.style.setProperty("--timer-progress", `${getPresenterTimerProgress(timerState) * 100}%`);
     progressNode.dataset.tone = timerTone;
+    const slideCount = compiled.renderedSlides.length;
+    const slideProgressPct = slideCount > 1 ? (activeSlideIndex / (slideCount - 1)) * 100 : 0;
+    slideProgressNode.style.setProperty("--slide-progress", `${slideProgressPct}%`);
+    const pace = getPaceIndicator(timerState, activeSlideIndex, slideCount);
+    if (pace === "rabbit") {
+      paceNode.textContent = "🐇 Ahead of schedule";
+      paceNode.hidden = false;
+    } else if (pace === "turtle") {
+      paceNode.textContent = "🐢 Behind schedule";
+      paceNode.hidden = false;
+    } else {
+      paceNode.hidden = true;
+    }
     timerStatusButton.textContent = `Timer: ${Math.ceil(timerState.remainingMs / 60000)}`;
     timerStatusButton.dataset.tone = timerTone;
     timerStatusButton.title =

@@ -246,7 +246,9 @@ Current timer features include:
 - reset when returning to slide 1
 - optional manual override for auto-start
 - color warning progression as time runs down
-- sticky bottom progress line in presenter view
+- sticky bottom progress line in presenter view (timer, shrinks as time runs out)
+- sticky bottom slide progress line (grows as slides advance through the deck)
+- pace indicator (🐇 ahead / 🐢 behind) shown when pace differs from schedule by more than 20%
 
 ## Export Features
 
