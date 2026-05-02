@@ -173,7 +173,7 @@ export function createSpeechRecognitionSource(onUpdate) {
         segments.push({ start: currentSegmentStartMs, end: segmentEnd, text: trimmedFinal });
         currentSegmentStartMs = segmentEnd;
       }
-      fullTranscript = fullTranscript ? fullTranscript + " " + newFinal.trim() : newFinal.trim();
+      fullTranscript = fullTranscript ? fullTranscript + " " + trimmedFinal : trimmedFinal;
     }
     interimText = newInterim;
 

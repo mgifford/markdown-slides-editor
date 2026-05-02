@@ -627,7 +627,7 @@ export function createPresenterView(root, initialSource) {
         navigator.clipboard.writeText(prompt).then(() => {
           const originalText = captionsCopyLlmButton.textContent;
           captionsCopyLlmButton.textContent = "Copied!";
-          window.setTimeout(() => {
+          setTimeout(() => {
             captionsCopyLlmButton.textContent = originalText;
           }, 2000);
         });
