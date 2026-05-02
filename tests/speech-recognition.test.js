@@ -244,3 +244,132 @@ test("createSpeechRecognitionSource exposes getLanguage and setLanguage", () => 
   delete globalThis.window;
   delete globalThis.localStorage;
 });
+
+test("createSpeechRecognitionSource accumulates full transcript across multiple results", () => {
+  function FakeSpeechRecognition() {
+    this.continuous = false;
+    this.interimResults = false;
+    this.onstart = null;
+    this.onresult = null;
+    this.onend = null;
+    this.onerror = null;
+    this._started = false;
+    this.start = () => {
+      this._started = true;
+      if (this.onstart) this.onstart();
+    };
+    this.stop = () => { this._started = false; };
+    instance = this;
+  }
+  let instance = null;
+  globalThis.window = { SpeechRecognition: FakeSpeechRecognition };
+
+  const updates = [];
+  const source = createSpeechRecognitionSource((update) => updates.push(update));
+  source.start();
+
+  const makeEvent = (transcript) => ({
+    resultIndex: 0,
+    results: Object.assign(
+      [Object.assign([{ transcript }], { isFinal: true })],
+      { length: 1 }
+    ),
+  });
+
+  instance.onresult(makeEvent("First segment."));
+  instance.onresult(makeEvent(" Second segment."));
+
+  assert.ok(source.getFullTranscript().includes("First segment."), "should contain first segment");
+  assert.ok(source.getFullTranscript().includes("Second segment."), "should contain second segment");
+
+  delete globalThis.window;
+});
+
+test("createSpeechRecognitionSource getSegments returns timestamped entries", () => {
+  function FakeSpeechRecognition() {
+    this.continuous = false;
+    this.interimResults = false;
+    this.onstart = null;
+    this.onresult = null;
+    this.onend = null;
+    this.onerror = null;
+    this._started = false;
+    this.start = () => {
+      this._started = true;
+      if (this.onstart) this.onstart();
+    };
+    this.stop = () => { this._started = false; };
+    instance = this;
+  }
+  let instance = null;
+  globalThis.window = { SpeechRecognition: FakeSpeechRecognition };
+
+  const source = createSpeechRecognitionSource(() => {});
+  source.start();
+
+  const makeEvent = (transcript) => ({
+    resultIndex: 0,
+    results: Object.assign(
+      [Object.assign([{ transcript }], { isFinal: true })],
+      { length: 1 }
+    ),
+  });
+
+  instance.onresult(makeEvent("Hello everyone."));
+  instance.onresult(makeEvent("Welcome to the talk."));
+
+  const segments = source.getSegments();
+  assert.equal(segments.length, 2, "should have two segments");
+  assert.equal(segments[0].text, "Hello everyone.", "first segment text");
+  assert.equal(segments[1].text, "Welcome to the talk.", "second segment text");
+  assert.ok(typeof segments[0].start === "number", "start should be a number");
+  assert.ok(typeof segments[0].end === "number", "end should be a number");
+  assert.ok(segments[0].start <= segments[0].end, "start should not exceed end");
+
+  delete globalThis.window;
+});
+
+test("createSpeechRecognitionSource clearText resets display text but preserves full transcript", () => {
+  function FakeSpeechRecognition() {
+    this.continuous = false;
+    this.interimResults = false;
+    this.onstart = null;
+    this.onresult = null;
+    this.onend = null;
+    this.onerror = null;
+    this._started = false;
+    this.start = () => {
+      this._started = true;
+      if (this.onstart) this.onstart();
+    };
+    this.stop = () => { this._started = false; };
+    instance = this;
+  }
+  let instance = null;
+  globalThis.window = { SpeechRecognition: FakeSpeechRecognition };
+
+  const updates = [];
+  const source = createSpeechRecognitionSource((update) => updates.push(update));
+  source.start();
+
+  const makeEvent = (transcript) => ({
+    resultIndex: 0,
+    results: Object.assign(
+      [Object.assign([{ transcript }], { isFinal: true })],
+      { length: 1 }
+    ),
+  });
+
+  instance.onresult(makeEvent("Before slide change."));
+  assert.ok(source.getFullTranscript().includes("Before slide change."), "should have transcript before clear");
+
+  source.clearText();
+  // Live display text is cleared
+  assert.equal(updates[updates.length - 1].text, "", "display text should be cleared");
+  // Full transcript is preserved
+  assert.ok(source.getFullTranscript().includes("Before slide change."), "full transcript should be preserved after clear");
+  // Segments are preserved
+  assert.equal(source.getSegments().length, 1, "segments should be preserved after clear");
+
+  delete globalThis.window;
+});

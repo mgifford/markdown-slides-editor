@@ -27,6 +27,8 @@ import {
 } from "../presenter-timer.js";
 import { createCaptionMonitor, getCaptionConfig } from "../captions.js";
 import { isSpeechRecognitionSupported, createSpeechRecognitionSource, CAPTION_LANGUAGES, getCaptionLanguage } from "../speech-recognition.js";
+import { buildVttContent, buildTranscriptCleanupPrompt } from "../transcript-export.js";
+import { downloadFile } from "../export.js";
 import { toggleColorMode } from "../color-mode.js";
 import { applyDeckTheme } from "../theme.js";
 import { applyPreviewScale } from "../slide-layout.js";
@@ -142,6 +144,11 @@ export function createPresenterView(root, initialSource) {
           <p id="presenter-captions-status" class="meta-text"></p>
           ${sttSupported ? `<label class="captions-language-label"><span class="sr-only">Caption language</span><select id="captions-language-select">${CAPTION_LANGUAGES.map(([tag, label]) => `<option value="${tag}"${tag === getCaptionLanguage() ? " selected" : ""}>${label}</option>`).join("")}</select></label>` : ""}
           <div id="presenter-captions" class="notes-content captions-transcript"></div>
+          ${sttSupported ? `<div class="captions-export-actions">
+            <button type="button" id="captions-save-vtt" disabled>Save as .VTT</button>
+            <button type="button" id="captions-save-txt" disabled>Save as text</button>
+            <button type="button" id="captions-copy-llm-prompt" disabled>Copy cleanup prompt</button>
+          </div>` : ""}
         </div>
       </section>
       <section class="presenter-panel" data-panel-id="outline">
@@ -176,6 +183,9 @@ export function createPresenterView(root, initialSource) {
   const captionsPanel = frame.querySelector('[data-panel-id="captions"]');
   const captionsStatusNode = frame.querySelector("#presenter-captions-status");
   const captionsNode = frame.querySelector("#presenter-captions");
+  const captionsSaveVttButton = sttSupported ? frame.querySelector("#captions-save-vtt") : null;
+  const captionsSaveTxtButton = sttSupported ? frame.querySelector("#captions-save-txt") : null;
+  const captionsCopyLlmButton = sttSupported ? frame.querySelector("#captions-copy-llm-prompt") : null;
   const timerNode = frame.querySelector("#presenter-timer");
   const remainingNode = frame.querySelector("#presenter-remaining");
   const outlineNode = frame.querySelector("#presenter-outline");
@@ -332,6 +342,10 @@ export function createPresenterView(root, initialSource) {
         sttToggleButton.dataset.sttActive = String(sttEnabled);
         sttToggleButton.title = sttEnabled ? "Turn off live speech-to-text captions" : "Turn on live speech-to-text captions";
       }
+      const hasTranscript = sttSource ? sttSource.getFullTranscript().length > 0 : false;
+      if (captionsSaveVttButton) captionsSaveVttButton.disabled = !hasTranscript;
+      if (captionsSaveTxtButton) captionsSaveTxtButton.disabled = !hasTranscript;
+      if (captionsCopyLlmButton) captionsCopyLlmButton.disabled = !hasTranscript;
     } else {
       captionsPanel.hidden = !captionsState.available;
       captionsStatusNode.textContent = captionsState.available
@@ -590,6 +604,34 @@ export function createPresenterView(root, initialSource) {
   if (captionsLanguageSelect && sttSource) {
     captionsLanguageSelect.addEventListener("change", () => {
       sttSource.setLanguage(captionsLanguageSelect.value);
+    });
+  }
+
+  if (captionsSaveVttButton && sttSource) {
+    captionsSaveVttButton.addEventListener("click", () => {
+      const vttContent = buildVttContent(sttSource.getSegments());
+      downloadFile("transcript.vtt", vttContent, "text/vtt");
+    });
+  }
+
+  if (captionsSaveTxtButton && sttSource) {
+    captionsSaveTxtButton.addEventListener("click", () => {
+      downloadFile("transcript.txt", sttSource.getFullTranscript(), "text/plain");
+    });
+  }
+
+  if (captionsCopyLlmButton && sttSource) {
+    captionsCopyLlmButton.addEventListener("click", () => {
+      const prompt = buildTranscriptCleanupPrompt(sttSource.getFullTranscript(), source);
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(prompt).then(() => {
+          const originalText = captionsCopyLlmButton.textContent;
+          captionsCopyLlmButton.textContent = "Copied!";
+          window.setTimeout(() => {
+            captionsCopyLlmButton.textContent = originalText;
+          }, 2000);
+        });
+      }
     });
   }
 

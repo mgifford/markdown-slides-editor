@@ -1391,6 +1391,33 @@ input:focus-visible {
   color: var(--text);
 }
 
+.captions-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-block-start: 0.6rem;
+}
+
+.captions-export-actions button {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--panel-strong);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.captions-export-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.captions-export-actions button:not(:disabled):hover {
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel-strong));
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
 .slide-card--next {
   cursor: pointer;
 }
