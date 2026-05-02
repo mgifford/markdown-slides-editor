@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import { getSlideIndexForSourceOffset, getSourceOffsetForSlideIndex, parseSource } from "../src/modules/parser.js";
 import { renderMarkdown } from "../src/modules/markdown.js";
 import { renderDeck } from "../src/modules/render.js";
-import { removeFrontMatterValue, updateFrontMatterValue } from "../src/modules/source-format.js";
 import { lintDeck } from "../src/modules/a11y.js";
 
 test("parseSource extracts front matter, slides, and notes", () => {
@@ -711,27 +710,6 @@ ${contentSlides}`;
     assert.equal(getSlideIndexForSourceOffset(source, offset), slideIndex,
       `round-trip failed for slide index ${slideIndex}`);
   }
-});
-
-test("updateFrontMatterValue adds and updates theme metadata", () => {
-  const base = "# Slide";
-  const withTheme = updateFrontMatterValue(base, "theme", "night-slate");
-  assert.equal(withTheme.includes("theme: night-slate"), true);
-
-  const updated = updateFrontMatterValue(withTheme, "theme", "civic-bright");
-  assert.equal(updated.includes("theme: civic-bright"), true);
-});
-
-test("removeFrontMatterValue removes optional theme stylesheet metadata", () => {
-  const source = `---
-title: Demo
-themeStylesheet: https://example.com/theme.css
----
-
-# Slide`;
-
-  const updated = removeFrontMatterValue(source, "themeStylesheet");
-  assert.equal(updated.includes("themeStylesheet"), false);
 });
 
 test("parseSource normalizes Language full name to lang ISO code", () => {

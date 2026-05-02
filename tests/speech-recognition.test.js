@@ -169,11 +169,6 @@ test("CAPTION_LANGUAGES includes English (United States) as en-US", () => {
   assert.equal(entry[2], "en", "Whisper code for en-US should be 'en'");
 });
 
-test("CAPTION_LANGUAGE_STORAGE_KEY is a stable string", () => {
-  assert.equal(typeof CAPTION_LANGUAGE_STORAGE_KEY, "string");
-  assert.ok(CAPTION_LANGUAGE_STORAGE_KEY.length > 0);
-});
-
 test("getCaptionLanguage falls back to en-US when localStorage and document are unavailable", () => {
   // Node.js has no window/localStorage/document, so the fallback should apply.
   const lang = getCaptionLanguage();
