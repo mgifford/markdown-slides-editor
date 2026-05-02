@@ -1233,3 +1233,124 @@ A paragraph with {>inline fragment}.`);
 
   assert.equal(rendered.stepCount, 4);
 });
+
+test("renderMarkdown image-hero directive renders full-bleed image with overlay text", () => {
+  const rendered = renderMarkdown(`
+::image-hero text-bottom-left
+![Mountain landscape at sunset](https://example.com/mountain.jpg)
+---
+Climate Action Now
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero"), "contains layout-image-hero class");
+  assert.ok(rendered.html.includes("layout-image-hero--text-bottom-left"), "contains text position class");
+  assert.ok(
+    rendered.html.includes('<img class="layout-image-hero__image" src="https://example.com/mountain.jpg" alt="Mountain landscape at sunset">'),
+    "contains background image",
+  );
+  assert.ok(rendered.html.includes('<div class="layout-image-hero__overlay">Climate Action Now</div>'), "contains overlay text");
+  assert.ok(rendered.hasImageHero, "hasImageHero is true");
+});
+
+test("renderMarkdown image-hero directive defaults to text-bottom-left when no text position given", () => {
+  const rendered = renderMarkdown(`
+::image-hero
+![Alt text](https://example.com/img.jpg)
+---
+Short text
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero--text-bottom-left"), "defaults to text-bottom-left");
+});
+
+test("renderMarkdown image-hero directive renders with corner logo SVG", () => {
+  const rendered = renderMarkdown(`
+::image-hero text-top-right logo-bottom-left
+![Alt](https://example.com/bg.jpg)
+---
+Hello World
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40"><text>Logo</text></svg>
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero--text-top-right"), "has text position");
+  assert.ok(rendered.html.includes("layout-image-hero--logo-bottom-left"), "has logo position");
+  assert.ok(rendered.html.includes("layout-image-hero__logo"), "has logo element");
+  assert.ok(rendered.html.includes("<svg"), "contains SVG logo");
+});
+
+test("renderMarkdown image-hero directive works without overlay text", () => {
+  const rendered = renderMarkdown(`
+::image-hero
+![Full screen image](https://example.com/bg.jpg)
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero"), "has image-hero class");
+  assert.ok(rendered.html.includes("layout-image-hero__image"), "has image");
+  assert.ok(!rendered.html.includes("layout-image-hero__overlay"), "no overlay when not provided");
+});
+
+test("renderDeck sets isImageHero on slides with image-hero directive", () => {
+  const source = `---
+title: Test
+---
+
+# My Hero Slide
+
+::image-hero text-bottom-right
+![Big image](https://example.com/big.jpg)
+---
+Short caption
+::
+`;
+  const deck = parseSource(source);
+  const rendered = renderDeck(deck);
+  assert.ok(rendered.renderedSlides[0].isImageHero, "isImageHero is true on the rendered slide");
+});
+
+test("lintDeck warns when image-hero overlay text exceeds 25 characters", () => {
+  const source = `---
+title: Test
+---
+
+# Slide
+
+::image-hero
+![Alt](https://example.com/img.jpg)
+---
+This text is definitely more than twenty-five characters long
+::
+
+Note:
+Notes here.
+`;
+  const deck = parseSource(source);
+  const rendered = renderDeck(deck);
+  const issues = lintDeck(deck, rendered.renderedSlides);
+  const overlayWarning = issues.find((i) => i.message.includes("image-hero overlay text"));
+  assert.ok(overlayWarning, "overlay text length warning is present");
+  assert.equal(overlayWarning.level, "warning");
+});
+
+test("lintDeck does not warn when image-hero overlay text is within 25 characters", () => {
+  const source = `---
+title: Test
+---
+
+# Slide
+
+::image-hero
+![Alt](https://example.com/img.jpg)
+---
+Short text
+::
+
+Note:
+Notes here.
+`;
+  const deck = parseSource(source);
+  const rendered = renderDeck(deck);
+  const issues = lintDeck(deck, rendered.renderedSlides);
+  const overlayWarning = issues.find((i) => i.message.includes("image-hero overlay text"));
+  assert.ok(!overlayWarning, "no overlay text warning for short text");
+});

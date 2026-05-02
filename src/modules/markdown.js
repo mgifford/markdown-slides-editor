@@ -200,6 +200,21 @@ function splitOnDivider(lines) {
   };
 }
 
+function splitOnDividers(lines) {
+  const sections = [];
+  let current = [];
+  for (const line of lines) {
+    if (line.trim() === "---") {
+      sections.push(current);
+      current = [];
+    } else {
+      current.push(line);
+    }
+  }
+  sections.push(current);
+  return sections;
+}
+
 function parseTableRow(line) {
   const trimmed = line.trim();
   if (!trimmed.startsWith("|")) return null;
@@ -321,6 +336,66 @@ function renderSpecialDirective(block, state) {
   if (block.directive === "step") {
     if (isProgressive) state.stepCount += 1;
     return `<div class="layout-step${progressiveClass}">${renderLines(block.content, state)}</div>`;
+  }
+
+  if (block.directive === "image-hero") {
+    if (isProgressive) state.stepCount += 1;
+    state.hasImageHero = true;
+
+    const TEXT_POSITIONS = ["text-top-left", "text-top-right", "text-bottom-left", "text-bottom-right", "text-center"];
+    const LOGO_POSITIONS = ["logo-top-left", "logo-top-right", "logo-bottom-left", "logo-bottom-right"];
+    const textPos = block.modifiers.find((m) => TEXT_POSITIONS.includes(m)) || "text-bottom-left";
+    const logoPos = block.modifiers.find((m) => LOGO_POSITIONS.includes(m));
+
+    const sections = splitOnDividers(block.content);
+    const imageLines = sections[0] || [];
+    const overlayLines = sections[1] || [];
+    const logoLines = sections[2] || [];
+
+    // Render background image
+    const firstImageLine = imageLines.map((l) => l.trim()).find(Boolean) || "";
+    let imageHtml = "";
+    const mdImgMatch = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(firstImageLine);
+    if (mdImgMatch) {
+      const alt = escapeAttribute(mdImgMatch[1]);
+      const src = escapeAttribute(mdImgMatch[2]);
+      imageHtml = `<img class="layout-image-hero__image" src="${src}" alt="${alt}">`;
+    } else if (/^<img\b/i.test(firstImageLine)) {
+      const safe = sanitizeImgMarkup(firstImageLine);
+      imageHtml = safe.replace(/^<img/, '<img class="layout-image-hero__image"');
+    }
+
+    // Render overlay text (plain text only, no inline markup, for brevity)
+    const overlayText = overlayLines.join("\n").trim();
+    const overlayHtml = overlayText
+      ? `<div class="layout-image-hero__overlay">${escapeHtml(overlayText)}</div>`
+      : "";
+
+    // Render optional corner logo (SVG or img)
+    let logoHtml = "";
+    const firstLogoLine = logoLines.map((l) => l.trim()).find(Boolean) || "";
+    if (firstLogoLine) {
+      const rawSvg = collectInlineSvgBlock(
+        logoLines.filter((l) => l.trim()),
+        0,
+      );
+      if (rawSvg) {
+        logoHtml = `<figure class="layout-image-hero__logo" aria-hidden="true">${sanitizeSvgMarkup(rawSvg.markup)}</figure>`;
+      } else if (/^<img\b/i.test(firstLogoLine)) {
+        logoHtml = `<figure class="layout-image-hero__logo" aria-hidden="true">${sanitizeImgMarkup(firstLogoLine)}</figure>`;
+      }
+    }
+
+    const classNames = [
+      "layout-image-hero",
+      `layout-image-hero--${textPos}`,
+      logoHtml && logoPos ? `layout-image-hero--${logoPos}` : "",
+      progressiveClass,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    return `<figure class="${classNames}">${imageHtml}${overlayHtml}${logoHtml}</figure>`;
   }
 
   return null;
@@ -467,11 +542,13 @@ export function renderMarkdown(markdown) {
     headings: [],
     stepCount: 0,
     mermaidCount: 0,
+    hasImageHero: false,
   };
 
   return {
     html: renderLines(String(markdown || "").split("\n"), state),
     headings: state.headings,
     stepCount: state.stepCount,
+    hasImageHero: state.hasImageHero,
   };
 }

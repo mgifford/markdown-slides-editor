@@ -78,7 +78,7 @@ export function calculateSlideBodyScale(measure) {
 }
 
 export function fitSlideBodyText(container, renderedSlide) {
-  if (!container || !renderedSlide || renderedSlide.kind === "title" || renderedSlide.kind === "closing") {
+  if (!container || !renderedSlide || renderedSlide.kind === "title" || renderedSlide.kind === "closing" || renderedSlide.isImageHero) {
     return { scale: 1, overflow: false };
   }
 
