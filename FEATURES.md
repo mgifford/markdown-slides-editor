@@ -408,6 +408,7 @@ Current automated validation includes:
 
 - Node built-in unit tests
 - semantic export checks via `scripts/check-semantic-output.js`
+- BDD feature scenarios via Cucumber.js (see `features/`)
 
 Current test coverage areas include:
 
@@ -421,6 +422,15 @@ Current test coverage areas include:
 - presenter timer behavior
 - storage fallback behavior
 - deep-link hash parsing
+
+BDD feature scenarios are written in Gherkin and cover the following user-visible behaviors:
+
+- deck source parsing (front matter, slide splitting, notes, resources, script)
+- Markdown rendering (headings, lists, links, bold, italic, images)
+- accessibility lint rules (heading errors, generic links, missing notes, slide density, alt text)
+- export filename generation and bundle contents
+- presenter countdown timer (reset, tick, pause, tone)
+- local storage persistence (save, load, fallback)
 
 Current manual validation expectations are documented and include:
 
@@ -451,7 +461,7 @@ The following are not yet fully implemented or are intentionally limited:
 - no automated `axe` or `pa11y` pipeline yet
 - no first-class embedded video directive yet
 - no complete local asset bundling for export archives
-- no browser E2E test suite yet
+- no browser E2E test suite yet (BDD scenarios use Node.js and cover module-level behavior)
 - no fully self-contained offline export when remote CSS or remote QR/image assets are referenced
 - no integrated AI chat revision workflow yet
 - no undo/redo system mature enough for AI-assisted editing workflows yet

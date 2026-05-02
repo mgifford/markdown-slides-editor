@@ -5,11 +5,15 @@
   "type": "module",
   "scripts": {
     "test": "npm run test:all",
-    "test:all": "npm run test:unit && npm run test:semantics",
+    "test:all": "npm run test:unit && npm run test:semantics && npm run test:bdd",
     "test:unit": "node --test",
     "test:semantics": "node ./scripts/check-semantic-output.js",
+    "test:bdd": "cucumber-js",
     "serve": "python3 -m http.server 4173",
     "dev:whisper": "node ./scripts/run-whisper.js",
     "dev:transcript": "node ./scripts/whisper-transcript-watch.js"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^12.8.2"
   }
 }
