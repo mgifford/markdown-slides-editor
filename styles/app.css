@@ -1418,13 +1418,16 @@ input:focus-visible {
 }
 
 .presenter-timer-progress {
-  position: sticky;
-  bottom: 0;
-  left: 0;
   width: 100%;
-  height: 2px;
+  height: 4px;
   background: color-mix(in srgb, var(--border) 70%, transparent);
-  margin-top: 0.5rem;
+}
+
+.presenter-slide-progress {
+  width: 100%;
+  height: 4px;
+  background: color-mix(in srgb, var(--border) 70%, transparent);
+  margin-top: 2px;
 }
 
 .presenter-timer-progress::after {
@@ -1433,6 +1436,14 @@ input:focus-visible {
   height: 100%;
   width: var(--timer-progress, 100%);
   background: var(--ok);
+}
+
+.presenter-slide-progress::after {
+  content: "";
+  display: block;
+  height: 100%;
+  width: var(--slide-progress, 0%);
+  background: var(--info);
 }
 
 .presenter-timer-progress[data-tone="warning"]::after {
@@ -1445,6 +1456,27 @@ input:focus-visible {
 
 .presenter-timer-progress[data-tone="danger"]::after {
   background: var(--error);
+}
+
+.presenter-progress-bars {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.presenter-pace-indicator {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--panel-strong) 90%, transparent);
+}
+
+.presenter-pace-indicator[hidden] {
+  display: none;
 }
 
 .live-caption-display {

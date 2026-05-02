@@ -4,6 +4,7 @@ import {
   adjustPresenterTimerMinutes,
   createPresenterTimerState,
   formatPresenterTimerMinutes,
+  getPaceIndicator,
   getPresenterTimerProgress,
   getPresenterTimerTone,
   resetPresenterTimer,
@@ -91,4 +92,38 @@ test("resetPresenterTimer restores the countdown and unpauses it", () => {
   assert.equal(reset.paused, true);
   assert.equal(reset.started, false);
   assert.equal(reset.lastTickAt, 2000);
+});
+
+test("getPaceIndicator returns null when timer not started", () => {
+  const state = createPresenterTimerState(30);
+  assert.equal(getPaceIndicator(state, 5, 10), null);
+});
+
+test("getPaceIndicator returns null for single-slide decks", () => {
+  const state = setPresenterTimerPaused(createPresenterTimerState(30), false, 0);
+  assert.equal(getPaceIndicator(state, 0, 1), null);
+});
+
+test("getPaceIndicator returns rabbit when significantly ahead of schedule", () => {
+  // 70% through slides (slide 7 of 10), only 30% of time elapsed (70% remaining)
+  const base = createPresenterTimerState(30);
+  const started = setPresenterTimerPaused(base, false, 0);
+  const running = { ...started, remainingMs: 30 * 60 * 1000 * 0.7 };
+  assert.equal(getPaceIndicator(running, 7, 10), "rabbit");
+});
+
+test("getPaceIndicator returns turtle when significantly behind schedule", () => {
+  // 10% through slides (slide 1 of 10), but 70% of time elapsed (30% remaining)
+  const base = createPresenterTimerState(30);
+  const started = setPresenterTimerPaused(base, false, 0);
+  const running = { ...started, remainingMs: 30 * 60 * 1000 * 0.3 };
+  assert.equal(getPaceIndicator(running, 1, 10), "turtle");
+});
+
+test("getPaceIndicator returns null when pace difference is within threshold", () => {
+  // 50% through slides, 50% of time elapsed
+  const base = createPresenterTimerState(30);
+  const started = setPresenterTimerPaused(base, false, 0);
+  const running = { ...started, remainingMs: 30 * 60 * 1000 * 0.5 };
+  assert.equal(getPaceIndicator(running, 5, 10), null);
 });
