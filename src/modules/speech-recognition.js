@@ -123,13 +123,25 @@ export function createSpeechRecognitionSource(onUpdate) {
   let started = false;
   let finalBuffer = "";
   let interimText = "";
+  let segments = [];
+  let fullTranscript = "";
+  let sessionStartTime = null;
+  let currentSegmentStartMs = 0;
 
   function buildDisplayText() {
     return (finalBuffer + (interimText ? " " + interimText : "")).trim();
   }
 
+  function getElapsedMs() {
+    return sessionStartTime !== null ? Date.now() - sessionStartTime : 0;
+  }
+
   recognition.onstart = () => {
     started = true;
+    if (sessionStartTime === null) {
+      sessionStartTime = Date.now();
+      currentSegmentStartMs = 0;
+    }
     onUpdate({ active: true, text: buildDisplayText() });
   };
 
@@ -155,6 +167,13 @@ export function createSpeechRecognitionSource(onUpdate) {
           finalBuffer = finalBuffer.slice(spaceIdx + 1);
         }
       }
+      const segmentEnd = getElapsedMs();
+      const trimmedFinal = newFinal.trim();
+      if (trimmedFinal) {
+        segments.push({ start: currentSegmentStartMs, end: segmentEnd, text: trimmedFinal });
+        currentSegmentStartMs = segmentEnd;
+      }
+      fullTranscript = fullTranscript ? fullTranscript + " " + trimmedFinal : trimmedFinal;
     }
     interimText = newInterim;
 
@@ -211,7 +230,14 @@ export function createSpeechRecognitionSource(onUpdate) {
     clearText() {
       finalBuffer = "";
       interimText = "";
+      currentSegmentStartMs = getElapsedMs();
       onUpdate({ active: enabled && started, text: "" });
+    },
+    getSegments() {
+      return segments.slice();
+    },
+    getFullTranscript() {
+      return fullTranscript;
     },
     getLanguage() {
       return recognition.lang || getCaptionLanguage();
