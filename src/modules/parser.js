@@ -195,10 +195,88 @@ function createClosingSlide(metadata) {
   };
 }
 
+/**
+ * Split deck content into individual slide strings on `\n---\n` boundaries,
+ * but skip any `---` line that appears inside a `:: ... ::` directive block.
+ * This prevents image-hero and other directives that use `---` as an internal
+ * section separator from being accidentally split into separate slides.
+ */
+function splitSlideContent(content) {
+  const lines = content.split("\n");
+  const slides = [];
+  let current = [];
+  let depth = 0;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Opening directive: ::name [modifiers]
+    if (/^::[a-z0-9%-]+(?:\s+[\w-]+)*\s*$/i.test(trimmed)) {
+      depth += 1;
+      current.push(line);
+      continue;
+    }
+
+    // Closing directive: ::
+    if (trimmed === "::") {
+      depth = Math.max(0, depth - 1);
+      current.push(line);
+      continue;
+    }
+
+    // Slide separator — only honoured at depth 0
+    if (depth === 0 && trimmed === "---") {
+      slides.push(current.join("\n").trim());
+      current = [];
+      continue;
+    }
+
+    current.push(line);
+  }
+
+  slides.push(current.join("\n").trim());
+  return slides;
+}
+
+/**
+ * Count the number of slide separators (`---` at directive depth 0) in `content`
+ * that appear strictly before `relativeOffset` characters, and also return the
+ * total count across the entire string.  Used by getSlideIndexForSourceOffset.
+ */
+function countSlideSeparatorsUpTo(content, relativeOffset) {
+  const lines = content.split("\n");
+  let depth = 0;
+  let charPos = 0;
+  let beforeOffset = 0;
+  let total = 0;
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    const lineLen = line.length + (i < lines.length - 1 ? 1 : 0); // +1 for \n
+
+    if (/^::[a-z0-9%-]+(?:\s+[\w-]+)*\s*$/i.test(trimmed)) {
+      depth += 1;
+    } else if (trimmed === "::") {
+      depth = Math.max(0, depth - 1);
+    } else if (depth === 0 && trimmed === "---") {
+      total += 1;
+      if (charPos < relativeOffset) {
+        beforeOffset += 1;
+      }
+    }
+
+    charPos += lineLen;
+  }
+
+  return { beforeOffset, total };
+}
+
+
 export function parseSource(source) {
   const { metadata, content } = extractMetadataAndContent(source);
 
-  const allParts = content.split(/\n---\n/g).map((entry) => entry.trim());
+  const allParts = splitSlideContent(content);
   const firstNonEmpty = allParts.findIndex(Boolean);
   const rawSlides = firstNonEmpty === -1
     ? []
@@ -331,26 +409,14 @@ export function getSlideIndexForSourceOffset(source, offset = 0) {
     return hasTitleSlide ? 1 : 0;
   }
 
-  const separatorPattern = /\n---\n/g;
-  let contentSlideIndex = 0;
-  let match;
-  while ((match = separatorPattern.exec(content)) && match.index < relativeOffset) {
-    contentSlideIndex += 1;
-  }
+  const separatorCounts = countSlideSeparatorsUpTo(content, relativeOffset);
+  const contentSlideIndex = separatorCounts.beforeOffset;
 
   if (!hasTitleSlide && !hasClosingSlide) {
     return contentSlideIndex;
   }
 
-  // Count total separators by continuing the scan from where the loop stopped.
-  // If match is non-null, it is the first separator after the cursor (found but not counted).
-  let totalSeparators = contentSlideIndex;
-  if (match !== null) {
-    totalSeparators += 1;
-    while (separatorPattern.exec(content) !== null) {
-      totalSeparators += 1;
-    }
-  }
+  const totalSeparators = separatorCounts.total;
   const totalContentSlides = totalSeparators + 1;
 
   // Determine where the title slide is inserted (0-indexed position in content array).

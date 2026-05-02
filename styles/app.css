@@ -1013,6 +1013,114 @@ input:focus-visible {
   text-align: center;
 }
 
+/* Image-hero: full-bleed background image with overlay text and optional corner logo */
+.slide-card--image-hero {
+  padding: 0;
+  background: #000;
+}
+
+.slide-card--image-hero .slide-card__content {
+  max-width: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.layout-image-hero {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  display: block;
+}
+
+.layout-image-hero__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.layout-image-hero__overlay {
+  position: absolute;
+  z-index: 1;
+  padding: 0.35em 0.65em;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: clamp(1.1rem, 2.5vw, 2rem);
+  font-weight: 700;
+  border-radius: 6px;
+  max-width: 55%;
+  line-height: 1.25;
+}
+
+/* Text position modifiers */
+.layout-image-hero--text-top-left .layout-image-hero__overlay {
+  top: 5%;
+  left: 5%;
+}
+
+.layout-image-hero--text-top-right .layout-image-hero__overlay {
+  top: 5%;
+  right: 5%;
+}
+
+.layout-image-hero--text-bottom-left .layout-image-hero__overlay {
+  bottom: 5%;
+  left: 5%;
+}
+
+.layout-image-hero--text-bottom-right .layout-image-hero__overlay {
+  bottom: 5%;
+  right: 5%;
+}
+
+.layout-image-hero--text-center .layout-image-hero__overlay {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  max-width: 70%;
+}
+
+/* Corner logo */
+.layout-image-hero__logo {
+  position: absolute;
+  z-index: 2;
+  margin: 0;
+  line-height: 0;
+}
+
+.layout-image-hero__logo img,
+.layout-image-hero__logo svg {
+  display: block;
+  height: clamp(32px, 5%, 64px);
+  width: auto;
+  max-width: 20%;
+}
+
+.layout-image-hero--logo-top-left .layout-image-hero__logo {
+  top: 4%;
+  left: 4%;
+}
+
+.layout-image-hero--logo-top-right .layout-image-hero__logo {
+  top: 4%;
+  right: 4%;
+}
+
+.layout-image-hero--logo-bottom-left .layout-image-hero__logo {
+  bottom: 4%;
+  left: 4%;
+}
+
+.layout-image-hero--logo-bottom-right .layout-image-hero__logo {
+  bottom: 4%;
+  right: 4%;
+}
+
 /* Step directive: transparent progressive wrapper, no extra visual styling */
 .layout-step {
   display: contents;

@@ -772,7 +772,7 @@ function buildAudienceScriptText() {
       container.innerHTML = '<article class="slide-card empty-state"><div class="slide-card__content"><p>No slide</p></div></article>';
       return;
     }
-    var cls = (slide.kind === 'title' || slide.kind === 'closing') ? 'slide-card slide-card--title' : 'slide-card';
+    var cls = (slide.kind === 'title' || slide.kind === 'closing') ? 'slide-card slide-card--title' : slide.isImageHero ? 'slide-card slide-card--image-hero' : 'slide-card';
     container.innerHTML = '<article class="' + cls + '"><div class="slide-card__content">' + slide.html + '</div></article>';
     applyRevealState(container, step);
   }
@@ -853,6 +853,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
     resourcesHtml: slide.resourcesHtml || "",
     stepCount: slide.stepCount || 0,
     kind: slide.kind || "content",
+    isImageHero: slide.isImageHero || false,
   }));
 
   const payload = escapeScriptText(
@@ -1033,7 +1034,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
       container.innerHTML = '<article class="slide-card empty-state"><div class="slide-card__content"><p>No slide</p></div></article>';
       return;
     }
-    var cls = (slide.kind === 'title' || slide.kind === 'closing') ? 'slide-card slide-card--title' : 'slide-card';
+    var cls = (slide.kind === 'title' || slide.kind === 'closing') ? 'slide-card slide-card--title' : slide.isImageHero ? 'slide-card slide-card--image-hero' : 'slide-card';
     container.innerHTML = '<article class="' + cls + '"><div class="slide-card__content">' + slide.html + '</div></article>';
     applyRevealState(container, step);
   }
@@ -1290,7 +1291,9 @@ export function buildOnePageHtml({ title, cssText, themeStylesheetCss, renderedS
       (slide, index) => {
         const slideCardClass = slide.kind === "title" || slide.kind === "closing"
           ? "slide-card slide-card--title"
-          : "slide-card";
+          : slide.isImageHero
+            ? "slide-card slide-card--image-hero"
+            : "slide-card";
         return `
         <section class="one-page-slide-card" aria-label="Slide ${index + 1}">
           <header class="one-page-slide-card__header">
@@ -1414,7 +1417,9 @@ export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, rendered
       (slide, index) => {
         const slideCardClass = slide.kind === "title" || slide.kind === "closing"
           ? "slide-card slide-card--title"
-          : "slide-card";
+          : slide.isImageHero
+            ? "slide-card slide-card--image-hero"
+            : "slide-card";
         return `
         <section class="slide${index === 0 ? " is-active" : ""}" data-slide-index="${index}" data-step-count="${slide.stepCount || 0}" data-kind="${slide.kind || "content"}" aria-label="Slide ${index + 1}">
           <div class="slide__content">
@@ -1574,7 +1579,7 @@ export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, rendered
 
       function prepareSlide(slide) {
         const content = slide.querySelector(".slide-card__content");
-        if (!content || slide.dataset.kind === "title" || slide.dataset.kind === "closing") return;
+        if (!content || slide.dataset.kind === "title" || slide.dataset.kind === "closing" || content.querySelector(".layout-image-hero")) return;
         let body = content.querySelector(":scope > .slide-card__body");
         if (!body) {
           body = document.createElement("div");

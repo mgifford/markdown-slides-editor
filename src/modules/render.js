@@ -166,6 +166,7 @@ export function renderDeck(deck) {
       notesHtml: noteRender?.html || "",
       resourcesHtml: resourcesRender?.html || "",
       scriptHtml: scriptRender?.html || "",
+      isImageHero: rendered.hasImageHero || false,
     };
   });
 

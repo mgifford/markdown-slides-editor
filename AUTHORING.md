@@ -133,10 +133,49 @@ Quick reference:
 | `::center` | Centre-align content vertically and horizontally |
 | `::column-left` / `::column-right` | Two-column layout |
 | `::media-left` / `::media-right` | Image or media beside text |
+| `::image-hero` | Full-bleed background image with short overlay text and optional corner logo |
 | `::callout` | Highlighted callout box |
 | `::quote` | Styled blockquote |
 | `::mermaid` | Inline Mermaid diagram |
 | `::svg` | SVG figure wrapper for scalable custom graphics |
+
+### `::image-hero` — image-first slides
+
+Use `::image-hero` to fill the entire slide with a background image, with an optional short text overlay and a corner logo (for example, an organisation SVG mark).
+
+```md
+# Slide title (visible to screen readers; becomes aria-label)
+
+::image-hero text-bottom-left logo-top-right
+![Descriptive alt text for accessibility](https://example.com/photo.jpg)
+---
+Short overlay (≤ 25 chars)
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40">
+  <!-- your SVG logo here -->
+</svg>
+::
+
+Note:
+Full argument, background context, and references go here.
+They appear in presenter view but not on screen.
+
+Resources:
+- [Source](https://example.com)
+```
+
+**Section order inside `::image-hero`:** image → `---` → overlay text → `---` → logo SVG or img.  
+The overlay and logo sections are optional.
+
+**Text position modifiers:** `text-top-left`, `text-top-right`, `text-bottom-left` (default), `text-bottom-right`, `text-center`.
+
+**Logo position modifiers:** `logo-top-left`, `logo-top-right` (default), `logo-bottom-left`, `logo-bottom-right`.
+
+**Accessibility notes:**
+- Always provide descriptive `alt` text on the background image.
+- Add an `H1` heading to the slide for screen-reader navigation (it can be the same as or longer than the overlay text).
+- Keep the overlay text to **25 characters or fewer** — the editor will warn you if it is longer.
+- Put the full argument, references, and context in `Note:` / `Resources:` so the offline export and presenter view carry the complete story.
 
 ## Theming
 
