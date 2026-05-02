@@ -160,7 +160,7 @@ export function createPresenterView(root, initialSource) {
       </section>
     </main>
     <div class="presenter-progress-bars">
-      <div id="presenter-pace-indicator" class="presenter-pace-indicator" hidden aria-live="polite"></div>
+      <div id="presenter-pace-indicator" class="presenter-pace-indicator" hidden aria-live="polite" aria-label="Presentation pace indicator"></div>
       <div id="presenter-timer-progress" class="presenter-timer-progress" aria-hidden="true"></div>
       <div id="presenter-slide-progress" class="presenter-slide-progress" aria-hidden="true"></div>
     </div>
