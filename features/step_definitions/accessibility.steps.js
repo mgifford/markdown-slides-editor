@@ -78,8 +78,14 @@ Given("a content slide with no speaker notes", function () {
 });
 
 Given("a slide body with more than 90 words and more than 6 bullets", function () {
-  const bullets = Array.from({ length: 7 }, (_, i) => `- Bullet point ${i + 1} with some extra words to fill the count`).join("\n");
-  const body = `A paragraph that adds many words to push past the ninety word threshold for the density check. Adding more words here. And here. And here. And here again.\n\n${bullets}`;
+  const bullets = Array.from({ length: 7 }, (_, i) =>
+    `- Bullet point ${i + 1} with some extra words to fill the count`,
+  ).join("\n");
+  const intro = [
+    "A paragraph that adds many words to push past the ninety word threshold",
+    "for the density check. Adding more words here. And here. And here again.",
+  ].join(" ");
+  const body = `${intro}\n\n${bullets}`;
   deck = makeDeck([{ notes: "Some notes", body }]);
   renderedSlides = [
     makeRenderedSlide({

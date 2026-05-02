@@ -1,4 +1,4 @@
-import { Given, When, Then } from "@cucumber/cucumber";
+import { After, Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { STORAGE_KEY, loadSource, saveSource } from "../../src/modules/storage.js";
 
@@ -29,6 +29,13 @@ let loadedValue = undefined;
 let loadError = null;
 const originalIndexedDB = globalThis.indexedDB;
 const originalLocalStorage = globalThis.localStorage;
+
+// ─── Cleanup ──────────────────────────────────────────────────────────────────
+
+After(function () {
+  globalThis.indexedDB = originalIndexedDB;
+  globalThis.localStorage = originalLocalStorage;
+});
 
 // ─── Givens ───────────────────────────────────────────────────────────────────
 
@@ -79,19 +86,12 @@ Then("the storage key is {string}", function (expected) {
 
 Then("the loaded source is {string}", function (expected) {
   assert.equal(loadedValue, expected);
-  // Restore globals after the assertion
-  globalThis.indexedDB = originalIndexedDB;
-  globalThis.localStorage = originalLocalStorage;
 });
 
 Then("the load does not throw an error", function () {
   assert.equal(loadError, null);
-  globalThis.indexedDB = originalIndexedDB;
-  globalThis.localStorage = originalLocalStorage;
 });
 
 Then("the loaded record is null", function () {
   assert.equal(loadedValue, null);
-  globalThis.indexedDB = originalIndexedDB;
-  globalThis.localStorage = originalLocalStorage;
 });
