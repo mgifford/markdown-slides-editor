@@ -131,13 +131,15 @@
 
 - `npm install`
 - `npm test`
+- `npm run test:unit` — run Node built-in unit tests only
+- `npm run test:bdd` — run Cucumber.js BDD scenarios only
 - `python3 -m http.server 4173`
 - `npm run dev:whisper`
 - `npm run dev:transcript -- --src ./path/to/transcript.txt`
 
 ## Known Gaps
 
-- No automated browser tests yet
+- No automated browser tests yet (BDD scenarios cover module-level behavior in Node.js)
 - No `axe` or `pa11y` automation yet
 - No bundled local asset export yet
 - No real `whisper-slides` runtime integration yet
