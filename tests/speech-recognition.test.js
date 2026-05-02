@@ -246,6 +246,7 @@ test("createSpeechRecognitionSource exposes getLanguage and setLanguage", () => 
 });
 
 test("createSpeechRecognitionSource accumulates full transcript across multiple results", () => {
+  let instance = null;
   function FakeSpeechRecognition() {
     this.continuous = false;
     this.interimResults = false;
@@ -261,7 +262,6 @@ test("createSpeechRecognitionSource accumulates full transcript across multiple 
     this.stop = () => { this._started = false; };
     instance = this;
   }
-  let instance = null;
   globalThis.window = { SpeechRecognition: FakeSpeechRecognition };
 
   const updates = [];
@@ -286,6 +286,7 @@ test("createSpeechRecognitionSource accumulates full transcript across multiple 
 });
 
 test("createSpeechRecognitionSource getSegments returns timestamped entries", () => {
+  let instance = null;
   function FakeSpeechRecognition() {
     this.continuous = false;
     this.interimResults = false;
@@ -301,7 +302,6 @@ test("createSpeechRecognitionSource getSegments returns timestamped entries", ()
     this.stop = () => { this._started = false; };
     instance = this;
   }
-  let instance = null;
   globalThis.window = { SpeechRecognition: FakeSpeechRecognition };
 
   const source = createSpeechRecognitionSource(() => {});
@@ -330,6 +330,7 @@ test("createSpeechRecognitionSource getSegments returns timestamped entries", ()
 });
 
 test("createSpeechRecognitionSource clearText resets display text but preserves full transcript", () => {
+  let instance = null;
   function FakeSpeechRecognition() {
     this.continuous = false;
     this.interimResults = false;
@@ -345,7 +346,6 @@ test("createSpeechRecognitionSource clearText resets display text but preserves 
     this.stop = () => { this._started = false; };
     instance = this;
   }
-  let instance = null;
   globalThis.window = { SpeechRecognition: FakeSpeechRecognition };
 
   const updates = [];

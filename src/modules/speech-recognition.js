@@ -132,7 +132,7 @@ export function createSpeechRecognitionSource(onUpdate) {
     return (finalBuffer + (interimText ? " " + interimText : "")).trim();
   }
 
-  function nowMs() {
+  function getElapsedMs() {
     return sessionStartTime !== null ? Date.now() - sessionStartTime : 0;
   }
 
@@ -167,13 +167,13 @@ export function createSpeechRecognitionSource(onUpdate) {
           finalBuffer = finalBuffer.slice(spaceIdx + 1);
         }
       }
-      const segmentEnd = nowMs();
+      const segmentEnd = getElapsedMs();
       const trimmedFinal = newFinal.trim();
       if (trimmedFinal) {
         segments.push({ start: currentSegmentStartMs, end: segmentEnd, text: trimmedFinal });
         currentSegmentStartMs = segmentEnd;
       }
-      fullTranscript = (fullTranscript + " " + newFinal).trim();
+      fullTranscript = fullTranscript ? fullTranscript + " " + newFinal.trim() : newFinal.trim();
     }
     interimText = newInterim;
 
@@ -230,7 +230,7 @@ export function createSpeechRecognitionSource(onUpdate) {
     clearText() {
       finalBuffer = "";
       interimText = "";
-      currentSegmentStartMs = nowMs();
+      currentSegmentStartMs = getElapsedMs();
       onUpdate({ active: enabled && started, text: "" });
     },
     getSegments() {
