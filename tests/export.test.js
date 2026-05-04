@@ -449,7 +449,8 @@ test("buildOfflinePresentationHtml uses document.write to open the audience wind
 
   assert.equal(html.includes("URL.createObjectURL"), false, "should not use blob URLs that fail in file:// context");
   assert.equal(html.includes("document.write"), true, "should use document.write for file:// compatibility");
-  assert.equal(html.includes("window.open('', 'offline-audience-window')"), true, "should open a blank named window");
+  assert.equal(html.includes("window.open('about:blank', 'offline-audience-window')"), true, "should open about:blank to avoid file:// URL security errors");
+  assert.equal(html.includes("window.open('', 'offline-audience-window')"), false, "empty-string URL resolves to same file:// origin and is blocked by browsers");
 });
 
 test("buildOfflinePresentationHtml escapes </style> in embedded CSS to prevent premature style block closure", () => {
