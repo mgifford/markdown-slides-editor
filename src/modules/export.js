@@ -1171,7 +1171,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
 
   function openAudienceWindow() {
     var html = buildAudienceHtml();
-    audienceWindow = window.open('', 'offline-audience-window');
+    audienceWindow = window.open('about:blank', 'offline-audience-window');
     if (audienceWindow) {
       audienceWindow.document.open('text/html', 'replace');
       audienceWindow.document.write(html);
