@@ -937,6 +937,40 @@ Revealed on click.
   assert.equal(rendered.stepCount, 1);
 });
 
+test("parseSource keeps two-column body content and extracts ::notes section separately", () => {
+  const source = `# The Davos Rupture
+## "We are in a rupture, not a transition." — Mark Carney, 2026
+
+::column-left
+- The rules-based order is fading
+- Great power rivalry is the new "Natural Logic"
+- Middle powers face a choice:
+  - **Accommodate** & hope
+  - **Act** to build strategic autonomy
+::
+
+::column-right
+- **Digital Infrastructure is the new front line**
+- *Code* is now matters of national security
+- Sovereignty is no longer defined by rules, but the ability to choose
+::
+
+::notes
+Start with the Prime Minister's Davos framing.
+::`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.slides.length, 1);
+  assert.equal(deck.slides[0].body.includes("::column-left"), true);
+  assert.equal(deck.slides[0].body.includes("::column-right"), true);
+  assert.equal(deck.slides[0].notes.includes("Prime Minister's Davos framing"), true);
+
+  const rendered = renderMarkdown(deck.slides[0].body);
+  assert.equal(rendered.html.includes('class="layout-columns"'), true);
+  assert.equal(rendered.html.includes("layout-columns__column--left"), true);
+  assert.equal(rendered.html.includes("layout-columns__column--right"), true);
+});
+
 test("renderMarkdown counts multiple on-click columns as separate steps", () => {
   const rendered = renderMarkdown(`# Slide
 
