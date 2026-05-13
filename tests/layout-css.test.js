@@ -7,10 +7,18 @@ test("responsive column layout keeps .layout-columns side-by-side at the 1100px 
   const desktopToTabletBlock = css
     .split("@media (max-width: 1100px) {")[1]
     ?.split("@media (max-width: 800px) {")[0] || "";
+  const mobileBlock = css
+    .split("@media (max-width: 800px) {")[1]
+    ?.split("@media (max-height: 500px) and (orientation: landscape) {")[0] || "";
 
   assert.equal(
     desktopToTabletBlock.includes(".layout-columns"),
     false,
     "1100px rules should not collapse two-column slide directives",
+  );
+  assert.equal(
+    mobileBlock.includes(".layout-columns"),
+    true,
+    "800px rules should collapse two-column slide directives for mobile screens",
   );
 });

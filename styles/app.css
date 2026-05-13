@@ -2019,6 +2019,17 @@ input:focus-visible {
     justify-content: flex-start;
   }
 
+  .layout-columns,
+  .layout-media,
+  .layout-media--right {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .layout-columns__column[style] {
+    max-width: none;
+  }
+
   .mobile-pane-tabs {
     display: grid;
   }
@@ -2353,13 +2364,3 @@ input:focus-visible {
     max-width: var(--column-basis) !important;
   }
 }
-  .layout-columns,
-  .layout-media,
-  .layout-media--right {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  .layout-columns__column[style] {
-    max-width: none;
-  }
