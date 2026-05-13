@@ -1993,15 +1993,10 @@ input:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .layout-columns,
   .layout-media,
   .layout-media--right {
     display: grid;
     grid-template-columns: 1fr;
-  }
-
-  .layout-columns__column[style] {
-    max-width: none;
   }
 
   .presenter-layout--custom .presenter-panel {
@@ -2358,3 +2353,13 @@ input:focus-visible {
     max-width: var(--column-basis) !important;
   }
 }
+  .layout-columns,
+  .layout-media,
+  .layout-media--right {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .layout-columns__column[style] {
+    max-width: none;
+  }
