@@ -1025,8 +1025,8 @@ input:focus-visible {
   overflow: hidden;
 }
 
-.slide-card--image-hero:not(.slide-card--image-hero-show-title) .slide-card__content > h1:first-child,
-.slide-card--image-hero:not(.slide-card--image-hero-show-subtitle) .slide-card__content > h2:first-child {
+.slide-card--image-hero:not(.slide-card--image-hero-show-title) .slide-card__content > h1:first-of-type,
+.slide-card--image-hero:not(.slide-card--image-hero-show-subtitle) .slide-card__content > h2:first-of-type {
   position: absolute;
   width: 1px;
   height: 1px;

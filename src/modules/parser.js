@@ -196,7 +196,7 @@ function createClosingSlide(metadata) {
 }
 
 // Matches an opening :: directive line, e.g. `::image-hero text-bottom-left`.
-const DIRECTIVE_OPEN_RE = /^::[a-z0-9%-]+(?:\s+\S+)*\s*$/i;
+const DIRECTIVE_OPEN_RE = /^::[a-z0-9%-]+(?:\s+[\w.\u2010-\u2015\u2212-]+)*\s*$/i;
 
 /**
  * Split deck content into individual slide strings on `\n---\n` boundaries,
