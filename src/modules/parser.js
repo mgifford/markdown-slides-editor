@@ -125,8 +125,9 @@ function extractMetadataAndContent(source) {
   const metadata = {};
 
   if (content.startsWith("---\n")) {
-    const end = content.indexOf("\n---\n", 4);
-    if (end !== -1) {
+    const endMatch = content.slice(4).match(/\n---(?:\n|$)/);
+    if (endMatch) {
+      const end = 4 + endMatch.index;
       const frontMatter = content.slice(4, end);
       for (const line of frontMatter.split("\n")) {
         const separator = line.indexOf(":");
@@ -135,7 +136,7 @@ function extractMetadataAndContent(source) {
         const value = line.slice(separator + 1);
         metadata[key] = parseYamlValue(value);
       }
-      content = content.slice(end + 5);
+      content = content.slice(end + endMatch[0].length);
     }
   }
 
