@@ -36,6 +36,20 @@ Full script text.
   assert.equal(deck.slides[0].script, "Full script text.");
 });
 
+test("parseSource extracts front matter when closing delimiter is at EOF", () => {
+  const source = `---
+title: Demo deck
+titleSlide: false
+lang: en-CA
+---`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.metadata.title, "Demo deck");
+  assert.equal(deck.metadata.titleSlide, false);
+  assert.equal(deck.metadata.lang, "en-CA");
+  assert.equal(deck.slides.length, 0);
+});
+
 test("parseSource prepends an optional title slide from front matter", () => {
   const source = `---
 title: Demo deck
