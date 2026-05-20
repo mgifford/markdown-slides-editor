@@ -481,7 +481,8 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
 
     try {
       await onSourceChange(nextSource);
-    } catch {
+    } catch (error) {
+      console.warn("Failed to save source locally.", error);
       if (!localSaveStatus) return;
       const offlineNote = navigator.onLine ? "" : " You are offline.";
       localSaveStatus.textContent = `Could not save this draft locally.${offlineNote} Export and copy your text before leaving this tab.`;
