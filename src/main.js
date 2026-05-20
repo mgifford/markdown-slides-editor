@@ -14,9 +14,18 @@ import { getCurrentRoute, restoreRedirectPath } from "./modules/router.js";
 
 restoreRedirectPath();
 initColorMode();
+registerServiceWorker();
 
 const app = document.querySelector("#app");
 const route = getCurrentRoute(window.location.pathname);
+
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  const serviceWorkerUrl = new URL("../service-worker.js", import.meta.url);
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register(serviceWorkerUrl).catch(() => {});
+  });
+}
 
 async function bootstrap() {
   const savedSource = await loadSource(STORAGE_KEY);

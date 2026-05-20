@@ -193,7 +193,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
             <span id="tb-tip-svg" role="tooltip" class="toolbar-tooltip">Insert an SVG figure block</span>
           </span>
         </div>
-        <p class="local-save-status">Saved locally in this browser on this device. Export to keep a copy elsewhere.</p>
+        <p class="local-save-status" id="local-save-status">Saved locally in this browser on this device. Export to keep a copy elsewhere.</p>
         <textarea id="source-editor" class="editor" spellcheck="true"></textarea>
       </section>
       <div class="editor-layout__divider" id="editor-layout-divider" role="separator" aria-orientation="vertical" aria-label="Resize editor and preview panels" tabindex="0"></div>
@@ -282,6 +282,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   const restorePreviewPanelButton = frame.querySelector("#restore-preview-panel");
   const toggleOutlinePanelButton = frame.querySelector("#toggle-outline-panel");
   const toggleOutlinePanelHeaderButton = frame.querySelector("#toggle-outline-panel-header");
+  const localSaveStatus = frame.querySelector("#local-save-status");
 
   const importInput = document.createElement("input");
   importInput.type = "file";
@@ -454,8 +455,44 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   function setSource(nextSource) {
     source = nextSource;
     editor.value = nextSource;
-    onSourceChange(nextSource);
+    persistSource(nextSource);
     render();
+  }
+
+  let sourceSaveVersion = 0;
+  let pendingSaveCount = 0;
+
+  function setSaveStatus() {
+    if (!localSaveStatus) return;
+    const offlineNote = navigator.onLine ? "" : " You are offline. Keep this tab open.";
+    if (pendingSaveCount > 0) {
+      localSaveStatus.textContent = `Saving locally…${offlineNote}`;
+      localSaveStatus.dataset.state = "saving";
+      return;
+    }
+    localSaveStatus.textContent = `Saved locally in this browser on this device.${offlineNote} Export to keep a copy elsewhere.`;
+    localSaveStatus.dataset.state = "saved";
+  }
+
+  async function persistSource(nextSource) {
+    const saveVersion = sourceSaveVersion += 1;
+    pendingSaveCount += 1;
+    setSaveStatus();
+
+    try {
+      await onSourceChange(nextSource);
+    } catch {
+      if (!localSaveStatus) return;
+      const offlineNote = navigator.onLine ? "" : " You are offline.";
+      localSaveStatus.textContent = `Could not save this draft locally.${offlineNote} Export and copy your text before leaving this tab.`;
+      localSaveStatus.dataset.state = "error";
+      return;
+    } finally {
+      pendingSaveCount = Math.max(0, pendingSaveCount - 1);
+    }
+
+    if (saveVersion !== sourceSaveVersion) return;
+    setSaveStatus();
   }
 
   function setEditorSelection(start, end = start) {
@@ -764,6 +801,9 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
   editor.value = source;
   applyPanelState();
   render();
+  setSaveStatus();
+  window.addEventListener("online", setSaveStatus);
+  window.addEventListener("offline", setSaveStatus);
 
   const previewFrameObserver = new ResizeObserver(() => {
     applyPreviewScale(previewFrame);
@@ -772,7 +812,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
 
   editor.addEventListener("input", () => {
     source = editor.value;
-    onSourceChange(source);
+    persistSource(source);
     activeSlideIndex = getSlideIndexForSourceOffset(source, editor.selectionStart || 0);
     render();
   });
@@ -1161,7 +1201,7 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
       source = text;
     }
     editor.value = source;
-    onSourceChange(source);
+    persistSource(source);
     render();
   });
 
