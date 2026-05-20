@@ -167,9 +167,11 @@ Resources:
 **Section order inside `::image-hero`:** image → `---` → overlay text → `---` → logo SVG or img.  
 The overlay and logo sections are optional.
 
-**Text position modifiers:** `text-top-left`, `text-top-right`, `text-bottom-left` (default), `text-bottom-right`, `text-center`.
+**Text position modifiers:** `text-top-left`, `text-top-right`, `text-bottom-left` (default), `text-bottom-right`, `text-center`.  
+Also accepted: shorthand/reordered forms such as `text-top`, `text-right`, or `text-right-top` (normalized to the nearest canonical position).
 
-**Logo position modifiers:** `logo-top-left`, `logo-top-right` (default), `logo-bottom-left`, `logo-bottom-right`.
+**Logo position modifiers:** `logo-top-left`, `logo-top-right` (default), `logo-bottom-left`, `logo-bottom-right`.  
+Also accepted: shorthand/reordered forms such as `logo-left`, `logo-bottom`, or `logo-left-bottom`.
 
 **Accessibility notes:**
 - Always provide descriptive `alt` text on the background image.
