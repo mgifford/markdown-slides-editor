@@ -1474,3 +1474,118 @@ Notes here.
   const overlayWarning = issues.find((i) => i.message.includes("image-hero overlay text"));
   assert.ok(!overlayWarning, "no overlay text warning when visible text is short");
 });
+
+test("renderMarkdown image-hero timed modifiers add timed class and animation styles", () => {
+  const rendered = renderMarkdown(`
+::image-hero stay-5 transition-10 final-0.2
+![Mountain](https://example.com/mountain.jpg)
+---
+**Short** overlay
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero--timed"), "has timed class");
+  assert.ok(rendered.html.includes("--hero-final:0.2"), "figure has --hero-final custom property");
+  assert.ok(
+    rendered.html.includes("animation:hero-img-fade 10s 5s both ease-in-out"),
+    "image has hero-img-fade animation with correct timing",
+  );
+  assert.ok(
+    rendered.html.includes("animation:hero-overlay-appear 10s 5s both ease-in-out"),
+    "overlay has hero-overlay-appear animation with correct timing",
+  );
+  assert.ok(rendered.hasImageHero, "hasImageHero is true");
+});
+
+test("renderMarkdown image-hero stay-only modifier activates timed mode with default transition", () => {
+  const rendered = renderMarkdown(`
+::image-hero stay-3
+![Photo](https://example.com/photo.jpg)
+---
+Text
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero--timed"), "has timed class from stay-only");
+  assert.ok(
+    rendered.html.includes("animation:hero-img-fade 5s 3s both ease-in-out"),
+    "uses default 5s transition when only stay is specified",
+  );
+});
+
+test("renderMarkdown image-hero final-only modifier activates timed mode with zero stay", () => {
+  const rendered = renderMarkdown(`
+::image-hero final-0.1
+![Photo](https://example.com/photo.jpg)
+---
+Text
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero--timed"), "has timed class from final-only");
+  assert.ok(rendered.html.includes("--hero-final:0.1"), "figure has correct --hero-final value");
+  assert.ok(
+    rendered.html.includes("animation:hero-img-fade 5s 0s both ease-in-out"),
+    "uses zero stay and default transition when only final is specified",
+  );
+});
+
+test("renderMarkdown image-hero timed modifiers combine with text position modifiers", () => {
+  const rendered = renderMarkdown(`
+::image-hero text-center stay-5 transition-8 final-0.15
+![Photo](https://example.com/photo.jpg)
+---
+Centered text
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero--timed"), "has timed class");
+  assert.ok(rendered.html.includes("layout-image-hero--text-center"), "retains text-center class");
+  assert.ok(rendered.html.includes("--hero-final:0.15"), "has correct final opacity");
+});
+
+test("renderMarkdown image-hero without timed modifiers has no timed class or animation styles", () => {
+  const rendered = renderMarkdown(`
+::image-hero text-bottom-left
+![Photo](https://example.com/photo.jpg)
+---
+Short text
+::
+`);
+  assert.ok(!rendered.html.includes("layout-image-hero--timed"), "no timed class without timing modifiers");
+  assert.ok(!rendered.html.includes("hero-img-fade"), "no image fade animation without timing modifiers");
+  assert.ok(!rendered.html.includes("hero-overlay-appear"), "no overlay animation without timing modifiers");
+  assert.ok(!rendered.html.includes("--hero-final"), "no --hero-final property without timing modifiers");
+});
+
+test("renderMarkdown image-hero final modifier value is clamped to 0–1", () => {
+  const highFinal = renderMarkdown(`
+::image-hero final-1.5
+![Photo](https://example.com/photo.jpg)
+---
+Text
+::
+`);
+  assert.ok(highFinal.html.includes("--hero-final:1"), "final opacity clamped to 1");
+
+  const zeroFinal = renderMarkdown(`
+::image-hero final-0
+![Photo](https://example.com/photo.jpg)
+---
+Text
+::
+`);
+  assert.ok(zeroFinal.html.includes("--hero-final:0"), "final opacity of 0 is valid");
+});
+
+test("renderMarkdown image-hero timed works with <img> tag syntax", () => {
+  const rendered = renderMarkdown(`
+::image-hero stay-2 transition-6 final-0.25
+<img src="https://example.com/photo.jpg" alt="Scenic view">
+---
+Timed text
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero--timed"), "has timed class with <img> syntax");
+  assert.ok(
+    rendered.html.includes("animation:hero-img-fade 6s 2s both ease-in-out"),
+    "image has animation with <img> syntax",
+  );
+  assert.ok(rendered.html.includes("--hero-final:0.25"), "has correct final opacity with <img> syntax");
+});

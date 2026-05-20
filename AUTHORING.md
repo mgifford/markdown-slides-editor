@@ -173,6 +173,29 @@ Also accepted: shorthand/reordered forms such as `text-top`, `text-right`, or `t
 **Logo position modifiers:** `logo-top-left`, `logo-top-right` (default), `logo-bottom-left`, `logo-bottom-right`.  
 Also accepted: shorthand/reordered forms such as `logo-left`, `logo-bottom`, or `logo-left-bottom`.
 
+#### Timed cinematic reveal
+
+Add `stay-N`, `transition-N`, and/or `final-N` modifiers to create a timed reveal effect:
+
+- **`stay-N`** — number of seconds the image is shown alone before the text appears (default `0`).
+- **`transition-N`** — number of seconds the overlay takes to expand from hidden to full-screen (default `5`).
+- **`final-N`** — final opacity of the background image as a decimal between `0` and `1` (default `0.15`).
+
+```md
+::image-hero stay-5 transition-10 final-0.2
+<img src="https://example.com/photo.jpg" alt="Descriptive alt text">
+---
+**Short** overlay (≤ 25 chars)
+::
+```
+
+The sequence:
+1. **Stay phase** (`stay-N` seconds): the image fills the entire slide; no overlay is visible.
+2. **Transition phase** (`transition-N` seconds): the overlay expands from invisible to full-screen while the background image fades to `final-N` opacity.
+3. **Final state**: the overlay covers the slide with the text prominently displayed; the image shows through at reduced opacity.
+
+Any combination of the three modifiers activates timed mode. They can be combined with text position and logo modifiers. Because the overlay fills the whole screen in the final state, text position modifiers do not affect the visual placement — the text is always centred.
+
 **Accessibility notes:**
 - Always provide descriptive `alt` text on the background image.
 - Use a direct public image file URL (for example `https://raw.githubusercontent.com/your-org/your-repo/main/path/image.jpg`) rather than a repository page URL.
@@ -180,6 +203,7 @@ Also accepted: shorthand/reordered forms such as `logo-left`, `logo-bottom`, or 
 - Keep the overlay text as a short phrase and **25 characters or fewer** — the editor will warn you if it is longer.
 - Overlay text supports inline Markdown emphasis (for example `**keyword**`) so you can highlight only the words you want on screen.
 - Put the full argument, references, and context in `Note:` / `Resources:` so the offline export and presenter view carry the complete story.
+- The timed animation plays through once each time the slide becomes active. It does not loop and cannot be paused. Ensure your content is readable at the start and end states.
 
 ## Theming
 

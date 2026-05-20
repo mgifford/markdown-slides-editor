@@ -1121,6 +1121,51 @@ input:focus-visible {
   right: 4%;
 }
 
+/* Timed image-hero: overlay becomes full-screen during the reveal transition.
+   The overlay uses clip-path to expand from invisible to full coverage,
+   and the background image fades to --hero-final opacity. */
+.layout-image-hero--timed .layout-image-hero__overlay {
+  inset: 0;
+  max-width: none;
+  border-radius: 0;
+  padding: 0.5em 1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  background: rgba(0, 0, 0, 0.85);
+}
+
+/* When timed, all position modifiers are overridden: overlay covers the full slide */
+.layout-image-hero--timed.layout-image-hero--text-top-left .layout-image-hero__overlay,
+.layout-image-hero--timed.layout-image-hero--text-top-right .layout-image-hero__overlay,
+.layout-image-hero--timed.layout-image-hero--text-bottom-left .layout-image-hero__overlay,
+.layout-image-hero--timed.layout-image-hero--text-bottom-right .layout-image-hero__overlay,
+.layout-image-hero--timed.layout-image-hero--text-center .layout-image-hero__overlay {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+/* Keyframes for timed image-hero animations */
+@keyframes hero-img-fade {
+  from { opacity: 1; }
+  to { opacity: var(--hero-final, 0.15); }
+}
+
+@keyframes hero-overlay-appear {
+  from {
+    clip-path: inset(50%);
+    background: rgba(0, 0, 0, 0);
+  }
+  to {
+    clip-path: inset(0%);
+    background: rgba(0, 0, 0, 0.85);
+  }
+}
+
 /* Step directive: transparent progressive wrapper, no extra visual styling */
 .layout-step {
   display: contents;
