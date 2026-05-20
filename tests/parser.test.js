@@ -1548,6 +1548,34 @@ Short overlay
   );
 });
 
+test("renderMarkdown image-hero accepts unicode dash in directive name", () => {
+  const rendered = renderMarkdown(`
+::image‑hero stay‑5 transition‑10 final‑0.2
+![Mountain](https://example.com/mountain.jpg)
+---
+Short overlay
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero--timed"), "has timed class");
+  assert.ok(!rendered.html.includes("::image"), "does not leave raw directive text");
+});
+
+test("parseSource keeps image-hero block intact with unicode dash directive name", () => {
+  const source = `
+# Intro
+::image‑hero stay‑5 transition‑10 final‑0.2
+![Mountain](https://example.com/mountain.jpg)
+---
+Short overlay
+::
+---
+# Next
+`;
+  const deck = parseSource(source);
+  assert.equal(deck.slides.length, 2, "keeps internal --- inside directive block");
+  assert.ok(deck.slides[0].body.includes("::image‑hero"), "keeps unicode-dash directive in slide body");
+});
+
 test("renderMarkdown image-hero stay-only modifier activates timed mode with default transition", () => {
   const rendered = renderMarkdown(`
 ::image-hero stay-3
