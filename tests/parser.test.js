@@ -1332,6 +1332,34 @@ Short text
   assert.ok(rendered.html.includes("layout-image-hero--text-bottom-left"), "defaults to text-bottom-left");
 });
 
+test("renderMarkdown image-hero directive accepts shorthand text and logo position modifiers", () => {
+  const rendered = renderMarkdown(`
+::image-hero text-top logo-left
+![Alt](https://example.com/bg.jpg)
+---
+Hello
+---
+<img src="https://example.com/logo.png" alt="Logo">
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero--text-top-left"), "maps text-top to text-top-left");
+  assert.ok(rendered.html.includes("layout-image-hero--logo-top-left"), "maps logo-left to logo-top-left");
+});
+
+test("renderMarkdown image-hero directive accepts reordered axis modifiers", () => {
+  const rendered = renderMarkdown(`
+::image-hero text-right-top logo-left-bottom
+![Alt](https://example.com/bg.jpg)
+---
+Hello
+---
+<img src="https://example.com/logo.png" alt="Logo">
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero--text-top-right"), "maps text-right-top to text-top-right");
+  assert.ok(rendered.html.includes("layout-image-hero--logo-bottom-left"), "maps logo-left-bottom to logo-bottom-left");
+});
+
 test("renderMarkdown image-hero directive renders with corner logo SVG", () => {
   const rendered = renderMarkdown(`
 ::image-hero text-top-right logo-bottom-left

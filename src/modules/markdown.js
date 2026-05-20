@@ -215,6 +215,49 @@ function splitOnDividers(lines) {
   return sections;
 }
 
+function resolveHeroPosition(modifiers, options) {
+  const {
+    prefix,
+    defaultVertical,
+    defaultHorizontal,
+    allowCenter = false,
+  } = options;
+  const canonical = new Set([
+    `${prefix}-top-left`,
+    `${prefix}-top-right`,
+    `${prefix}-bottom-left`,
+    `${prefix}-bottom-right`,
+    ...(allowCenter ? [`${prefix}-center`] : []),
+  ]);
+
+  for (const modifier of modifiers) {
+    if (!modifier.startsWith(`${prefix}-`)) continue;
+    if (canonical.has(modifier)) return modifier;
+
+    const parts = modifier.slice(prefix.length + 1).split("-").filter(Boolean);
+    if (allowCenter && parts.includes("center")) return `${prefix}-center`;
+
+    let vertical = defaultVertical;
+    let horizontal = defaultHorizontal;
+    let sawAxisToken = false;
+    for (const part of parts) {
+      if (part === "top" || part === "bottom") {
+        vertical = part;
+        sawAxisToken = true;
+        continue;
+      }
+      if (part === "left" || part === "right") {
+        horizontal = part;
+        sawAxisToken = true;
+      }
+    }
+
+    if (sawAxisToken) return `${prefix}-${vertical}-${horizontal}`;
+  }
+
+  return `${prefix}-${defaultVertical}-${defaultHorizontal}`;
+}
+
 /**
  * Count approximate visible character length for short overlay copy authored in Markdown.
  * Strips inline markdown syntax so linting can reflect what appears onscreen to the audience.
@@ -359,10 +402,17 @@ function renderSpecialDirective(block, state) {
     if (isProgressive) state.stepCount += 1;
     state.hasImageHero = true;
 
-    const TEXT_POSITIONS = ["text-top-left", "text-top-right", "text-bottom-left", "text-bottom-right", "text-center"];
-    const LOGO_POSITIONS = ["logo-top-left", "logo-top-right", "logo-bottom-left", "logo-bottom-right"];
-    const textPos = block.modifiers.find((m) => TEXT_POSITIONS.includes(m)) || "text-bottom-left";
-    const logoPos = block.modifiers.find((m) => LOGO_POSITIONS.includes(m));
+    const textPos = resolveHeroPosition(block.modifiers, {
+      prefix: "text",
+      defaultVertical: "bottom",
+      defaultHorizontal: "left",
+      allowCenter: true,
+    });
+    const logoPos = resolveHeroPosition(block.modifiers, {
+      prefix: "logo",
+      defaultVertical: "top",
+      defaultHorizontal: "right",
+    });
 
     const sections = splitOnDividers(block.content);
     const imageLines = sections[0] || [];
@@ -407,7 +457,7 @@ function renderSpecialDirective(block, state) {
     const classNames = [
       "layout-image-hero",
       `layout-image-hero--${textPos}`,
-      logoHtml && logoPos ? `layout-image-hero--${logoPos}` : "",
+      logoHtml ? `layout-image-hero--${logoPos}` : "",
       progressiveClass,
     ]
       .filter(Boolean)
