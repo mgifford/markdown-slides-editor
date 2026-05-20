@@ -167,6 +167,8 @@ export function renderDeck(deck) {
       resourcesHtml: resourcesRender?.html || "",
       scriptHtml: scriptRender?.html || "",
       isImageHero: rendered.hasImageHero || false,
+      imageHeroShowTitle: rendered.imageHeroShowTitle || false,
+      imageHeroShowSubtitle: rendered.imageHeroShowSubtitle || false,
     };
   });
 

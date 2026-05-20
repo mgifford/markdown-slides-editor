@@ -1405,6 +1405,42 @@ Short caption
   assert.ok(rendered.renderedSlides[0].isImageHero, "isImageHero is true on the rendered slide");
 });
 
+test("renderDeck image-hero hides title and subtitle by default", () => {
+  const source = `---
+title: Test
+---
+
+# Hero Title
+## Hero Subtitle
+
+::image-hero
+![Big image](https://example.com/big.jpg)
+::
+`;
+  const deck = parseSource(source);
+  const rendered = renderDeck(deck);
+  assert.equal(rendered.renderedSlides[0].imageHeroShowTitle, false, "title is hidden by default");
+  assert.equal(rendered.renderedSlides[0].imageHeroShowSubtitle, false, "subtitle is hidden by default");
+});
+
+test("renderDeck image-hero can opt in to showing title and subtitle", () => {
+  const source = `---
+title: Test
+---
+
+# Hero Title
+## Hero Subtitle
+
+::image-hero show-title show-subtitle
+![Big image](https://example.com/big.jpg)
+::
+`;
+  const deck = parseSource(source);
+  const rendered = renderDeck(deck);
+  assert.equal(rendered.renderedSlides[0].imageHeroShowTitle, true, "title is shown when opted in");
+  assert.equal(rendered.renderedSlides[0].imageHeroShowSubtitle, true, "subtitle is shown when opted in");
+});
+
 test("lintDeck warns when image-hero overlay text exceeds 25 characters", () => {
   const source = `---
 title: Test
@@ -1494,6 +1530,22 @@ test("renderMarkdown image-hero timed modifiers add timed class and animation st
     "overlay has hero-overlay-appear animation with correct timing",
   );
   assert.ok(rendered.hasImageHero, "hasImageHero is true");
+});
+
+test("renderMarkdown image-hero accepts unicode dash modifiers", () => {
+  const rendered = renderMarkdown(`
+::image-hero stay‑5 transition‑10 final‑0.2
+![Mountain](https://example.com/mountain.jpg)
+---
+Short overlay
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero--timed"), "has timed class");
+  assert.ok(rendered.html.includes("--hero-final:0.2"), "figure has --hero-final custom property");
+  assert.ok(
+    rendered.html.includes("animation:hero-img-fade 10s 5s both ease-in-out"),
+    "image has animation with normalized dash modifiers",
+  );
 });
 
 test("renderMarkdown image-hero stay-only modifier activates timed mode with default transition", () => {

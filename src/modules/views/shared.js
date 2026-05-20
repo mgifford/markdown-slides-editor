@@ -95,11 +95,15 @@ export function mountSlideInto(container, renderedSlide, options = {}) {
 
   const { revealStep = renderedSlide.stepCount || 0, includeLabel = true } = options;
   const title = renderedSlide.headings.find((heading) => heading.level === 1)?.text || "Slide preview";
-  const slideClass = renderedSlide.isImageHero
-    ? "slide-card slide-card--image-hero"
-    : renderedSlide.kind === "title"
-      ? "slide-card slide-card--title"
-      : "slide-card";
+  const slideClasses = ["slide-card"];
+  if (renderedSlide.isImageHero) {
+    slideClasses.push("slide-card--image-hero");
+    if (renderedSlide.imageHeroShowTitle) slideClasses.push("slide-card--image-hero-show-title");
+    if (renderedSlide.imageHeroShowSubtitle) slideClasses.push("slide-card--image-hero-show-subtitle");
+  } else if (renderedSlide.kind === "title") {
+    slideClasses.push("slide-card--title");
+  }
+  const slideClass = slideClasses.join(" ");
 
   container.innerHTML = `
     <article class="${slideClass}"${includeLabel ? ` aria-label="${escapeAttribute(title)}"` : ""}>
