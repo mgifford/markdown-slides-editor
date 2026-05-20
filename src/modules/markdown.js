@@ -100,7 +100,7 @@ function renderInline(text, state) {
 }
 
 function collectDirectiveBlock(lines, startIndex) {
-  const directiveMatch = /^::([a-z0-9%-]+)((?:\s+[\w-]+)*)\s*$/i.exec(lines[startIndex].trim());
+  const directiveMatch = /^::([a-z0-9%-]+)((?:\s+[\w.-]+)*)\s*$/i.exec(lines[startIndex].trim());
   if (!directiveMatch) {
     return null;
   }
@@ -114,7 +114,7 @@ function collectDirectiveBlock(lines, startIndex) {
 
   for (let index = startIndex + 1; index < lines.length; index += 1) {
     const trimmed = lines[index].trim();
-    if (/^::[a-z0-9%-]+(?:\s+[\w-]+)*\s*$/i.test(trimmed)) {
+    if (/^::[a-z0-9%-]+(?:\s+[\w.-]+)*\s*$/i.test(trimmed)) {
       depth += 1;
       content.push(lines[index]);
       continue;
@@ -414,29 +414,60 @@ function renderSpecialDirective(block, state) {
       defaultHorizontal: "right",
     });
 
+    // Parse optional timing modifiers: stay-N (seconds image is full), transition-N (seconds of reveal), final-N (final image opacity)
+    let staySeconds = null;
+    let transSeconds = null;
+    let finalOpacity = null;
+    for (const mod of block.modifiers) {
+      const stayMatch = /^stay-(\d+(?:\.\d+)?)$/.exec(mod);
+      if (stayMatch) {
+        staySeconds = parseFloat(stayMatch[1]);
+        continue;
+      }
+      const transMatch = /^transition-(\d+(?:\.\d+)?)$/.exec(mod);
+      if (transMatch) {
+        transSeconds = parseFloat(transMatch[1]);
+        continue;
+      }
+      const finalMatch = /^final-(\d+(?:\.\d+)?)$/.exec(mod);
+      if (finalMatch) {
+        finalOpacity = Math.min(1, Math.max(0, parseFloat(finalMatch[1])));
+      }
+    }
+    const isTimed = staySeconds !== null || transSeconds !== null || finalOpacity !== null;
+    const effectiveStay = staySeconds ?? 0;
+    const effectiveTrans = transSeconds ?? 5;
+    const effectiveFinal = finalOpacity ?? 0.15;
+
     const sections = splitOnDividers(block.content);
     const imageLines = sections[0] || [];
     const overlayLines = sections[1] || [];
     const logoLines = sections[2] || [];
 
+    const heroAnimStyle = isTimed
+      ? (name) => ` style="animation:${name} ${effectiveTrans}s ${effectiveStay}s both ease-in-out"`
+      : () => "";
+
     // Render background image
     const firstImageLine = imageLines.map((l) => l.trim()).find(Boolean) || "";
     let imageHtml = "";
+    const imgAnimStyle = heroAnimStyle("hero-img-fade");
     const mdImgMatch = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(firstImageLine);
     if (mdImgMatch) {
       const alt = escapeAttribute(mdImgMatch[1]);
       const src = escapeAttribute(mdImgMatch[2]);
-      imageHtml = `<img class="layout-image-hero__image" src="${src}" alt="${alt}">`;
+      imageHtml = `<img class="layout-image-hero__image"${imgAnimStyle} src="${src}" alt="${alt}">`;
     } else if (/^<img\b/i.test(firstImageLine)) {
       const safe = sanitizeImgMarkup(firstImageLine);
-      imageHtml = safe.replace(/^<img/, '<img class="layout-image-hero__image"');
+      imageHtml = safe.replace(/^<img/, `<img class="layout-image-hero__image"${imgAnimStyle}`);
     }
 
     // Render overlay text (supports inline markdown emphasis/links)
     const overlayText = overlayLines.join("\n").trim();
     const overlayTextLength = getPlainTextLength(overlayText);
+    const overlayAnimAttr = heroAnimStyle("hero-overlay-appear");
     const overlayHtml = overlayText
-      ? `<div class="layout-image-hero__overlay" data-overlay-text-length="${overlayTextLength}">${renderInline(overlayText, state)}</div>`
+      ? `<div class="layout-image-hero__overlay"${overlayAnimAttr} data-overlay-text-length="${overlayTextLength}">${renderInline(overlayText, state)}</div>`
       : "";
 
     // Render optional corner logo (SVG or img)
@@ -456,6 +487,7 @@ function renderSpecialDirective(block, state) {
 
     const classNames = [
       "layout-image-hero",
+      isTimed ? "layout-image-hero--timed" : "",
       `layout-image-hero--${textPos}`,
       logoHtml ? `layout-image-hero--${logoPos}` : "",
       progressiveClass,
@@ -463,7 +495,9 @@ function renderSpecialDirective(block, state) {
       .filter(Boolean)
       .join(" ");
 
-    return `<figure class="${classNames}">${imageHtml}${overlayHtml}${logoHtml}</figure>`;
+    const figureStyle = isTimed ? ` style="--hero-final:${effectiveFinal}"` : "";
+
+    return `<figure class="${classNames}"${figureStyle}>${imageHtml}${overlayHtml}${logoHtml}</figure>`;
   }
 
   return null;
@@ -520,7 +554,7 @@ function renderLines(lines, state) {
       continue;
     }
 
-    if (/^::column-(left|right)(?:-[0-9.]+(?:px|%|rem|vw)?)?(?:\s+[\w-]+)*\s*$/i.test(trimmed)) {
+    if (/^::column-(left|right)(?:-[0-9.]+(?:px|%|rem|vw)?)?(?:\s+[\w.-]+)*\s*$/i.test(trimmed)) {
       flushList();
       const renderedColumns = renderColumns(lines, index, state);
       htmlParts.push(renderedColumns.html);
@@ -528,7 +562,7 @@ function renderLines(lines, state) {
       continue;
     }
 
-    if (/^::[a-z0-9%-]+(?:\s+[\w-]+)*\s*$/i.test(trimmed)) {
+    if (/^::[a-z0-9%-]+(?:\s+[\w.-]+)*\s*$/i.test(trimmed)) {
       flushList();
       const block = collectDirectiveBlock(lines, index);
       if (block) {

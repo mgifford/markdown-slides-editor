@@ -196,7 +196,7 @@ function createClosingSlide(metadata) {
 }
 
 // Matches an opening :: directive line, e.g. `::image-hero text-bottom-left`.
-const DIRECTIVE_OPEN_RE = /^::[a-z0-9%-]+(?:\s+[\w-]+)*\s*$/i;
+const DIRECTIVE_OPEN_RE = /^::[a-z0-9%-]+(?:\s+[\w.-]+)*\s*$/i;
 
 /**
  * Split deck content into individual slide strings on `\n---\n` boundaries,
@@ -339,7 +339,7 @@ export function parseSource(source) {
       // When inside a :: section directive, track nested directives so that a
       // closing :: on an inner block does not prematurely exit the section.
       if (sectionDirectiveDepth > 0) {
-        if (/^::[a-z0-9%-]+(?:\s+[\w-]+)*\s*$/i.test(trimmed)) {
+        if (/^::[a-z0-9%-]+(?:\s+[\w.-]+)*\s*$/i.test(trimmed)) {
           sectionDirectiveDepth += 1;
         } else if (trimmed === "::") {
           sectionDirectiveDepth -= 1;
