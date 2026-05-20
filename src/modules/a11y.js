@@ -100,15 +100,15 @@ export function lintDeck(deck, renderedSlides) {
     }
 
     const heroOverlayMatches = [
-      ...slide.html.matchAll(/<div class="layout-image-hero__overlay">([^<]*)<\/div>/g),
+      ...slide.html.matchAll(/<div class="layout-image-hero__overlay"[^>]*data-overlay-text-length="(\d+)"[^>]*>/g),
     ];
     for (const match of heroOverlayMatches) {
-      const text = match[1].trim();
-      if (text.length > 25) {
+      const textLength = Number(match[1]);
+      if (textLength > 25) {
         issues.push({
           level: "warning",
           slide: slideNumber,
-          message: `Slide ${slideNumber} image-hero overlay text is ${text.length} characters (recommended maximum is 25).`,
+          message: `Slide ${slideNumber} image-hero overlay text is ${textLength} characters (recommended maximum is 25).`,
         });
       }
     }
