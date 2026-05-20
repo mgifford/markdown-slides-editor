@@ -194,7 +194,7 @@ The sequence:
 2. **Transition phase** (`transition-N` seconds): the overlay expands from invisible to full-screen while the background image fades to `final-N` opacity.
 3. **Final state**: the overlay covers the slide with the text prominently displayed; the image shows through at reduced opacity.
 
-Any combination of the three modifiers activates timed mode. They can be combined with text position and logo modifiers. Because the overlay fills the whole screen in the final state, text position modifiers do not affect the visual placement — the text is always centred.
+Any combination of the three modifiers activates timed mode. They can be combined with text position and logo modifiers. Because the overlay fills the whole screen in the final state, text position modifiers do not affect the visual placement — the text is always centered.
 
 **Accessibility notes:**
 - Always provide descriptive `alt` text on the background image.

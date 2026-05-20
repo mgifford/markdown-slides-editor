@@ -420,11 +420,19 @@ function renderSpecialDirective(block, state) {
     let finalOpacity = null;
     for (const mod of block.modifiers) {
       const stayMatch = /^stay-(\d+(?:\.\d+)?)$/.exec(mod);
-      if (stayMatch) { staySeconds = parseFloat(stayMatch[1]); continue; }
+      if (stayMatch) {
+        staySeconds = parseFloat(stayMatch[1]);
+        continue;
+      }
       const transMatch = /^transition-(\d+(?:\.\d+)?)$/.exec(mod);
-      if (transMatch) { transSeconds = parseFloat(transMatch[1]); continue; }
+      if (transMatch) {
+        transSeconds = parseFloat(transMatch[1]);
+        continue;
+      }
       const finalMatch = /^final-(\d+(?:\.\d+)?)$/.exec(mod);
-      if (finalMatch) { finalOpacity = Math.min(1, Math.max(0, parseFloat(finalMatch[1]))); continue; }
+      if (finalMatch) {
+        finalOpacity = Math.min(1, Math.max(0, parseFloat(finalMatch[1])));
+      }
     }
     const isTimed = staySeconds !== null || transSeconds !== null || finalOpacity !== null;
     const effectiveStay = staySeconds ?? 0;
@@ -436,12 +444,14 @@ function renderSpecialDirective(block, state) {
     const overlayLines = sections[1] || [];
     const logoLines = sections[2] || [];
 
+    const heroAnimStyle = isTimed
+      ? (name) => ` style="animation:${name} ${effectiveTrans}s ${effectiveStay}s both ease-in-out"`
+      : () => "";
+
     // Render background image
     const firstImageLine = imageLines.map((l) => l.trim()).find(Boolean) || "";
     let imageHtml = "";
-    const imgAnimStyle = isTimed
-      ? ` style="animation:hero-img-fade ${effectiveTrans}s ${effectiveStay}s both ease-in-out"`
-      : "";
+    const imgAnimStyle = heroAnimStyle("hero-img-fade");
     const mdImgMatch = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(firstImageLine);
     if (mdImgMatch) {
       const alt = escapeAttribute(mdImgMatch[1]);
@@ -455,9 +465,7 @@ function renderSpecialDirective(block, state) {
     // Render overlay text (supports inline markdown emphasis/links)
     const overlayText = overlayLines.join("\n").trim();
     const overlayTextLength = getPlainTextLength(overlayText);
-    const overlayAnimAttr = isTimed
-      ? ` style="animation:hero-overlay-appear ${effectiveTrans}s ${effectiveStay}s both ease-in-out"`
-      : "";
+    const overlayAnimAttr = heroAnimStyle("hero-overlay-appear");
     const overlayHtml = overlayText
       ? `<div class="layout-image-hero__overlay"${overlayAnimAttr} data-overlay-text-length="${overlayTextLength}">${renderInline(overlayText, state)}</div>`
       : "";
