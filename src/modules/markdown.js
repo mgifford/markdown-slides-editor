@@ -215,6 +215,23 @@ function splitOnDividers(lines) {
   return sections;
 }
 
+/**
+ * Count approximate visible character length for short overlay copy authored in Markdown.
+ * Strips inline markdown syntax so linting can reflect what appears onscreen to the audience.
+ * This intentionally handles only this project's lightweight inline markdown subset.
+ *
+ * @param {string} markdownText
+ * @returns {number}
+ */
+function getPlainTextLength(markdownText) {
+  return String(markdownText)
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, "")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1")
+    .replace(/[*_`~]/g, "")
+    .replace(/\s+/g, " ")
+    .trim().length;
+}
+
 function parseTableRow(line) {
   const trimmed = line.trim();
   if (!trimmed.startsWith("|")) return null;
@@ -367,8 +384,9 @@ function renderSpecialDirective(block, state) {
 
     // Render overlay text (supports inline markdown emphasis/links)
     const overlayText = overlayLines.join("\n").trim();
+    const overlayTextLength = getPlainTextLength(overlayText);
     const overlayHtml = overlayText
-      ? `<div class="layout-image-hero__overlay">${renderInline(overlayText, state)}</div>`
+      ? `<div class="layout-image-hero__overlay" data-overlay-text-length="${overlayTextLength}">${renderInline(overlayText, state)}</div>`
       : "";
 
     // Render optional corner logo (SVG or img)

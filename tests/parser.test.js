@@ -1282,7 +1282,10 @@ Climate Action Now
     rendered.html.includes('<img class="layout-image-hero__image" src="https://example.com/mountain.jpg" alt="Mountain landscape at sunset">'),
     "contains background image",
   );
-  assert.ok(rendered.html.includes('<div class="layout-image-hero__overlay">Climate Action Now</div>'), "contains overlay text");
+  assert.ok(
+    rendered.html.includes('<div class="layout-image-hero__overlay" data-overlay-text-length="18">Climate Action Now</div>'),
+    "contains overlay text with length metadata",
+  );
   assert.ok(rendered.hasImageHero, "hasImageHero is true");
 });
 
@@ -1294,7 +1297,28 @@ test("renderMarkdown image-hero directive supports inline emphasis in overlay te
 **Climate** action now
 ::
 `);
-  assert.ok(rendered.html.includes("<div class=\"layout-image-hero__overlay\"><strong>Climate</strong> action now</div>"), "contains emphasized overlay text");
+  assert.ok(
+    rendered.html.includes("<div class=\"layout-image-hero__overlay\" data-overlay-text-length=\"18\"><strong>Climate</strong> action now</div>"),
+    "contains emphasized overlay text with visible length metadata",
+  );
+});
+
+test("renderMarkdown image-hero overlay length metadata counts visible text from markdown", () => {
+  const rendered = renderMarkdown(`
+::image-hero
+![Alt](https://example.com/bg.jpg)
+---
+**Bold** [Link](https://example.com) \`code\` ![skip](https://example.com/x.png)
+::
+`);
+  assert.ok(
+    rendered.html.includes("data-overlay-text-length=\"14\""),
+    "overlay length metadata counts only visible text",
+  );
+  assert.ok(rendered.html.includes("<strong>Bold</strong>"), "keeps visible bold text");
+  assert.ok(rendered.html.includes(">Link</a>"), "keeps visible link text");
+  assert.ok(rendered.html.includes("<code>code</code>"), "keeps visible code text");
+  assert.ok(!rendered.html.includes("![skip]"), "does not render markdown image syntax as visible overlay text");
 });
 
 test("renderMarkdown image-hero directive defaults to text-bottom-left when no text position given", () => {

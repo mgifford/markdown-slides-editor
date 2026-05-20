@@ -1041,8 +1041,6 @@ input:focus-visible {
   height: 100%;
   object-fit: cover;
   display: block;
-  color: transparent;
-  font-size: 0;
 }
 
 .layout-image-hero__overlay {
