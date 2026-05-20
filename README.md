@@ -19,6 +19,7 @@ This is intended for real production presentations. It is not a training product
 - Fixed slide geometry with auto-fit body text and compact density warnings
 - Better small-screen support for editor and audience view
 - IndexedDB-backed local storage
+- Service-worker-cached app shell for offline editing after first successful load
 - In-editor AI prompt generator for briefing Ollama or another LLM
 - Source import plus bundled ZIP export for Markdown, JSON, HTML, ODP, and MHTML
 - Portable HTML snapshot export
@@ -125,4 +126,3 @@ Longer term, the editor should support optional LLM-assisted slide review and re
 The project should be reusable by others, including teams such as CivicActions and W3C, but it should not depend on their adoption to justify product quality. The baseline should stand on its own.
 
 The accessibility approach should actively build on strong public guidance, especially Intopia's presentation accessibility recommendations, while also promoting resources from Inklusiv and related accessibility communities.
-
