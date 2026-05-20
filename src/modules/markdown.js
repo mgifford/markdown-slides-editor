@@ -365,10 +365,10 @@ function renderSpecialDirective(block, state) {
       imageHtml = safe.replace(/^<img/, '<img class="layout-image-hero__image"');
     }
 
-    // Render overlay text (plain text only, no inline markup, for brevity)
+    // Render overlay text (supports inline markdown emphasis/links)
     const overlayText = overlayLines.join("\n").trim();
     const overlayHtml = overlayText
-      ? `<div class="layout-image-hero__overlay">${escapeHtml(overlayText)}</div>`
+      ? `<div class="layout-image-hero__overlay">${renderInline(overlayText, state)}</div>`
       : "";
 
     // Render optional corner logo (SVG or img)

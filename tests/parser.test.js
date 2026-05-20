@@ -1286,6 +1286,17 @@ Climate Action Now
   assert.ok(rendered.hasImageHero, "hasImageHero is true");
 });
 
+test("renderMarkdown image-hero directive supports inline emphasis in overlay text", () => {
+  const rendered = renderMarkdown(`
+::image-hero text-center
+![Mountain landscape at sunset](https://example.com/mountain.jpg)
+---
+**Climate** action now
+::
+`);
+  assert.ok(rendered.html.includes("<div class=\"layout-image-hero__overlay\"><strong>Climate</strong> action now</div>"), "contains emphasized overlay text");
+});
+
 test("renderMarkdown image-hero directive defaults to text-bottom-left when no text position given", () => {
   const rendered = renderMarkdown(`
 ::image-hero
@@ -1387,4 +1398,27 @@ Notes here.
   const issues = lintDeck(deck, rendered.renderedSlides);
   const overlayWarning = issues.find((i) => i.message.includes("image-hero overlay text"));
   assert.ok(!overlayWarning, "no overlay text warning for short text");
+});
+
+test("lintDeck counts image-hero overlay text length without inline markup tags", () => {
+  const source = `---
+title: Test
+---
+
+# Slide
+
+::image-hero
+![Alt](https://example.com/img.jpg)
+---
+**Short** text
+::
+
+Note:
+Notes here.
+`;
+  const deck = parseSource(source);
+  const rendered = renderDeck(deck);
+  const issues = lintDeck(deck, rendered.renderedSlides);
+  const overlayWarning = issues.find((i) => i.message.includes("image-hero overlay text"));
+  assert.ok(!overlayWarning, "no overlay text warning when visible text is short");
 });

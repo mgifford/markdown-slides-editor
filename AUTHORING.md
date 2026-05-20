@@ -149,7 +149,7 @@ Use `::image-hero` to fill the entire slide with a background image, with an opt
 ::image-hero text-bottom-left logo-top-right
 ![Descriptive alt text for accessibility](https://example.com/photo.jpg)
 ---
-Short overlay (≤ 25 chars)
+**Short** overlay (≤ 25 chars)
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40">
   <!-- your SVG logo here -->
@@ -173,8 +173,10 @@ The overlay and logo sections are optional.
 
 **Accessibility notes:**
 - Always provide descriptive `alt` text on the background image.
+- Use a direct public image file URL (for example `raw.githubusercontent.com/.../image.jpg`) rather than a repository page URL.
 - Add an `H1` heading to the slide for screen-reader navigation (it can be the same as or longer than the overlay text).
-- Keep the overlay text to **25 characters or fewer** — the editor will warn you if it is longer.
+- Keep the overlay text to **about 5–7 words** and **25 characters or fewer** — the editor will warn you if it is longer.
+- Overlay text supports inline Markdown emphasis (for example `**keyword**`) so you can highlight only the words you want on screen.
 - Put the full argument, references, and context in `Note:` / `Resources:` so the offline export and presenter view carry the complete story.
 
 ## Theming

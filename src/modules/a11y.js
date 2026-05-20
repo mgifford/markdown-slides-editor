@@ -100,10 +100,10 @@ export function lintDeck(deck, renderedSlides) {
     }
 
     const heroOverlayMatches = [
-      ...slide.html.matchAll(/<div class="layout-image-hero__overlay">([^<]*)<\/div>/g),
+      ...slide.html.matchAll(/<div class="layout-image-hero__overlay">([\s\S]*?)<\/div>/g),
     ];
     for (const match of heroOverlayMatches) {
-      const text = match[1].trim();
+      const text = match[1].replace(/<[^>]+>/g, "").trim();
       if (text.length > 25) {
         issues.push({
           level: "warning",
