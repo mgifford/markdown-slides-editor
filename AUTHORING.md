@@ -144,7 +144,7 @@ Quick reference:
 Use `::image-hero` to fill the entire slide with a background image, with an optional short text overlay and a corner logo (for example, an organisation SVG mark).
 
 ```md
-# Slide title (visible to screen readers; becomes aria-label)
+# Slide title (kept for navigation/aria-label; hidden on-screen by default)
 
 ::image-hero text-bottom-left logo-top-right
 ![Descriptive alt text for accessibility](https://example.com/photo.jpg)
@@ -173,6 +173,9 @@ Also accepted: shorthand/reordered forms such as `text-top`, `text-right`, or `t
 **Logo position modifiers:** `logo-top-left`, `logo-top-right` (default), `logo-bottom-left`, `logo-bottom-right`.  
 Also accepted: shorthand/reordered forms such as `logo-left`, `logo-bottom`, or `logo-left-bottom`.
 
+**Optional heading visibility:** `show-title` (show first `#` heading) and `show-subtitle` (show first `##` heading).  
+Without these modifiers, hero headings remain available for accessibility/navigation but are hidden visually.
+
 #### Timed cinematic reveal
 
 Add `stay-N`, `transition-N`, and/or `final-N` modifiers to create a timed reveal effect:
@@ -199,7 +202,7 @@ Any combination of the three modifiers activates timed mode. They can be combine
 **Accessibility notes:**
 - Always provide descriptive `alt` text on the background image.
 - Use a direct public image file URL (for example `https://raw.githubusercontent.com/your-org/your-repo/main/path/image.jpg`) rather than a repository page URL.
-- Add an `H1` heading to the slide for screen-reader navigation (it can be the same as or longer than the overlay text).
+- Add an `H1` heading to the slide for screen-reader navigation (it can be the same as or longer than the overlay text). Use `show-title` if you want it visible on-screen.
 - Keep the overlay text as a short phrase and **25 characters or fewer** — the editor will warn you if it is longer.
 - Overlay text supports inline Markdown emphasis (for example `**keyword**`) so you can highlight only the words you want on screen.
 - Put the full argument, references, and context in `Note:` / `Resources:` so the offline export and presenter view carry the complete story.

@@ -99,22 +99,38 @@ function renderInline(text, state) {
   return result;
 }
 
-function collectDirectiveBlock(lines, startIndex) {
-  const directiveMatch = /^::([a-z0-9%-]+)((?:\s+[\w.-]+)*)\s*$/i.exec(lines[startIndex].trim());
+const DIRECTIVE_OPEN_RE = /^::([a-z0-9%-]+)(?:\s+(.+?))?\s*$/i;
+const DIRECTIVE_DASH_RE = /[\u2010-\u2015\u2212]/g;
+
+function normalizeDirectiveModifier(modifier) {
+  return String(modifier).trim().toLowerCase().replace(DIRECTIVE_DASH_RE, "-");
+}
+
+function parseDirectiveOpenLine(line) {
+  const directiveMatch = DIRECTIVE_OPEN_RE.exec(String(line).trim());
   if (!directiveMatch) {
     return null;
   }
+  return {
+    directive: directiveMatch[1].toLowerCase(),
+    modifiers: directiveMatch[2]
+      ? directiveMatch[2].trim().split(/\s+/).filter(Boolean).map(normalizeDirectiveModifier)
+      : [],
+  };
+}
 
-  const modifiers = directiveMatch[2]
-    ? directiveMatch[2].trim().toLowerCase().split(/\s+/)
-    : [];
+function collectDirectiveBlock(lines, startIndex) {
+  const opening = parseDirectiveOpenLine(lines[startIndex]);
+  if (!opening) {
+    return null;
+  }
 
   let depth = 1;
   const content = [];
 
   for (let index = startIndex + 1; index < lines.length; index += 1) {
     const trimmed = lines[index].trim();
-    if (/^::[a-z0-9%-]+(?:\s+[\w.-]+)*\s*$/i.test(trimmed)) {
+    if (parseDirectiveOpenLine(trimmed)) {
       depth += 1;
       content.push(lines[index]);
       continue;
@@ -124,8 +140,8 @@ function collectDirectiveBlock(lines, startIndex) {
       depth -= 1;
       if (depth === 0) {
         return {
-          directive: directiveMatch[1].toLowerCase(),
-          modifiers,
+          directive: opening.directive,
+          modifiers: opening.modifiers,
           content,
           endIndex: index,
         };
@@ -138,8 +154,8 @@ function collectDirectiveBlock(lines, startIndex) {
   }
 
   return {
-    directive: directiveMatch[1].toLowerCase(),
-    modifiers,
+    directive: opening.directive,
+    modifiers: opening.modifiers,
     content,
     endIndex: lines.length - 1,
   };
@@ -401,6 +417,8 @@ function renderSpecialDirective(block, state) {
   if (block.directive === "image-hero") {
     if (isProgressive) state.stepCount += 1;
     state.hasImageHero = true;
+    if (block.modifiers.includes("show-title")) state.imageHeroShowTitle = true;
+    if (block.modifiers.includes("show-subtitle")) state.imageHeroShowSubtitle = true;
 
     const textPos = resolveHeroPosition(block.modifiers, {
       prefix: "text",
@@ -562,7 +580,7 @@ function renderLines(lines, state) {
       continue;
     }
 
-    if (/^::[a-z0-9%-]+(?:\s+[\w.-]+)*\s*$/i.test(trimmed)) {
+    if (parseDirectiveOpenLine(trimmed)) {
       flushList();
       const block = collectDirectiveBlock(lines, index);
       if (block) {
@@ -645,6 +663,8 @@ export function renderMarkdown(markdown) {
     stepCount: 0,
     mermaidCount: 0,
     hasImageHero: false,
+    imageHeroShowTitle: false,
+    imageHeroShowSubtitle: false,
   };
 
   return {
@@ -652,5 +672,7 @@ export function renderMarkdown(markdown) {
     headings: state.headings,
     stepCount: state.stepCount,
     hasImageHero: state.hasImageHero,
+    imageHeroShowTitle: state.imageHeroShowTitle,
+    imageHeroShowSubtitle: state.imageHeroShowSubtitle,
   };
 }
