@@ -99,7 +99,7 @@ function renderInline(text, state) {
   return result;
 }
 
-const DIRECTIVE_OPEN_RE = /^::([a-z0-9%-]+)(?:\s+(.+?))?\s*$/i;
+const DIRECTIVE_OPEN_RE = /^::([a-z0-9%\u2010-\u2015\u2212-]+)(?:\s+(.+?))?\s*$/i;
 const DIRECTIVE_DASH_RE = /[\u2010-\u2015\u2212]/g;
 
 function normalizeDirectiveModifier(modifier) {
@@ -112,7 +112,7 @@ function parseDirectiveOpenLine(line) {
     return null;
   }
   return {
-    directive: directiveMatch[1].toLowerCase(),
+    directive: normalizeDirectiveModifier(directiveMatch[1]),
     modifiers: directiveMatch[2]
       ? directiveMatch[2].trim().split(/\s+/).filter(Boolean).map(normalizeDirectiveModifier)
       : [],
