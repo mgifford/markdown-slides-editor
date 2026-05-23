@@ -1546,6 +1546,40 @@ test("renderMarkdown image-hero timed modifiers add timed class and animation st
   assert.ok(rendered.hasImageHero, "hasImageHero is true");
 });
 
+test("renderMarkdown image-hero supports pan, blur, and saturation modifiers via CSS custom properties", () => {
+  const rendered = renderMarkdown(`
+::image-hero stay-5 transition-10 final-0.2 pan-left blur-3px saturation-0
+![Mountain](https://example.com/mountain.jpg)
+---
+Overlay text
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero--timed"), "has timed class");
+  assert.ok(rendered.html.includes("--hero-stay:5s"), "sets --hero-stay");
+  assert.ok(rendered.html.includes("--hero-transition:10s"), "sets --hero-transition");
+  assert.ok(rendered.html.includes("--hero-opacity:0.2"), "sets --hero-opacity");
+  assert.ok(rendered.html.includes("--hero-pan:left"), "sets --hero-pan direction");
+  assert.ok(rendered.html.includes("--hero-pan-x:-2%"), "sets horizontal pan offset");
+  assert.ok(rendered.html.includes("--hero-pan-y:0%"), "sets vertical pan offset");
+  assert.ok(rendered.html.includes("--hero-blur:3px"), "sets --hero-blur");
+  assert.ok(rendered.html.includes("--hero-saturation:0"), "sets --hero-saturation");
+  assert.ok(!rendered.html.includes("::image-hero"), "does not leak raw directive line");
+});
+
+test("renderMarkdown image-hero pan-only modifier still renders as directive, not paragraph text", () => {
+  const rendered = renderMarkdown(`
+::image-hero pan-right
+![Photo](https://example.com/photo.jpg)
+---
+Text
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero"), "renders image-hero layout");
+  assert.ok(rendered.html.includes("layout-image-hero--timed"), "pan-only opts into timed transition mode");
+  assert.ok(rendered.html.includes("--hero-pan:right"), "keeps pan direction");
+  assert.ok(!rendered.html.includes("<p>::image-hero pan-right</p>"), "does not render directive as paragraph");
+});
+
 test("renderMarkdown image-hero accepts unicode dash modifiers", () => {
   const rendered = renderMarkdown(`
 ::image-hero stay‑5 transition‑10 final‑0.2

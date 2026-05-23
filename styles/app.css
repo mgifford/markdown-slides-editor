@@ -1149,6 +1149,7 @@ input:focus-visible {
   text-align: center;
   font-size: clamp(2.5rem, 6vw, 5rem);
   background: rgba(0, 0, 0, 0.85);
+  will-change: clip-path, background, opacity;
 }
 
 /* When timed, all position modifiers are overridden: overlay covers the full slide */
@@ -1165,8 +1166,16 @@ input:focus-visible {
 
 /* Keyframes for timed image-hero animations */
 @keyframes hero-img-fade {
-  from { opacity: 1; }
-  to { opacity: var(--hero-final, 0.15); }
+  from {
+    opacity: 1;
+    filter: blur(0px) saturate(1);
+    transform: scale(1) translate(0%, 0%);
+  }
+  to {
+    opacity: var(--hero-opacity, var(--hero-final, 0.15));
+    filter: blur(var(--hero-blur, 0px)) saturate(var(--hero-saturation, 1));
+    transform: scale(1.05) translate(var(--hero-pan-x, 0%), var(--hero-pan-y, 0%));
+  }
 }
 
 @keyframes hero-overlay-appear {
