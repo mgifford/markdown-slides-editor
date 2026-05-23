@@ -106,7 +106,7 @@ export function mountSlideInto(container, renderedSlide, options = {}) {
   const slideClass = slideClasses.join(" ");
 
   container.innerHTML = `
-    <article class="${slideClass}"${includeLabel ? ` aria-label="${escapeAttribute(title)}"` : ""}>
+    <article class="${slideClass} active"${includeLabel ? ` aria-label="${escapeAttribute(title)}"` : ""}>
       <div class="slide-card__content">
         ${renderedSlide.html}
       </div>
