@@ -34,6 +34,7 @@ const APP_SHELL_ASSETS = [
   "./src/modules/views/presenter-view.js",
   "./src/modules/views/shared.js",
 ];
+const APP_SHELL_PATHS = new Set(APP_SHELL_ASSETS.map((asset) => normalizeAssetPath(asset)));
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -60,6 +61,34 @@ function shouldCacheResponse(request, response) {
   return url.origin === self.location.origin && (url.protocol === "http:" || url.protocol === "https:");
 }
 
+function normalizeAssetPath(asset) {
+  const path = asset.startsWith("./") ? `/${asset.slice(2)}` : asset;
+  return path.endsWith("/") ? `${path}index.html` : path;
+}
+
+function normalizeRequestPath(pathname) {
+  return pathname.endsWith("/") ? `${pathname}index.html` : pathname;
+}
+
+function isAppShellRequest(url) {
+  return APP_SHELL_PATHS.has(normalizeRequestPath(url.pathname));
+}
+
+function fetchAndCache(request) {
+  return fetch(request).then((response) => {
+    if (!shouldCacheResponse(request, response)) return response;
+    const copy = response.clone();
+    caches.open(CACHE_NAME).then((cache) => {
+      cache.put(request, copy).catch((error) => {
+        console.warn("Failed to cache response.", request.url, error);
+      });
+    }).catch((error) => {
+      console.warn("Failed to open cache.", request.url, error);
+    });
+    return response;
+  });
+}
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
@@ -67,23 +96,29 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  const isNavigation = request.mode === "navigate";
+  const useNetworkFirst = isNavigation || isAppShellRequest(url);
+
+  if (useNetworkFirst) {
+    event.respondWith(
+      fetchAndCache(request).catch(() => (
+        caches.match(request).then((cached) => {
+          if (cached) return cached;
+          if (isNavigation) {
+            return caches.match("./index.html");
+          }
+          return undefined;
+        })
+      )),
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
 
-      return fetch(request)
-        .then((response) => {
-          if (!shouldCacheResponse(request, response)) return response;
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, copy).catch((error) => {
-              console.warn("Failed to cache response.", request.url, error);
-            });
-          }).catch((error) => {
-            console.warn("Failed to open cache.", request.url, error);
-          });
-          return response;
-        })
+      return fetchAndCache(request)
         .catch(() => {
           if (request.mode === "navigate") {
             return caches.match("./index.html");
