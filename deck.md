@@ -18,7 +18,7 @@ closingPrompt: Let's build accessible, visually stunning presentation structures
 # Archetype 1: The Dynamic Hero Transition
 ## Programmatic sequencing: The image controls the room before the text appears
 
-::image-hero stay-5 transition-10 final-0.2 blur-3px
+::image-hero pan-left saturation-85 stay-5 transition-10 final-0.2 blur-3px
 ![High impact focal image](https://dummyimage.com/1280x720/102542/ffffff.png&text=Focal+Visual+Asset)
 ::
 
@@ -155,7 +155,7 @@ Use this as your baseline hero. The image carries the emotional weight, and the 
 # Hero Showcase: Opposite Corners
 ## Top-left text with bottom-right logo
 
-::image-hero text-top-left logo-bottom-right
+::image-hero text-top-left logo-bottom-right pan-right saturation-120
 ![Presenter introducing a session in front of a skyline backdrop](https://dummyimage.com/1280x720/0b3d91/ffffff.png&text=Top-Left+Bottom-Right)
 ---
 Set context fast
@@ -168,7 +168,7 @@ Set context fast
 # Hero Showcase: Visible Heading Variant
 ## Bottom-right text with visible title/subtitle
 
-::image-hero text-bottom-right logo-top-left show-title show-subtitle
+::image-hero text-bottom-right logo-top-left show-title show-subtitle blur-2px
 ![Crowd looking at a large projection screen during a plenary talk](https://dummyimage.com/1280x720/3a506b/ffffff.png&text=Visible+Headings)
 ---
 Keep the title visible
@@ -184,7 +184,7 @@ This variant is useful when the title itself is part of the on-screen narrative 
 # Hero Showcase: Timed Reveal
 ## Centered message after image-first pause
 
-::image-hero text-center logo-bottom-left stay-2 transition-6 final-0.2
+::image-hero text-center logo-bottom-left stay-2 transition-6 final-0.2 pan-up
 ![Audience watching a transition from full image to message-first overlay](https://dummyimage.com/1280x720/0f4c5c/ffffff.png&text=Timed+Reveal)
 ---
 See the idea land

@@ -186,7 +186,7 @@ This is the default hero-image layout: bottom-left overlay text, no logo, with t
 # Hero top left
 ## Add a logo in the opposite corner
 
-::image-hero text-top-left logo-bottom-right
+::image-hero text-top-left logo-bottom-right pan-right saturation-120
 ![Morning skyline behind a conference venue banner before the event begins](https://dummyimage.com/1280x720/0b3d91/ffffff.png&text=Top-left+hero)
 ---
 Open with context
@@ -202,7 +202,7 @@ This sample shows a top-left overlay and a bottom-right SVG logo.
 # Hero top right
 ## Swap the overlay and logo corners
 
-::image-hero text-top-right logo-bottom-left
+::image-hero text-top-right logo-bottom-left blur-2px
 ![People gathered around a poster wall during a conference break](https://dummyimage.com/1280x720/1b4965/ffffff.png&text=Top-right+hero)
 ---
 Show the evidence
@@ -250,7 +250,7 @@ Centered overlay text is useful when the message should feel like a title card i
 # Timed hero reveal
 ## Wait a moment for the full transition
 
-::image-hero stay-2 transition-6 final-0.2
+::image-hero stay-2 transition-6 final-0.2 pan-up
 <img src="https://dummyimage.com/1280x720/0f4c5c/ffffff.png&text=Timed+hero" alt="Audience watching a keynote slide fade into a focused message">
 ---
 See the idea land
@@ -264,7 +264,7 @@ Wait a second or two after the slide becomes active to see the reveal begin, the
 # Image-only hero
 ## Full-bleed visual pause
 
-::image-hero
+::image-hero pan-left saturation-85
 ![Wide photograph of a calm lake and mountains used as a visual pause between sections](https://dummyimage.com/1280x720/264653/ffffff.png&text=Image-only+hero)
 ::
 

@@ -30,6 +30,10 @@ test("custom demo deck demonstrates documented image-hero feature combinations",
     heroSlides.some((body) => body.includes("Image-Only Pause") && !body.includes("\n---\n")),
     "includes image-only hero variant with optional sections omitted",
   );
+  assert.ok(
+    heroSlides.some((body) => body.includes("pan-") || body.includes("blur-") || body.includes("saturation-")),
+    "includes documented pan/blur/saturation hero image treatments",
+  );
 });
 
 test("custom demo deck demonstrates non-hero image wrapping options", () => {
