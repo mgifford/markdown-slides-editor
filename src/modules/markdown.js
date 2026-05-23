@@ -99,8 +99,8 @@ function renderInline(text, state) {
   return result;
 }
 
-const DIRECTIVE_OPEN_RE = /^::([a-z0-9%\u2010-\u2015\u2212-]+)(?:\s+(.+?))?\s*$/i;
-const DIRECTIVE_DASH_RE = /[\u2010-\u2015\u2212]/g;
+const DIRECTIVE_OPEN_RE = /^::([a-z0-9%\u00ad\u2010-\u2015\u2212-]+)(?:\s+(.+?))?\s*$/i;
+const DIRECTIVE_DASH_RE = /[\u00ad\u2010-\u2015\u2212]/g;
 
 function normalizeDirectiveModifier(modifier) {
   return String(modifier).trim().toLowerCase().replace(DIRECTIVE_DASH_RE, "-");
