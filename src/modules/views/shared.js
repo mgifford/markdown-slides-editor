@@ -118,9 +118,12 @@ export function mountSlideInto(container, renderedSlide, options = {}) {
   if (container.classList.contains("preview-frame--compact")) {
     applyPreviewScale(container);
   }
+  const generation = (container._mountGeneration = (container._mountGeneration || 0) + 1);
   const fitResult = fitSlideBodyText(container, renderedSlide);
   renderMermaidBlocks(container).then(() => {
-    fitSlideBodyText(container, renderedSlide);
+    if (container._mountGeneration === generation) {
+      fitSlideBodyText(container, renderedSlide);
+    }
   });
   return fitResult;
 }

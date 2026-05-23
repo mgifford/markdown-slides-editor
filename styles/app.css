@@ -1023,6 +1023,7 @@ input:focus-visible {
   max-width: none;
   position: relative;
   overflow: hidden;
+  display: block;
 }
 
 .slide-card--image-hero:not(.slide-card--image-hero-show-title) .slide-card__content > h1:first-of-type,
