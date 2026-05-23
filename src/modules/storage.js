@@ -145,14 +145,14 @@ A centered image or statement works well when you want a simple visual moment.
 
 ---
 
-# Image only
+# Image with title
 
 ::center
-![Wide panoramic photograph of a conference room with a projected slide on screen](https://dummyimage.com/1280x540/102542/dae8f5.png&text=Visual+moment)
+![Wide panoramic photograph of a conference room with a projected slide on screen](https://dummyimage.com/1280x540/102542/dae8f5.png&text=Visual+with+title)
 ::
 
 Note:
-A full-width image with no body text is a strong way to open or close a section, or to let a photograph speak for itself.
+This keeps the standard slide title visible while letting a single image carry the rest of the slide. Use it when you want a named visual moment without switching to the full-bleed image-only hero treatment.
 
 ---
 
