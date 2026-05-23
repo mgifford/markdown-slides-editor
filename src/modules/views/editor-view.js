@@ -87,6 +87,7 @@ async function embedImagesInRenderedSlides(slides) {
 }
 
 export function createAppView(root, { initialSource, onSourceChange, onClearDeck, onClearAll }) {
+  const debugPrefix = "[slides-editor:editor]";
   let source = initialSource;
   let activeSlideIndex = 0;
   let lastCompiled = null;
@@ -452,6 +453,11 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
   const aiPromptStatus = aiPromptDialog.querySelector("#ai-prompt-status");
   const copyAiPromptButton = aiPromptDialog.querySelector("#copy-ai-prompt");
 
+  console.info(`${debugPrefix} init:start`, {
+    sourceLength: source.length,
+    url: window.location.href,
+  });
+
   themeSelect.innerHTML = BUILT_IN_THEMES.map(
     (theme) => `<option value="${theme.id}">${theme.label}</option>`,
   ).join("");
@@ -744,8 +750,36 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
   }
 
   function render() {
-    lastCompiled = compileSource(source);
-    publishState(lastCompiled);
+    const renderStartedAt = performance.now();
+    try {
+      lastCompiled = compileSource(source);
+      publishState(lastCompiled);
+      console.debug(`${debugPrefix} render:ok`, {
+        slideCount: lastCompiled.renderedSlides.length,
+        activeSlideIndex,
+        elapsedMs: Math.round(performance.now() - renderStartedAt),
+      });
+    } catch (error) {
+      console.error(`${debugPrefix} render:failed`, {
+        error,
+        activeSlideIndex,
+        sourceLength: source.length,
+        sourcePreview: source.slice(0, 200),
+      });
+      previewFrame.innerHTML = `
+        <section class="slide-card">
+          <div class="slide-body">
+            <h2>Editor preview error</h2>
+            <p>Rendering failed. Check the browser console for details.</p>
+          </div>
+        </section>
+      `;
+      notesPreview.textContent = "Rendering failed. Check the browser console for details.";
+      deckMeta.textContent = "Editor preview error";
+      layoutWarning.hidden = true;
+      layoutWarningTooltip.textContent = "";
+      outlineNode.innerHTML = "";
+    }
   }
 
   function showLayoutWarningTooltip() {
