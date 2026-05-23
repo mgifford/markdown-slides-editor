@@ -43,9 +43,16 @@ A big statement slide works well as a transition between sections or to emphasis
 
 # Key number
 
-::center
+::big-stat
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+  <ellipse cx="32" cy="32" rx="28" ry="18" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="32" cy="32" r="9" stroke="currentColor" stroke-width="3.5"/>
+  <circle cx="32" cy="32" r="4" fill="currentColor"/>
+  <circle cx="37" cy="27" r="2" fill="currentColor" opacity="0.5"/>
+</svg>
+---
 **73%**
-
+---
 of people retain a message better when it is paired with one strong visual.
 ::
 

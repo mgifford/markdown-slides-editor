@@ -131,6 +131,7 @@ Quick reference:
 | Directive | Effect |
 |---|---|
 | `::center` | Centre-align content vertically and horizontally |
+| `::big-stat` | Large centred statistic with equal spacing above and below |
 | `::column-left` / `::column-right` | Two-column layout |
 | `::media-left` / `::media-right` | Image or media beside text |
 | `::image-hero` | Full-bleed background image with short overlay text and optional corner logo |
@@ -138,6 +139,38 @@ Quick reference:
 | `::quote` | Styled blockquote |
 | `::mermaid` | Inline Mermaid diagram |
 | `::svg` | SVG figure wrapper for scalable custom graphics |
+
+### `::big-stat` — key number slides
+
+Use `::big-stat` to present a single large statistic with equal spacing above and below the number. Separate the content into sections with `---`. Two sections give a stat number and body text; three sections add an optional visual element above the number.
+
+```md
+# Key number
+
+::big-stat
+**73%**
+---
+of people retain a message better when it is paired with one strong visual.
+::
+```
+
+Three-section variant with an inline SVG visual above the number:
+
+```md
+# Key number
+
+::big-stat
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+  <!-- your icon here -->
+</svg>
+---
+**73%**
+---
+of people retain a message better when it is paired with one strong visual.
+::
+```
+
+The bold text (`**…**`) in the number section is rendered at a large display size (roughly 5× body text) and coloured with the accent colour. The body section text is kept smaller to create clear visual hierarchy.
 
 ### `::image-hero` — image-first slides
 

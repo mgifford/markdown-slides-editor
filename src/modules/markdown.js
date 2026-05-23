@@ -350,6 +350,37 @@ function renderSpecialDirective(block, state) {
     return `<blockquote class="layout-quote${progressiveClass}">${renderLines(block.content, state)}</blockquote>`;
   }
 
+  if (block.directive === "big-stat") {
+    if (isProgressive) state.stepCount += 1;
+    const sections = splitOnDividers(block.content);
+    if (sections.length >= 3) {
+      // 3+ sections: visual / stat-number / body
+      const visualHtml = renderLines(sections[0], state);
+      const statHtml = renderLines(sections[1], state);
+      const bodyHtml = renderLines(sections[2], state);
+      return `
+        <div class="layout-big-stat${progressiveClass}">
+          <div class="big-stat__visual">${visualHtml}</div>
+          <div class="big-stat__number">${statHtml}</div>
+          <div class="big-stat__body">${bodyHtml}</div>
+        </div>
+      `;
+    }
+    if (sections.length === 2) {
+      // 2 sections: stat-number / body
+      const statHtml = renderLines(sections[0], state);
+      const bodyHtml = renderLines(sections[1], state);
+      return `
+        <div class="layout-big-stat${progressiveClass}">
+          <div class="big-stat__number">${statHtml}</div>
+          <div class="big-stat__body">${bodyHtml}</div>
+        </div>
+      `;
+    }
+    // Fallback: single section, render all content centred
+    return `<div class="layout-big-stat${progressiveClass}">${renderLines(block.content, state)}</div>`;
+  }
+
   if (block.directive === "media-left" || block.directive === "media-right") {
     if (isProgressive) state.stepCount += 1;
     const { first, second } = splitOnDivider(block.content);
