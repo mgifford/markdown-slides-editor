@@ -1586,11 +1586,9 @@ Short overlay
 ::
 `);
   assert.ok(rendered.html.includes("layout-image-hero--timed"), "has timed class");
+  assert.ok(rendered.html.includes("--hero-stay:5s"), "figure has normalized stay custom property");
+  assert.ok(rendered.html.includes("--hero-transition:10s"), "figure has normalized transition custom property");
   assert.ok(rendered.html.includes("--hero-final:0.2"), "figure has --hero-final custom property");
-  assert.ok(
-    rendered.html.includes("animation:hero-img-fade 10s 5s both ease-in-out"),
-    "image has animation with normalized dash modifiers",
-  );
 });
 
 test("renderMarkdown image-hero accepts unicode dash in directive name", () => {
