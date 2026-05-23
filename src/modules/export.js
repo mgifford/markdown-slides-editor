@@ -785,7 +785,7 @@ function buildAudienceScriptText() {
       return;
     }
     var cls = slideCardCls(slide);
-    container.innerHTML = '<article class="' + cls + '"><div class="slide-card__content">' + slide.html + '</div></article>';
+    container.innerHTML = '<article class="' + cls + ' active"><div class="slide-card__content">' + slide.html + '</div></article>';
     applyRevealState(container, step);
   }
   function render() {
@@ -1048,7 +1048,7 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
       return;
     }
     var cls = slideCardCls(slide);
-    container.innerHTML = '<article class="' + cls + '"><div class="slide-card__content">' + slide.html + '</div></article>';
+    container.innerHTML = '<article class="' + cls + ' active"><div class="slide-card__content">' + slide.html + '</div></article>';
     applyRevealState(container, step);
   }
 

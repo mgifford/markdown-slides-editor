@@ -1525,7 +1525,7 @@ Notes here.
   assert.ok(!overlayWarning, "no overlay text warning when visible text is short");
 });
 
-test("renderMarkdown image-hero timed modifiers add timed class and animation styles", () => {
+test("renderMarkdown image-hero timed modifiers add timed class and inline CSS custom properties", () => {
   const rendered = renderMarkdown(`
 ::image-hero stay-5 transition-10 final-0.2
 ![Mountain](https://example.com/mountain.jpg)
@@ -1534,15 +1534,12 @@ test("renderMarkdown image-hero timed modifiers add timed class and animation st
 ::
 `);
   assert.ok(rendered.html.includes("layout-image-hero--timed"), "has timed class");
+  assert.ok(rendered.html.includes("image-hero-slide"), "has image-hero-slide class");
+  assert.ok(rendered.html.includes("--hero-stay:5s"), "figure has --hero-stay custom property");
+  assert.ok(rendered.html.includes("--hero-transition:10s"), "figure has --hero-transition custom property");
+  assert.ok(rendered.html.includes("--hero-opacity:0.2"), "figure has --hero-opacity custom property");
   assert.ok(rendered.html.includes("--hero-final:0.2"), "figure has --hero-final custom property");
-  assert.ok(
-    rendered.html.includes("animation:hero-img-fade 10s 5s both ease-in-out"),
-    "image has hero-img-fade animation with correct timing",
-  );
-  assert.ok(
-    rendered.html.includes("animation:hero-overlay-appear 10s 5s both ease-in-out"),
-    "overlay has hero-overlay-appear animation with correct timing",
-  );
+  assert.ok(!rendered.html.includes("animation:"), "does not use inline animation styles");
   assert.ok(rendered.hasImageHero, "hasImageHero is true");
 });
 
@@ -1589,11 +1586,9 @@ Short overlay
 ::
 `);
   assert.ok(rendered.html.includes("layout-image-hero--timed"), "has timed class");
+  assert.ok(rendered.html.includes("--hero-stay:5s"), "figure has normalized stay custom property");
+  assert.ok(rendered.html.includes("--hero-transition:10s"), "figure has normalized transition custom property");
   assert.ok(rendered.html.includes("--hero-final:0.2"), "figure has --hero-final custom property");
-  assert.ok(
-    rendered.html.includes("animation:hero-img-fade 10s 5s both ease-in-out"),
-    "image has animation with normalized dash modifiers",
-  );
 });
 
 test("renderMarkdown image-hero accepts unicode dash in directive name", () => {
@@ -1662,10 +1657,8 @@ Text
 ::
 `);
   assert.ok(rendered.html.includes("layout-image-hero--timed"), "has timed class from stay-only");
-  assert.ok(
-    rendered.html.includes("animation:hero-img-fade 5s 3s both ease-in-out"),
-    "uses default 5s transition when only stay is specified",
-  );
+  assert.ok(rendered.html.includes("--hero-stay:3s"), "uses requested stay duration");
+  assert.ok(rendered.html.includes("--hero-transition:2s"), "uses default 2s transition when only stay is specified");
 });
 
 test("renderMarkdown image-hero final-only modifier activates timed mode with zero stay", () => {
@@ -1677,11 +1670,10 @@ Text
 ::
 `);
   assert.ok(rendered.html.includes("layout-image-hero--timed"), "has timed class from final-only");
+  assert.ok(rendered.html.includes("--hero-stay:0s"), "uses zero stay by default");
+  assert.ok(rendered.html.includes("--hero-transition:2s"), "uses default 2s transition");
+  assert.ok(rendered.html.includes("--hero-opacity:0.1"), "figure has correct --hero-opacity value");
   assert.ok(rendered.html.includes("--hero-final:0.1"), "figure has correct --hero-final value");
-  assert.ok(
-    rendered.html.includes("animation:hero-img-fade 5s 0s both ease-in-out"),
-    "uses zero stay and default transition when only final is specified",
-  );
 });
 
 test("renderMarkdown image-hero timed modifiers combine with text position modifiers", () => {
@@ -1697,7 +1689,7 @@ Centered text
   assert.ok(rendered.html.includes("--hero-final:0.15"), "has correct final opacity");
 });
 
-test("renderMarkdown image-hero without timed modifiers has no timed class or animation styles", () => {
+test("renderMarkdown image-hero without timed modifiers still uses default inline CSS custom properties", () => {
   const rendered = renderMarkdown(`
 ::image-hero text-bottom-left
 ![Photo](https://example.com/photo.jpg)
@@ -1706,9 +1698,10 @@ Short text
 ::
 `);
   assert.ok(!rendered.html.includes("layout-image-hero--timed"), "no timed class without timing modifiers");
-  assert.ok(!rendered.html.includes("hero-img-fade"), "no image fade animation without timing modifiers");
-  assert.ok(!rendered.html.includes("hero-overlay-appear"), "no overlay animation without timing modifiers");
-  assert.ok(!rendered.html.includes("--hero-final"), "no --hero-final property without timing modifiers");
+  assert.ok(rendered.html.includes("--hero-stay:0s"), "uses default stay");
+  assert.ok(rendered.html.includes("--hero-transition:2s"), "uses default transition");
+  assert.ok(rendered.html.includes("--hero-opacity:0.3"), "uses default opacity");
+  assert.ok(!rendered.html.includes("animation:"), "does not include inline animation styles");
 });
 
 test("renderMarkdown image-hero final modifier value is clamped to 0–1", () => {
@@ -1740,9 +1733,8 @@ Timed text
 ::
 `);
   assert.ok(rendered.html.includes("layout-image-hero--timed"), "has timed class with <img> syntax");
-  assert.ok(
-    rendered.html.includes("animation:hero-img-fade 6s 2s both ease-in-out"),
-    "image has animation with <img> syntax",
-  );
+  assert.ok(rendered.html.includes("--hero-stay:2s"), "has correct stay with <img> syntax");
+  assert.ok(rendered.html.includes("--hero-transition:6s"), "has correct transition with <img> syntax");
+  assert.ok(rendered.html.includes("--hero-opacity:0.25"), "has correct opacity with <img> syntax");
   assert.ok(rendered.html.includes("--hero-final:0.25"), "has correct final opacity with <img> syntax");
 });

@@ -436,26 +436,30 @@ function renderSpecialDirective(block, state) {
     // stay-N (seconds image is full), transition-N (seconds of reveal),
     // final-N (final image opacity), pan-{left|right|up|down},
     // blur-Npx, saturation-N.
-    let staySeconds = null;
-    let transSeconds = null;
-    let finalOpacity = null;
+    let staySeconds = 0;
+    let transSeconds = 2;
+    let finalOpacity = 0.3;
     let panDirection = "none";
     let blurAmount = "0px";
     let saturationLevel = 1;
+    let hasTimedModifiers = false;
     for (const mod of block.modifiers) {
       const stayMatch = /^stay-(\d+(?:\.\d+)?)$/.exec(mod);
       if (stayMatch) {
         staySeconds = parseFloat(stayMatch[1]);
+        hasTimedModifiers = true;
         continue;
       }
       const transMatch = /^transition-(\d+(?:\.\d+)?)$/.exec(mod);
       if (transMatch) {
         transSeconds = parseFloat(transMatch[1]);
+        hasTimedModifiers = true;
         continue;
       }
       const finalMatch = /^final-(\d+(?:\.\d+)?)$/.exec(mod);
       if (finalMatch) {
         finalOpacity = Math.min(1, Math.max(0, parseFloat(finalMatch[1])));
+        hasTimedModifiers = true;
         continue;
       }
       const panMatch = /^pan-(left|right|up|down)$/.exec(mod);
@@ -475,11 +479,10 @@ function renderSpecialDirective(block, state) {
     }
     const hasVisualTransitionModifiers =
       panDirection !== "none" || blurAmount !== "0px" || saturationLevel !== 1;
-    const isTimed =
-      staySeconds !== null || transSeconds !== null || finalOpacity !== null || hasVisualTransitionModifiers;
-    const effectiveStay = staySeconds ?? 0;
-    const effectiveTrans = transSeconds ?? 5;
-    const effectiveFinal = finalOpacity ?? 0.15;
+    const isTimed = hasTimedModifiers || hasVisualTransitionModifiers;
+    const effectiveStay = staySeconds;
+    const effectiveTrans = transSeconds;
+    const effectiveFinal = finalOpacity;
     const panX = panDirection === "left" ? "-2%" : panDirection === "right" ? "2%" : "0%";
     const panY = panDirection === "up" ? "-2%" : panDirection === "down" ? "2%" : "0%";
 
@@ -488,30 +491,24 @@ function renderSpecialDirective(block, state) {
     const overlayLines = sections[1] || [];
     const logoLines = sections[2] || [];
 
-    const heroAnimStyle = isTimed
-      ? (name) => ` style="animation:${name} ${effectiveTrans}s ${effectiveStay}s both ease-in-out"`
-      : () => "";
-
     // Render background image
     const firstImageLine = imageLines.map((l) => l.trim()).find(Boolean) || "";
     let imageHtml = "";
-    const imgAnimStyle = heroAnimStyle("hero-img-fade");
     const mdImgMatch = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(firstImageLine);
     if (mdImgMatch) {
       const alt = escapeAttribute(mdImgMatch[1]);
       const src = escapeAttribute(mdImgMatch[2]);
-      imageHtml = `<img class="layout-image-hero__image"${imgAnimStyle} src="${src}" alt="${alt}">`;
+      imageHtml = `<img class="layout-image-hero__image" src="${src}" alt="${alt}">`;
     } else if (/^<img\b/i.test(firstImageLine)) {
       const safe = sanitizeImgMarkup(firstImageLine);
-      imageHtml = safe.replace(/^<img/, `<img class="layout-image-hero__image"${imgAnimStyle}`);
+      imageHtml = safe.replace(/^<img/, `<img class="layout-image-hero__image"`);
     }
 
     // Render overlay text (supports inline markdown emphasis/links)
     const overlayText = overlayLines.join("\n").trim();
     const overlayTextLength = getPlainTextLength(overlayText);
-    const overlayAnimAttr = heroAnimStyle("hero-overlay-appear");
     const overlayHtml = overlayText
-      ? `<div class="layout-image-hero__overlay"${overlayAnimAttr} data-overlay-text-length="${overlayTextLength}">${renderInline(overlayText, state)}</div>`
+      ? `<div class="layout-image-hero__overlay" data-overlay-text-length="${overlayTextLength}">${renderInline(overlayText, state)}</div>`
       : "";
 
     // Render optional corner logo (SVG or img)
@@ -531,6 +528,7 @@ function renderSpecialDirective(block, state) {
 
     const classNames = [
       "layout-image-hero",
+      "image-hero-slide",
       isTimed ? "layout-image-hero--timed" : "",
       `layout-image-hero--${textPos}`,
       logoHtml ? `layout-image-hero--${logoPos}` : "",
@@ -539,9 +537,8 @@ function renderSpecialDirective(block, state) {
       .filter(Boolean)
       .join(" ");
 
-    const figureStyle = isTimed
-      ? ` style="--hero-stay:${effectiveStay}s;--hero-transition:${effectiveTrans}s;--hero-opacity:${effectiveFinal};--hero-final:${effectiveFinal};--hero-pan:${panDirection};--hero-pan-x:${panX};--hero-pan-y:${panY};--hero-blur:${blurAmount};--hero-saturation:${saturationLevel}"`
-      : "";
+    const figureStyle =
+      ` style="--hero-stay:${effectiveStay}s;--hero-transition:${effectiveTrans}s;--hero-opacity:${effectiveFinal};--hero-final:${effectiveFinal};--hero-pan:${panDirection};--hero-pan-x:${panX};--hero-pan-y:${panY};--hero-blur:${blurAmount};--hero-saturation:${saturationLevel}"`;
 
     return `<figure class="${classNames}"${figureStyle}>${imageHtml}${overlayHtml}${logoHtml}</figure>`;
   }
