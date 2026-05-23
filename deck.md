@@ -133,3 +133,106 @@ When comparing three parallel concepts or models, don't build three separate sli
 
 Note:
 Pairing a clean blockquote macro with a contextual portrait or site photo anchors quotes instantly, giving them a professional, journalistic magazine layout feel.
+
+---
+
+# Hero Showcase: Default Composition
+## Bottom-left text with top-right logo
+
+::image-hero text-bottom-left logo-top-right
+![Conference audience waiting for the keynote to begin](https://dummyimage.com/1280x720/102542/ffffff.png&text=Default+Hero+Composition)
+---
+Start with one message
+---
+<img src="https://dummyimage.com/170x60/ffffff/102542.png&text=Summit+Logo" alt="Summit logo">
+::
+
+Note:
+Use this as your baseline hero. The image carries the emotional weight, and the short overlay keeps focus on a single idea.
+
+---
+
+# Hero Showcase: Opposite Corners
+## Top-left text with bottom-right logo
+
+::image-hero text-top-left logo-bottom-right
+![Presenter introducing a session in front of a skyline backdrop](https://dummyimage.com/1280x720/0b3d91/ffffff.png&text=Top-Left+Bottom-Right)
+---
+Set context fast
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 60" role="img" aria-label="Event mark"><rect width="180" height="60" rx="12" fill="#ffffff"/><text x="90" y="38" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" fill="#0b3d91">Event Mark</text></svg>
+::
+
+---
+
+# Hero Showcase: Visible Heading Variant
+## Bottom-right text with visible title/subtitle
+
+::image-hero text-bottom-right logo-top-left show-title show-subtitle
+![Crowd looking at a large projection screen during a plenary talk](https://dummyimage.com/1280x720/3a506b/ffffff.png&text=Visible+Headings)
+---
+Keep the title visible
+---
+<img src="https://dummyimage.com/170x60/ffffff/3a506b.png&text=Org+Flag" alt="Organization flag logo">
+::
+
+Note:
+This variant is useful when the title itself is part of the on-screen narrative and should remain visible during the hero treatment.
+
+---
+
+# Hero Showcase: Timed Reveal
+## Centered message after image-first pause
+
+::image-hero text-center logo-bottom-left stay-2 transition-6 final-0.2
+![Audience watching a transition from full image to message-first overlay](https://dummyimage.com/1280x720/0f4c5c/ffffff.png&text=Timed+Reveal)
+---
+See the idea land
+---
+<img src="https://dummyimage.com/170x60/ffffff/0f4c5c.png&text=Brand+Mark" alt="Brand mark logo">
+::
+
+Note:
+Timed heroes let you pause on the photo first, then transition to text for emphasis.
+
+---
+
+# Hero Showcase: Image-Only Pause
+## Full-bleed visual breathing room
+
+::image-hero
+![Calm landscape used as an interstitial visual pause](https://dummyimage.com/1280x720/264653/ffffff.png&text=Image-Only+Pause)
+::
+
+---
+
+# Non-hero wrap: Media left
+## Visual on the left, analysis on the right
+
+::media-left
+![Dashboard screenshot with highlighted trend lines](https://dummyimage.com/560x360/dae8f5/102542.png&text=Dashboard+Detail)
+---
+When detail matters, keep the image crisp and place the interpretation beside it.
+
+- Anchor the room on one visual
+- Add only the supporting points you need
+- Move deeper detail into notes
+::
+
+---
+
+# Non-hero wrap: Media right
+## Text first, visual support on the right
+
+::media-right
+![Annotated process diagram with three handoff stages](https://dummyimage.com/560x360/cbe7f5/0b3d91.png&text=Process+Diagram)
+---
+This pattern works when your spoken story starts with text and the visual acts as confirmation.
+
+1. State the decision or recommendation
+2. Use the image to confirm the flow
+3. Keep visual and text in one screen without overlap
+::
+
+Note:
+Use `::media-left` and `::media-right` as your non-hero wrapping options when you need compelling text-plus-image slides.

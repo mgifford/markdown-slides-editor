@@ -98,3 +98,18 @@ test("default source includes representative image-hero demo slides", () => {
     "includes the image-only hero sample",
   );
 });
+
+test("default source includes non-hero image wrapping samples for media-left and media-right", () => {
+  const mediaSlides = parseSource(DEFAULT_SOURCE).slides
+    .map((slide) => slide.body)
+    .filter((body) => body.includes("::media-left") || body.includes("::media-right"));
+
+  assert.ok(
+    mediaSlides.some((body) => body.includes("::media-left") && body.includes("\n---\n")),
+    "includes a media-left slide with image/text split",
+  );
+  assert.ok(
+    mediaSlides.some((body) => body.includes("::media-right") && body.includes("\n---\n")),
+    "includes a media-right slide with image/text split",
+  );
+});
