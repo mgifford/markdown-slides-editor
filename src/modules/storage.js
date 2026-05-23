@@ -296,6 +296,20 @@ Columns work best when both sides stay balanced and readable.
 
 # Image with supporting text
 
+::media-left
+![Photo of a presenter beside an audience-facing dashboard chart](https://dummyimage.com/520x360/cbe7f5/0b3d91.png&text=Visual+left)
+---
+Use media-left when you want the visual to lead and the explanation to wrap alongside it.
+
+- Start with the visual anchor
+- Add only the essential interpretation
+- Keep details in notes or script
+::
+
+---
+
+# Image with supporting text (text-first)
+
 ::media-right
 ![Screenshot placeholder showing a slide editor beside a preview](https://dummyimage.com/520x360/dae8f5/102542.png&text=Editor+preview)
 ---
