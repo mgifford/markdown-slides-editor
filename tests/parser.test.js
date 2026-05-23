@@ -148,6 +148,39 @@ Body three
   }
 });
 
+test("getSourceOffsetForSlideIndex ignores directive-internal separators when mapping navigation", () => {
+  const source = `# Intro
+
+Welcome
+
+---
+
+::image-hero
+https://example.com/hero.jpg
+---
+Overlay copy
+---
+https://example.com/logo.svg
+::
+
+---
+
+# End slide
+
+Thanks`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.slides.length, 3);
+
+  const endSlideOffset = getSourceOffsetForSlideIndex(source, 2, deck);
+  assert.equal(endSlideOffset, source.indexOf("# End slide"));
+
+  for (let slideIndex = 0; slideIndex <= 2; slideIndex += 1) {
+    const offset = getSourceOffsetForSlideIndex(source, slideIndex, deck);
+    assert.equal(getSlideIndexForSourceOffset(source, offset), slideIndex);
+  }
+});
+
 test("getSourceOffsetForSlideIndex handles CRLF source and generated slides", () => {
   const source = `---\r
 title: Demo deck\r

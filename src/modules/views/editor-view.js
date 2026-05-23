@@ -230,6 +230,7 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
 
             <button type="button" id="toggle-outline-panel-header" aria-label="Show Outline" title="Show Outline">☰</button>
             <div class="preview-header__nav" aria-label="Slide navigation">
+              <button type="button" id="first-slide" aria-label="First Slide" title="First Slide">&lt;&lt;</button>
               <button type="button" id="prev-slide" aria-label="Previous Slide" title="Previous Slide">&lt;</button>
               <button type="button" id="next-slide" aria-label="Next Slide" title="Next Slide">&gt;</button>
             </div>
@@ -282,6 +283,9 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
   const restorePreviewPanelButton = frame.querySelector("#restore-preview-panel");
   const toggleOutlinePanelButton = frame.querySelector("#toggle-outline-panel");
   const toggleOutlinePanelHeaderButton = frame.querySelector("#toggle-outline-panel-header");
+  const firstSlideButton = frame.querySelector("#first-slide");
+  const prevSlideButton = frame.querySelector("#prev-slide");
+  const nextSlideButton = frame.querySelector("#next-slide");
   const localSaveStatus = frame.querySelector("#local-save-status");
 
   const importInput = document.createElement("input");
@@ -697,6 +701,10 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
     deckMeta.textContent = compiled.renderedSlides.length
       ? `${compiled.metadata.title || "Untitled deck"} · Slide ${activeSlideIndex + 1} of ${compiled.renderedSlides.length}`
       : `${compiled.metadata.title || "Untitled deck"} · No slides`;
+    const slideCount = compiled.renderedSlides.length;
+    firstSlideButton.disabled = slideCount <= 1 || activeSlideIndex !== slideCount - 1;
+    prevSlideButton.disabled = activeSlideIndex <= 0;
+    nextSlideButton.disabled = activeSlideIndex >= slideCount - 1;
     const stylesheetValue = compiled.metadata.themeStylesheet || "";
     themeSelect.value = compiled.metadata.theme || "default-high-contrast";
     themeStylesheetInput.dataset.fullValue = stylesheetValue;
@@ -909,14 +917,21 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
     });
   });
 
-  frame.querySelector("#prev-slide").addEventListener("click", () => {
+  firstSlideButton.addEventListener("click", () => {
+    const compiled = compileSource(source);
+    activeSlideIndex = 0;
+    publishState(compiled);
+    jumpEditorToSlide(compiled, activeSlideIndex);
+  });
+
+  prevSlideButton.addEventListener("click", () => {
     const compiled = compileSource(source);
     activeSlideIndex = Math.max(0, activeSlideIndex - 1);
     publishState(compiled);
     jumpEditorToSlide(compiled, activeSlideIndex);
   });
 
-  frame.querySelector("#next-slide").addEventListener("click", () => {
+  nextSlideButton.addEventListener("click", () => {
     const compiled = compileSource(source);
     activeSlideIndex = Math.min(compiled.renderedSlides.length - 1, activeSlideIndex + 1);
     publishState(compiled);

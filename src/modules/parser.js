@@ -276,6 +276,31 @@ function countSlideSeparatorsUpTo(content, relativeOffset) {
   return { beforeOffset, total };
 }
 
+function getContentSlideStarts(content) {
+  const lines = content.split("\n");
+  const starts = [0];
+  let depth = 0;
+  let charPos = 0;
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    const lineLen = line.length + (i < lines.length - 1 ? 1 : 0);
+
+    if (DIRECTIVE_OPEN_RE.test(trimmed)) {
+      depth += 1;
+    } else if (trimmed === "::") {
+      depth = Math.max(0, depth - 1);
+    } else if (depth === 0 && trimmed === "---") {
+      starts.push(charPos + lineLen);
+    }
+
+    charPos += lineLen;
+  }
+
+  return starts;
+}
+
 
 export function parseSource(source) {
   const { metadata, content } = extractMetadataAndContent(source);
@@ -484,12 +509,7 @@ export function getSourceOffsetForSlideIndex(source, slideIndex, deck = null) {
     return toOriginalOffset(source, contentStart);
   }
 
-  const contentSlideStarts = [0];
-  const separatorPattern = /\n---\n/g;
-  let match;
-  while ((match = separatorPattern.exec(content))) {
-    contentSlideStarts.push(match.index + 5);
-  }
+  const contentSlideStarts = getContentSlideStarts(content);
 
   const generatedSlidesBefore = compiledDeck.slides
     .slice(0, safeSlideIndex)
