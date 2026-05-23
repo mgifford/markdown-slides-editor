@@ -448,6 +448,11 @@ function renderSpecialDirective(block, state) {
   if (block.directive === "image-hero") {
     if (isProgressive) state.stepCount += 1;
     state.hasImageHero = true;
+    if (block.modifiers.includes("show-all")) state.imageHeroShowAll = true;
+    if (state.imageHeroShowAll) {
+      state.imageHeroShowTitle = true;
+      state.imageHeroShowSubtitle = true;
+    }
     if (block.modifiers.includes("show-title")) state.imageHeroShowTitle = true;
     if (block.modifiers.includes("show-subtitle")) state.imageHeroShowSubtitle = true;
 
@@ -719,6 +724,7 @@ export function renderMarkdown(markdown) {
     stepCount: 0,
     mermaidCount: 0,
     hasImageHero: false,
+    imageHeroShowAll: false,
     imageHeroShowTitle: false,
     imageHeroShowSubtitle: false,
   };
@@ -728,6 +734,7 @@ export function renderMarkdown(markdown) {
     headings: state.headings,
     stepCount: state.stepCount,
     hasImageHero: state.hasImageHero,
+    imageHeroShowAll: state.imageHeroShowAll,
     imageHeroShowTitle: state.imageHeroShowTitle,
     imageHeroShowSubtitle: state.imageHeroShowSubtitle,
   };

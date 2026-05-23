@@ -98,6 +98,7 @@ export function mountSlideInto(container, renderedSlide, options = {}) {
   const slideClasses = ["slide-card"];
   if (renderedSlide.isImageHero) {
     slideClasses.push("slide-card--image-hero");
+    if (renderedSlide.imageHeroShowAll) slideClasses.push("slide-card--image-hero-show-all");
     if (renderedSlide.imageHeroShowTitle) slideClasses.push("slide-card--image-hero-show-title");
     if (renderedSlide.imageHeroShowSubtitle) slideClasses.push("slide-card--image-hero-show-subtitle");
   } else if (renderedSlide.kind === "title") {
