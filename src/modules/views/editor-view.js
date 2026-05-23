@@ -86,7 +86,7 @@ async function embedImagesInRenderedSlides(slides) {
   );
 }
 
-export function createAppView(root, { initialSource, onSourceChange, onResetDeck, onClearLocalData }) {
+export function createAppView(root, { initialSource, onSourceChange, onClearDeck, onClearAll }) {
   let source = initialSource;
   let activeSlideIndex = 0;
   let lastCompiled = null;
@@ -306,8 +306,8 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     <div class="advanced-menu__panel">
       <button type="button" id="advanced-import-source">Import Source</button>
       <button type="button" id="advanced-email-deck">Email Deck</button>
-      <button type="button" id="advanced-reset-deck">Reset Local Deck</button>
-      <button type="button" id="advanced-clear-data">Clear Local App Data</button>
+      <button type="button" id="advanced-clear-deck">Clear the deck</button>
+      <button type="button" id="advanced-clear-all">Clear all</button>
     </div>
   `;
 
@@ -326,8 +326,8 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
 
   const advancedImportButton = advancedMenu.querySelector("#advanced-import-source");
   const advancedEmailDeckButton = advancedMenu.querySelector("#advanced-email-deck");
-  const advancedResetDeckButton = advancedMenu.querySelector("#advanced-reset-deck");
-  const advancedClearDataButton = advancedMenu.querySelector("#advanced-clear-data");
+  const advancedClearDeckButton = advancedMenu.querySelector("#advanced-clear-deck");
+  const advancedClearAllButton = advancedMenu.querySelector("#advanced-clear-all");
 
   const helpDialog = document.createElement("dialog");
   helpDialog.className = "help-dialog";
@@ -1163,25 +1163,25 @@ export function createAppView(root, { initialSource, onSourceChange, onResetDeck
     window.location.href = mailto;
   });
 
-  advancedResetDeckButton.addEventListener("click", async () => {
+  advancedClearDeckButton.addEventListener("click", async () => {
     advancedMenu.hidden = true;
     advancedToggle.setAttribute("aria-expanded", "false");
     const confirmed = window.confirm(
-      "Reset the locally saved deck and restore the default starter deck for this browser?",
+      "Clear the deck saved in this browser and reload with the default starter deck?",
     );
     if (!confirmed) return;
-    await onResetDeck();
+    await onClearDeck();
     window.location.reload();
   });
 
-  advancedClearDataButton.addEventListener("click", async () => {
+  advancedClearAllButton.addEventListener("click", async () => {
     advancedMenu.hidden = true;
     advancedToggle.setAttribute("aria-expanded", "false");
     const confirmed = window.confirm(
-      "Clear all locally stored app data for this browser and reload the editor?",
+      "Clear all local app data (deck, settings, and cached app files) for this browser and reload?",
     );
     if (!confirmed) return;
-    await onClearLocalData();
+    await onClearAll();
     window.location.reload();
   });
 

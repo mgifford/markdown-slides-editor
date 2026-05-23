@@ -183,8 +183,8 @@ Supported author recovery flows:
 
 - import Markdown source
 - import JSON deck data
-- reset local deck to starter content
-- clear local app data
+- clear the deck (restore starter content)
+- clear all local app data (including cached app files)
 - email deck handoff for mobile-to-desktop workflows
 
 ## Presentation Runtime Features
