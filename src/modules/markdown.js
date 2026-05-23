@@ -432,10 +432,16 @@ function renderSpecialDirective(block, state) {
       defaultHorizontal: "right",
     });
 
-    // Parse optional timing modifiers: stay-N (seconds image is full), transition-N (seconds of reveal), final-N (final image opacity)
+    // Parse optional timing/visual modifiers:
+    // stay-N (seconds image is full), transition-N (seconds of reveal),
+    // final-N (final image opacity), pan-{left|right|up|down},
+    // blur-Npx, saturation-N.
     let staySeconds = null;
     let transSeconds = null;
     let finalOpacity = null;
+    let panDirection = "none";
+    let blurAmount = "0px";
+    let saturationLevel = 1;
     for (const mod of block.modifiers) {
       const stayMatch = /^stay-(\d+(?:\.\d+)?)$/.exec(mod);
       if (stayMatch) {
@@ -450,12 +456,32 @@ function renderSpecialDirective(block, state) {
       const finalMatch = /^final-(\d+(?:\.\d+)?)$/.exec(mod);
       if (finalMatch) {
         finalOpacity = Math.min(1, Math.max(0, parseFloat(finalMatch[1])));
+        continue;
+      }
+      const panMatch = /^pan-(left|right|up|down)$/.exec(mod);
+      if (panMatch) {
+        panDirection = panMatch[1];
+        continue;
+      }
+      const blurMatch = /^blur-(\d+(?:\.\d+)?px)$/.exec(mod);
+      if (blurMatch) {
+        blurAmount = blurMatch[1];
+        continue;
+      }
+      const saturationMatch = /^saturation-(\d+(?:\.\d+)?)$/.exec(mod);
+      if (saturationMatch) {
+        saturationLevel = Math.min(1, Math.max(0, parseFloat(saturationMatch[1])));
       }
     }
-    const isTimed = staySeconds !== null || transSeconds !== null || finalOpacity !== null;
+    const hasVisualTransitionModifiers =
+      panDirection !== "none" || blurAmount !== "0px" || saturationLevel !== 1;
+    const isTimed =
+      staySeconds !== null || transSeconds !== null || finalOpacity !== null || hasVisualTransitionModifiers;
     const effectiveStay = staySeconds ?? 0;
     const effectiveTrans = transSeconds ?? 5;
     const effectiveFinal = finalOpacity ?? 0.15;
+    const panX = panDirection === "left" ? "-2%" : panDirection === "right" ? "2%" : "0%";
+    const panY = panDirection === "up" ? "-2%" : panDirection === "down" ? "2%" : "0%";
 
     const sections = splitOnDividers(block.content);
     const imageLines = sections[0] || [];
@@ -513,7 +539,9 @@ function renderSpecialDirective(block, state) {
       .filter(Boolean)
       .join(" ");
 
-    const figureStyle = isTimed ? ` style="--hero-final:${effectiveFinal}"` : "";
+    const figureStyle = isTimed
+      ? ` style="--hero-stay:${effectiveStay}s;--hero-transition:${effectiveTrans}s;--hero-opacity:${effectiveFinal};--hero-final:${effectiveFinal};--hero-pan:${panDirection};--hero-pan-x:${panX};--hero-pan-y:${panY};--hero-blur:${blurAmount};--hero-saturation:${saturationLevel}"`
+      : "";
 
     return `<figure class="${classNames}"${figureStyle}>${imageHtml}${overlayHtml}${logoHtml}</figure>`;
   }
