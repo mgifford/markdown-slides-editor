@@ -164,6 +164,30 @@ Resources:
 - [Source](https://example.com)
 ```
 
+Complete demo slide showing all option types together:
+
+```md
+# Hero title
+## Hero subtitle
+
+::image-hero text-bottom-right logo-top-left show-title show-subtitle stay-3 transition-8 final-0.2
+![Descriptive alt text for accessibility](https://example.com/photo.jpg)
+---
+**Short** overlay (≤ 25 chars)
+---
+<img src="https://example.com/logo.svg" alt="">
+::
+
+Note:
+Use notes/resources/script for the full spoken content while keeping the on-screen overlay short.
+
+Resources:
+- [Source](https://example.com)
+
+Script:
+Optional fuller script text for delivery support.
+```
+
 **Section order inside `::image-hero`:** image → `---` → overlay text → `---` → logo SVG or img.  
 The overlay and logo sections are optional.
 
