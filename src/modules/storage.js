@@ -140,6 +140,55 @@ Before-and-after columns work well for comparisons, improvements, or contrasting
 
 ---
 
+# Left and right columns
+
+::column-left
+## Left column
+
+- Primary points
+- Short bullets
+- Main argument
+::
+
+::column-right
+## Right column
+
+Supporting text, examples, references, or a short quote can live here.
+::
+
+Note:
+Columns work best when both sides stay balanced and readable.
+
+---
+
+# Image with supporting text
+
+::media-left
+![Photo of a presenter beside an audience-facing dashboard chart](https://dummyimage.com/520x360/cbe7f5/0b3d91.png&text=Visual+left)
+---
+Use media-left when you want the visual to lead and the explanation to wrap alongside it.
+
+- Start with the visual anchor
+- Add only the essential interpretation
+- Keep details in notes or script
+::
+
+---
+
+# Image with supporting text (text-first)
+
+::media-right
+![Screenshot placeholder showing a slide editor beside a preview](https://dummyimage.com/520x360/dae8f5/102542.png&text=Editor+preview)
+---
+Use media layouts when a visual and a short explanation need to sit together on one slide.
+
+- Keep the image relevant
+- Give it meaningful alt text
+- Avoid crowding the companion text
+::
+
+---
+
 # Centered content
 
 ::center
@@ -167,12 +216,17 @@ This keeps the standard slide title visible while letting a single image carry t
 
 Use the image-hero layout when one photograph should carry the slide and the on-screen text can stay very short.
 
-- Keep overlay text brief
-- Add descriptive alt text
-- Put detail in notes and resources
+The following slides are live examples — advance through them to see each variation in action:
+
+- **Default:** bottom-left overlay, no logo
+- **Corners:** text and logo in opposite corners with a pan effect
+- **Visible heading:** title and subtitle shown on screen
+- **Centered:** message centered over the image
+- **Timed reveal:** image-first pause before text appears
+- **Image-only:** full-bleed visual with no overlay
 
 Note:
-The next slides show the main hero-image variations directly in the starter deck so they are easy to test.
+The next slides show the main hero-image variations directly in the starter deck so they are easy to test. Each example is interactive — click or press the right arrow to advance.
 
 ---
 
@@ -277,55 +331,6 @@ Wait a second or two after the slide becomes active to see the reveal begin, the
 
 Note:
 This is the full-bleed image-only hero variant, with no overlay text and no logo.
-
----
-
-# Left and right columns
-
-::column-left
-## Left column
-
-- Primary points
-- Short bullets
-- Main argument
-::
-
-::column-right
-## Right column
-
-Supporting text, examples, references, or a short quote can live here.
-::
-
-Note:
-Columns work best when both sides stay balanced and readable.
-
----
-
-# Image with supporting text
-
-::media-left
-![Photo of a presenter beside an audience-facing dashboard chart](https://dummyimage.com/520x360/cbe7f5/0b3d91.png&text=Visual+left)
----
-Use media-left when you want the visual to lead and the explanation to wrap alongside it.
-
-- Start with the visual anchor
-- Add only the essential interpretation
-- Keep details in notes or script
-::
-
----
-
-# Image with supporting text (text-first)
-
-::media-right
-![Screenshot placeholder showing a slide editor beside a preview](https://dummyimage.com/520x360/dae8f5/102542.png&text=Editor+preview)
----
-Use media layouts when a visual and a short explanation need to sit together on one slide.
-
-- Keep the image relevant
-- Give it meaningful alt text
-- Avoid crowding the companion text
-::
 
 ---
 
