@@ -1,12 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  DEFAULT_SOURCE,
   STORAGE_KEY,
   clearStoredDocuments,
   loadSource,
   removeSource,
   saveSource,
 } from "../src/modules/storage.js";
+import { parseSource } from "../src/modules/parser.js";
 
 function createLocalStorageMock(initialEntries = {}) {
   const store = new Map(Object.entries(initialEntries));
@@ -59,4 +61,40 @@ test("clearStoredDocuments clears the localStorage fallback key", async (t) => {
 
   await clearStoredDocuments();
   assert.equal(await loadSource(STORAGE_KEY), null);
+});
+
+test("default source includes representative image-hero demo slides", () => {
+  const heroSlides = parseSource(DEFAULT_SOURCE).slides
+    .map((slide) => slide.body)
+    .filter((body) => body.includes("::image-hero"));
+
+  assert.ok(heroSlides.length >= 6, "default deck includes multiple hero-image slides");
+  assert.ok(
+    heroSlides.some((body) => body.includes("::image-hero\n") && body.includes("Start with the room")),
+    "includes the default bottom-left hero sample",
+  );
+  assert.ok(
+    heroSlides.some((body) => body.includes("text-top-left logo-bottom-right")),
+    "includes the top-left hero sample",
+  );
+  assert.ok(
+    heroSlides.some((body) => body.includes("text-top-right logo-bottom-left")),
+    "includes the top-right hero sample",
+  );
+  assert.ok(
+    heroSlides.some((body) => body.includes("text-bottom-right logo-top-left show-title show-subtitle")),
+    "includes the bottom-right visible-heading hero sample",
+  );
+  assert.ok(
+    heroSlides.some((body) => body.includes("text-center logo-top-right")),
+    "includes the centered hero sample",
+  );
+  assert.ok(
+    heroSlides.some((body) => body.includes("stay-2 transition-6 final-0.2")),
+    "includes the timed hero sample",
+  );
+  assert.ok(
+    heroSlides.some((body) => body.includes("Image-only hero") && !body.includes("\n---\n")),
+    "includes the image-only hero sample",
+  );
 });

@@ -156,6 +156,123 @@ A full-width image with no body text is a strong way to open or close a section,
 
 ---
 
+# Hero image layouts
+
+Use `::image-hero` when one photograph should carry the slide and the on-screen text can stay very short.
+
+- Keep overlay text brief
+- Add descriptive alt text
+- Put detail in notes and resources
+
+Note:
+The next slides show the main hero-image variations directly in the starter deck so they are easy to test.
+
+---
+
+# Default hero
+## Bottom-left overlay, hidden heading
+
+::image-hero
+![Audience seated in a large room before an accessibility presentation begins](https://dummyimage.com/1280x720/102542/dae8f5.png&text=Default+hero)
+---
+Start with the room
+::
+
+Note:
+This is the default hero-image layout: bottom-left overlay text, no logo, with the Markdown heading kept for navigation but hidden on screen.
+
+---
+
+# Hero top left
+## Add a logo in the opposite corner
+
+::image-hero text-top-left logo-bottom-right
+![Morning skyline behind a conference venue banner before the event begins](https://dummyimage.com/1280x720/0b3d91/ffffff.png&text=Top-left+hero)
+---
+Open with context
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 56" role="img" aria-label="Example mark"><rect width="160" height="56" rx="12" fill="#ffffff"/><text x="80" y="35" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" fill="#102542">Mark</text></svg>
+::
+
+Note:
+This sample shows a top-left overlay and a bottom-right SVG logo.
+
+---
+
+# Hero top right
+## Swap the overlay and logo corners
+
+::image-hero text-top-right logo-bottom-left
+![People gathered around a poster wall during a conference break](https://dummyimage.com/1280x720/1b4965/ffffff.png&text=Top-right+hero)
+---
+Show the evidence
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 56" role="img" aria-label="Example badge"><rect width="160" height="56" rx="12" fill="#ffffff"/><text x="80" y="35" text-anchor="middle" font-size="22" font-family="Arial, sans-serif" fill="#1b4965">Badge</text></svg>
+::
+
+Note:
+Use this when the important part of the image needs to stay visible on the left side.
+
+---
+
+# Hero bottom right
+## Keep the heading visible when needed
+
+::image-hero text-bottom-right logo-top-left show-title show-subtitle
+![Stage view from the back of a room with attendees facing a projected slide](https://dummyimage.com/1280x720/3a506b/ffffff.png&text=Bottom-right+hero)
+---
+Make the title visible
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 56" role="img" aria-label="Example flag"><rect width="160" height="56" rx="12" fill="#ffffff"/><text x="80" y="35" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" fill="#3a506b">Flag</text></svg>
+::
+
+Note:
+This variant keeps both the slide title and subtitle visible while also placing a logo in the top-left corner.
+
+---
+
+# Hero center
+## Center the message over the image
+
+::image-hero text-center logo-top-right
+![Hands pointing at wireframes and design notes on a table](https://dummyimage.com/1280x720/5bc0be/102542.png&text=Centered+hero)
+---
+**Design** for trust
+---
+<img src="https://dummyimage.com/160x56/ffffff/102542.png&text=Wordmark" alt="Example wordmark logo">
+::
+
+Note:
+Centered overlay text is useful when the message should feel like a title card instead of a caption.
+
+---
+
+# Timed hero reveal
+## Wait a moment for the full transition
+
+::image-hero stay-2 transition-6 final-0.2
+<img src="https://dummyimage.com/1280x720/0f4c5c/ffffff.png&text=Timed+hero" alt="Audience watching a keynote slide fade into a focused message">
+---
+See the idea land
+::
+
+Note:
+Wait a second or two after the slide becomes active to see the reveal begin, then let the transition finish before advancing.
+
+---
+
+# Image-only hero
+## Full-bleed visual pause
+
+::image-hero
+![Wide photograph of a calm lake and mountains used as a visual pause between sections](https://dummyimage.com/1280x720/264653/ffffff.png&text=Image-only+hero)
+::
+
+Note:
+This is the full-bleed image-only hero variant, with no overlay text and no logo.
+
+---
+
 # Left and right columns
 
 ::column-left
