@@ -1574,6 +1574,19 @@ Short overlay
   assert.ok(!rendered.html.includes("::image"), "does not leave raw directive text");
 });
 
+test("renderMarkdown image-hero accepts soft hyphen in directive name and modifiers", () => {
+  const rendered = renderMarkdown(`
+::image\u00adhero stay\u00ad5 transition\u00ad10 final\u00ad0.2
+![Mountain](https://example.com/mountain.jpg)
+---
+Short overlay
+::
+`);
+  assert.ok(rendered.html.includes("layout-image-hero--timed"), "has timed class");
+  assert.ok(rendered.html.includes("--hero-final:0.2"), "figure has --hero-final custom property");
+  assert.ok(!rendered.html.includes("::image"), "does not leave raw directive text");
+});
+
 test("parseSource keeps image-hero block intact with unicode dash directive name", () => {
   const source = `
 # Intro
@@ -1588,6 +1601,22 @@ Short overlay
   const deck = parseSource(source);
   assert.equal(deck.slides.length, 2, "keeps internal --- inside directive block");
   assert.ok(deck.slides[0].body.includes("::image‑hero"), "keeps unicode-dash directive in slide body");
+});
+
+test("parseSource keeps image-hero block intact with soft hyphen directive name", () => {
+  const source = `
+# Intro
+::image\u00adhero stay\u00ad5 transition\u00ad10 final\u00ad0.2
+![Mountain](https://example.com/mountain.jpg)
+---
+Short overlay
+::
+---
+# Next
+`;
+  const deck = parseSource(source);
+  assert.equal(deck.slides.length, 2, "keeps internal --- inside directive block");
+  assert.ok(deck.slides[0].body.includes("::image\u00adhero"), "keeps soft-hyphen directive in slide body");
 });
 
 test("renderMarkdown image-hero stay-only modifier activates timed mode with default transition", () => {
