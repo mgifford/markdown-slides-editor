@@ -158,7 +158,7 @@ A full-width image with no body text is a strong way to open or close a section,
 
 # Hero image layouts
 
-Use `::image-hero` when one photograph should carry the slide and the on-screen text can stay very short.
+Use the image-hero layout when one photograph should carry the slide and the on-screen text can stay very short.
 
 - Keep overlay text brief
 - Add descriptive alt text
