@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { getCurrentRoute } from "../src/modules/router.js";
+import { getCurrentRoute, restoreRedirectPath } from "../src/modules/router.js";
 
 test("getCurrentRoute returns editor for the root path", () => {
   assert.equal(getCurrentRoute("/"), "editor");
@@ -42,4 +42,66 @@ test("getCurrentRoute returns editor for paths that only partially resemble pres
 
 test("getCurrentRoute prefers presenter over present when both suffixes are possible", () => {
   assert.equal(getCurrentRoute("/foo/presenter"), "presenter");
+});
+
+test("restoreRedirectPath does nothing when redirect flag is missing", (t) => {
+  const originalWindow = globalThis.window;
+  const replaceCalls = [];
+  globalThis.window = {
+    location: { search: "?pathname=%2Fpresent" },
+    history: {
+      replaceState(state, title, url) {
+        replaceCalls.push({ state, title, url });
+      },
+    },
+  };
+
+  t.after(() => {
+    globalThis.window = originalWindow;
+  });
+
+  restoreRedirectPath();
+  assert.equal(replaceCalls.length, 0);
+});
+
+test("restoreRedirectPath restores pathname, search, and hash from redirect params", (t) => {
+  const originalWindow = globalThis.window;
+  const replaceCalls = [];
+  globalThis.window = {
+    location: { search: "?redirect=1&pathname=%2Fpresenter&search=%3Fslide%3D4&hash=%234.1" },
+    history: {
+      replaceState(state, title, url) {
+        replaceCalls.push({ state, title, url });
+      },
+    },
+  };
+
+  t.after(() => {
+    globalThis.window = originalWindow;
+  });
+
+  restoreRedirectPath();
+  assert.equal(replaceCalls.length, 1);
+  assert.deepEqual(replaceCalls[0], { state: {}, title: "", url: "/presenter?slide=4#4.1" });
+});
+
+test("restoreRedirectPath defaults to root when redirect pathname is missing", (t) => {
+  const originalWindow = globalThis.window;
+  const replaceCalls = [];
+  globalThis.window = {
+    location: { search: "?redirect=1" },
+    history: {
+      replaceState(state, title, url) {
+        replaceCalls.push({ state, title, url });
+      },
+    },
+  };
+
+  t.after(() => {
+    globalThis.window = originalWindow;
+  });
+
+  restoreRedirectPath();
+  assert.equal(replaceCalls.length, 1);
+  assert.equal(replaceCalls[0].url, "/");
 });
