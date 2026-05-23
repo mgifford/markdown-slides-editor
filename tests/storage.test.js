@@ -97,6 +97,10 @@ test("default source includes representative image-hero demo slides", () => {
     heroSlides.some((body) => body.includes("Image-only hero") && !body.includes("\n---\n")),
     "includes the image-only hero sample",
   );
+  assert.ok(
+    heroSlides.some((body) => body.includes("pan-") || body.includes("blur-") || body.includes("saturation-")),
+    "includes pan/blur/saturation hero-image treatment samples",
+  );
 });
 
 test("default source includes non-hero image wrapping samples for media-left and media-right", () => {
