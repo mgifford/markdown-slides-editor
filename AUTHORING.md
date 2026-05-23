@@ -197,7 +197,7 @@ Also accepted: shorthand/reordered forms such as `text-top`, `text-right`, or `t
 **Logo position modifiers:** `logo-top-left`, `logo-top-right` (default), `logo-bottom-left`, `logo-bottom-right`.  
 Also accepted: shorthand/reordered forms such as `logo-left`, `logo-bottom`, or `logo-left-bottom`.
 
-**Optional heading visibility:** `show-title` (show first `#` heading) and `show-subtitle` (show first `##` heading).  
+**Optional heading visibility:** `show-title` (show first `#` heading), `show-subtitle` (show first `##` heading), and `show-all` (show all slide text in a readable text layer over the hero image; implies both heading options).  
 Without these modifiers, hero headings remain available for accessibility/navigation but are hidden visually.
 
 #### Timed cinematic reveal

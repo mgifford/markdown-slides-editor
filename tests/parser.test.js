@@ -1453,6 +1453,28 @@ title: Test
   const rendered = renderDeck(deck);
   assert.equal(rendered.renderedSlides[0].imageHeroShowTitle, true, "title is shown when opted in");
   assert.equal(rendered.renderedSlides[0].imageHeroShowSubtitle, true, "subtitle is shown when opted in");
+  assert.equal(rendered.renderedSlides[0].imageHeroShowAll, false, "show-all is off unless specified");
+});
+
+test("renderDeck image-hero show-all enables full text mode and heading visibility", () => {
+  const source = `---
+title: Test
+---
+
+# Hero Title
+## Hero Subtitle
+
+::image-hero show-all
+![Big image](https://example.com/big.jpg)
+---
+Supporting body text
+::
+`;
+  const deck = parseSource(source);
+  const rendered = renderDeck(deck);
+  assert.equal(rendered.renderedSlides[0].imageHeroShowAll, true, "show-all enables full text mode");
+  assert.equal(rendered.renderedSlides[0].imageHeroShowTitle, true, "show-all implies title is visible");
+  assert.equal(rendered.renderedSlides[0].imageHeroShowSubtitle, true, "show-all implies subtitle is visible");
 });
 
 test("lintDeck warns when image-hero overlay text exceeds 25 characters", () => {

@@ -167,6 +167,7 @@ export function renderDeck(deck) {
       resourcesHtml: resourcesRender?.html || "",
       scriptHtml: scriptRender?.html || "",
       isImageHero: rendered.hasImageHero || false,
+      imageHeroShowAll: rendered.imageHeroShowAll || false,
       imageHeroShowTitle: rendered.imageHeroShowTitle || false,
       imageHeroShowSubtitle: rendered.imageHeroShowSubtitle || false,
     };
