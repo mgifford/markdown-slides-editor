@@ -52,6 +52,7 @@ Then open:
 - `AGENTS.md`: repository instructions for coding agents and automation tools
 - `FEATURES.md`: technical inventory of the implemented and maintained feature set
 - `LICENSE`: AGPLv3 license for the project
+- `SBOM.md`: software bill of materials with technology versions and licenses used
 - `STYLES.md`: writing, design, and styling standards for the app and repository docs
 - `.github/copilot-instructions.md`: onboarding notes for GitHub Copilot coding agent
 - `TODO.md`: future roadmap and integration ideas
