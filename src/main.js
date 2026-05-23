@@ -27,19 +27,26 @@ function registerServiceWorker() {
 }
 
 async function bootstrap() {
+  console.info("[slides-editor] bootstrap:start", {
+    route,
+    pathname: window.location.pathname,
+  });
   const savedSource = await loadSource(STORAGE_KEY);
   const source = savedSource || DEFAULT_SOURCE;
 
   if (route === "present") {
+    console.info("[slides-editor] bootstrap:view", { route: "present" });
     createPresentationView(app, source);
     return;
   }
 
   if (route === "presenter") {
+    console.info("[slides-editor] bootstrap:view", { route: "presenter" });
     createPresenterView(app, source);
     return;
   }
 
+  console.info("[slides-editor] bootstrap:view", { route: "editor" });
   createAppView(app, {
     initialSource: source,
     onSourceChange: (nextSource) => saveSource(STORAGE_KEY, nextSource),
@@ -52,4 +59,6 @@ async function bootstrap() {
   });
 }
 
-bootstrap();
+bootstrap().catch((error) => {
+  console.error("[slides-editor] bootstrap:failed", error);
+});
