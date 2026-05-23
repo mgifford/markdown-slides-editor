@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "a11y-critic": {
+      "source": "zivtech/a11y-meta-skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/a11y-critic/SKILL.md",
+      "computedHash": "e767c295c9076ce4da0aa00cd6fe3ea78a9bc314b2f07c7bd0f2e501aacc7629"
+    },
+    "a11y-planner": {
+      "source": "zivtech/a11y-meta-skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/a11y-planner/SKILL.md",
+      "computedHash": "7254e3a2eedbb68ac4beb0f1e72d64180b606d8afc4969b210575613baf086dc"
+    },
+    "a11y-test": {
+      "source": "zivtech/a11y-meta-skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/a11y-test/SKILL.md",
+      "computedHash": "e68a9c93cc8e2bd4380fba1ccdb1d8e3a2ea88c0755cd7d9eaafbec307657afe"
+    },
+    "a11y-workflow": {
+      "source": "zivtech/a11y-meta-skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/a11y-workflow/SKILL.md",
+      "computedHash": "f9430ece820cdad29177a54b887f914e9314043355420299a662393f07b95ee5"
+    },
+    "perspective-audit": {
+      "source": "zivtech/a11y-meta-skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/perspective-audit/SKILL.md",
+      "computedHash": "ad4cd1d6b32774936b7b5a3fbfc78a629260f3077b9d14b956adf2caea256e39"
+    }
+  }
+}
