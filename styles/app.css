@@ -2526,4 +2526,32 @@ input:focus-visible {
     flex: 0 0 var(--column-basis) !important;
     max-width: var(--column-basis) !important;
   }
+
+  /* Hero slides: force final state in print so overlay text is readable */
+  .image-hero-slide .layout-image-hero__image {
+    opacity: var(--hero-final, 0.3) !important;
+    filter: blur(var(--hero-blur, 0px)) saturate(var(--hero-saturation, 1)) !important;
+    transform: scale(1.05) translate(var(--hero-pan-x, 0%), var(--hero-pan-y, 0%)) !important;
+    transition: none !important;
+  }
+
+  .image-hero-slide .layout-image-hero__overlay {
+    opacity: 1 !important;
+    transition: none !important;
+  }
+
+  .slide-card--image-hero {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* On-click reveals: show all items in print */
+  .next {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  .next[hidden] {
+    display: block !important;
+  }
 }

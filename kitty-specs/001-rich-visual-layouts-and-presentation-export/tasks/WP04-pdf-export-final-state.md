@@ -1,7 +1,7 @@
 ---
 work_package_id: WP04
 title: PDF Export Final State
-lane: planned
+lane: done
 dependencies: []
 subtasks:
 - T018
@@ -21,6 +21,11 @@ history:
   agent: system
   shell_pid: ''
   action: Prompt generated via /spec-kitty.tasks
+- timestamp: '2026-05-24T22:30:00Z'
+  lane: done
+  agent: claude-opus
+  shell_pid: ''
+  action: 'Implemented T018-T022: print rules for hero final state, overlay visibility, transitions disabled, on-click reveals visible, print-color-adjust'
 ---
 
 # Work Package Prompt: WP04 – PDF Export Final State
