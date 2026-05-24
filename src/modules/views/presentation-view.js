@@ -87,6 +87,9 @@ export function createPresentationView(root, initialSource) {
   let currentMountedSlideIndex = -1;
   let currentMountedRevealStep = -1;
   let currentMountedSource = null;
+  let captionsEverActive = false;
+  let captionHideTimer = null;
+  const CAPTION_HIDE_DELAY_MS = 3000;
   const frame = document.createElement("div");
   frame.className = "audience-shell";
 
@@ -121,12 +124,10 @@ export function createPresentationView(root, initialSource) {
   captionResizeObserver.observe(captionNode);
 
   function updateCaptionSpacing() {
-    if (!captionNode.hidden && captionNode.textContent) {
-      // Measure how much of the viewport the caption element occupies from its
-      // top edge down to the bottom (including the fixed bottom gap).
-      const rect = captionNode.getBoundingClientRect();
-      const reserved = window.innerHeight - rect.top;
-      frameNode.style.setProperty("--caption-bar-height", `${Math.max(0, reserved)}px`);
+    if (captionsEverActive) {
+      // Reserve a fixed height for the caption bar so the slide doesn't
+      // resize every time caption text changes length.
+      frameNode.style.setProperty("--caption-bar-height", "5rem");
     } else {
       frameNode.style.removeProperty("--caption-bar-height");
     }
@@ -185,8 +186,26 @@ export function createPresentationView(root, initialSource) {
         return `<li${currentClass}><button type="button" data-slide-index="${index}">${getSlideTitle(renderedSlide, index)}</button></li>`;
       })
       .join("");
-    captionNode.hidden = !captionsState.available || !captionsState.text;
-    captionNode.textContent = captionsState.text;
+    if (captionsState.available && captionsState.text) {
+      captionsEverActive = true;
+      captionNode.classList.remove("captions-inactive");
+      captionNode.hidden = false;
+      captionNode.textContent = captionsState.text;
+      if (captionHideTimer) {
+        clearTimeout(captionHideTimer);
+        captionHideTimer = null;
+      }
+    } else if (captionsEverActive && !captionNode.hidden) {
+      if (!captionHideTimer) {
+        captionHideTimer = setTimeout(() => {
+          captionNode.hidden = true;
+          captionHideTimer = null;
+        }, CAPTION_HIDE_DELAY_MS);
+      }
+    } else if (!captionsState.available) {
+      captionNode.hidden = true;
+      captionNode.classList.add("captions-inactive");
+    }
     updateCaptionSpacing();
     updateHash();
     // Only broadcast when this window is the primary and is the initiator
@@ -296,8 +315,21 @@ export function createPresentationView(root, initialSource) {
         render();
       }
       if (message.type === "caption-update") {
-        captionNode.hidden = !message.text;
-        captionNode.textContent = message.text || "";
+        if (message.text) {
+          captionsEverActive = true;
+          captionNode.classList.remove("captions-inactive");
+          captionNode.hidden = false;
+          captionNode.textContent = message.text;
+          if (captionHideTimer) {
+            clearTimeout(captionHideTimer);
+            captionHideTimer = null;
+          }
+        } else if (!captionHideTimer) {
+          captionHideTimer = setTimeout(() => {
+            captionNode.hidden = true;
+            captionHideTimer = null;
+          }, CAPTION_HIDE_DELAY_MS);
+        }
         updateCaptionSpacing();
       }
     } finally {

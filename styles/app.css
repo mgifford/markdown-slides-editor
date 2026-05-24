@@ -1799,6 +1799,9 @@ input:focus-visible {
   bottom: 0.85rem;
   transform: translateX(-50%);
   width: min(92vw, 72rem);
+  min-height: 3.6em;
+  max-height: 4.2em;
+  overflow: hidden;
   padding: 0.8rem 1rem;
   border-radius: 18px;
   border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
@@ -1808,9 +1811,17 @@ input:focus-visible {
   font-size: clamp(1rem, 1.7vw, 1.35rem);
   line-height: 1.45;
   z-index: 15;
+  opacity: 1;
+  transition: opacity 0.6s ease;
 }
 
 .live-caption-display[hidden] {
+  display: block !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.live-caption-display.captions-inactive {
   display: none;
 }
 
