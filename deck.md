@@ -18,8 +18,12 @@ closingPrompt: Let's build accessible, visually stunning presentation structures
 # Archetype 1: The Dynamic Hero Transition
 ## Programmatic sequencing: The image controls the room before the text appears
 
-::image-hero pan-left saturation-85 stay-5 transition-10 final-0.2 blur-3px
-![High impact focal image](https://dummyimage.com/1280x720/102542/ffffff.png&text=Focal+Visual+Asset)
+::image-hero text-bottom-left logo-top-right pan-left saturation-85 stay-5 transition-10 final-0.2 blur-3px
+![High impact focal image](https://dummyimage.com/1280x720/8B4513/ffffff.png&text=Warm+Focal+Asset)
+---
+Control the room's attention
+---
+<img src="https://dummyimage.com/170x60/ffffff/8B4513.png&text=Summit+Logo" alt="Summit logo">
 ::
 
 - **Seconds 0 to 5:** The audience looks entirely at the crisp, clear image while listening to you.
@@ -29,13 +33,53 @@ closingPrompt: Let's build accessible, visually stunning presentation structures
 Note:
 Use this method for your presentation anchors. It honors both visual-first learners and text readers without splitting the momentum.
 
+Resources:
+- [WCAG 2.2 Success Criterion 1.4.3: Contrast](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum)
+- [Inclusive Design Principles](https://inclusivedesignprinciples.info/)
+
 ---
 
-# Archetype 2: The Split-Screen
+# Archetype 2: Media Left Layout
+## Image on the left, analysis on the right
+
+::media-left
+![Dashboard screenshot with highlighted trend lines](https://dummyimage.com/560x360/dae8f5/102542.png&text=Dashboard+Detail)
+---
+When detail matters, keep the image crisp and place the interpretation beside it.
+
+- Anchor the room on one visual
+- Add only the supporting points you need
+- Move deeper detail into notes
+::
+
+Note:
+If your image contains detailed features, faces, or text instructions, never use it as a background. Use a media or column layout instead for strict WCAG contrast compliance.
+
+---
+
+# Archetype 3: Media Right Layout
+## Text first, visual support on the right
+
+::media-right
+![Annotated process diagram with three handoff stages](https://dummyimage.com/560x360/cbe7f5/0b3d91.png&text=Process+Diagram)
+---
+This pattern works when your spoken story starts with text and the visual acts as confirmation.
+
+1. State the decision or recommendation
+2. Use the image to confirm the flow
+3. Keep visual and text in one screen without overlap
+::
+
+Script:
+When presenting this slide, start by describing the decision framework before pointing to the diagram. Say: "Here you can see the three handoff stages we designed. Notice how each stage has a clear owner and a defined deliverable. This eliminates the ambiguity we saw in last quarter's process."
+
+---
+
+# Archetype 4: Column Layout with Image
 ## Perfect balance: Zero competition between graphics and text structures
 
 ::column-left
-![Clean informational graphic](https://dummyimage.com/600x450/dae8f5/102542.png&text=100%+Clarity+Graphic)
+![Clean informational graphic](https://dummyimage.com/600x450/E8D5B7/333333.png&text=Concept+Graphic)
 ::
 
 ::column-right
@@ -46,11 +90,22 @@ Use this method for your presentation anchors. It honors both visual-first learn
 ::
 
 Note:
-If your image contains detailed features, faces, or text instructions, never use it as a background. Use a Split-Screen column layout instead.
+The column layout gives you full control over proportions. You can use `::column-left-60%` to give the image more space, or `::column-right-40%` for a narrower text column.
 
 ---
 
-# Archetype 3: Visual First, Text Second
+# Archetype 5: The Billboard
+## Aggressive text reduction for maximum emotional resonance
+
+::image-hero stay-0 transition-0 final-0.35 text-center
+![Cinematic broad landscape photography](https://dummyimage.com/1280x720/1a1a2e/e0e0e0.png&text=Cinematic+Dark+Scene)
+---
+One clear statement is more powerful than ten crowded bullet points.
+::
+
+---
+
+# Archetype 6: Progressive Reveal
 ## Progressive disclosure: Stop the room from reading ahead of your narrative
 
 ::column-left
@@ -59,37 +114,20 @@ If your image contains detailed features, faces, or text instructions, never use
 
 ::column-right on-click
 ### The On-Click Reveal
-- **Immediate Visual:** The slide loads with *only* the title and the left graphic visible.
+- **Immediate Visual:** The slide loads with only the title and the left graphic visible.
 - **Narrative Control:** You establish the context verbally before displaying the conclusion.
 - **The Payoff:** Clicking the clicker drops this bullet block into place right as you speak to it.
 ::
 
 Note:
-This structure completely breaks the habit of audiences reading the entire slide ahead of your voice.
+This structure completely breaks the habit of audiences reading the entire slide ahead of your voice. Use it whenever you need to build tension before revealing data or conclusions.
+
+Resources:
+- [Presentation Zen by Garr Reynolds](https://www.presentationzen.com/)
 
 ---
 
-# Archetype 4: The Billboard
-## Aggressive text reduction for maximum emotional resonance
-
-::image-hero stay-0 transition-0 final-0.4
-![Cinematic broad landscape photography](https://dummyimage.com/1280x720/1c1c1c/ffffff.png&text=Cinematic+Background)
-::
-
-::center
-# "One clear statement is more powerful than ten crowded bullet points."
-::
-
-::center
-**Digital Independence is defined by the absolute ability to choose.**
-::
-
-Note:
-The Billboard slide is a structural pallet cleanser. Strip the details, look at a big image, highlight exactly one quote or core statistic, and let your voice guide the room.
-
----
-
-# Advanced Layout: The Triple-Threat Matrix
+# The Triple-Threat Matrix
 ## Displaying concurrent options or regional case studies cleanly
 
 ::column-left
@@ -113,60 +151,60 @@ The Billboard slide is a structural pallet cleanser. Strip the details, look at 
 - Local legal requirements
 ::
 
-Note:
-When comparing three parallel concepts or models, don't build three separate slides. Use a clear three-column grid layout to show patterns side-by-side.
+::notes
+When comparing three parallel concepts or models, don't build three separate slides. Use a clear three-column grid layout to show patterns side-by-side. This is especially effective for competitive analysis and regional comparisons.
+::
 
 ---
 
-# Advanced Layout: The Quote / Case Anchor
+# The Quote / Case Anchor
 
 ::column-left
 ::quote
 "We are currently in a systemic rupture, not a simple historical transition."
-— Mark Carney, World Economic Forum 2026
 ::
 ::
 
 ::column-right
-![Mark Carney portrait placeholder](https://dummyimage.com/600x450/333333/ffffff.png&text=Contextual+Portrait)
+![Contextual portrait placeholder](https://dummyimage.com/600x450/4a4a4a/ffffff.png&text=Portrait+Photo)
 ::
 
 Note:
-Pairing a clean blockquote macro with a contextual portrait or site photo anchors quotes instantly, giving them a professional, journalistic magazine layout feel.
+Pairing a clean blockquote with a contextual portrait or site photo anchors quotes instantly, giving them a professional, journalistic magazine layout feel.
 
 ---
 
-# Hero Showcase: Default Composition
-## Bottom-left text with top-right logo
+# Callout and Quote Showcase
 
-::image-hero text-bottom-left logo-top-right
-![Conference audience waiting for the keynote to begin](https://dummyimage.com/1280x720/102542/ffffff.png&text=Default+Hero+Composition)
----
-Start with one message
----
-<img src="https://dummyimage.com/170x60/ffffff/102542.png&text=Summit+Logo" alt="Summit logo">
+::callout
+Accessibility is not a feature. It is a fundamental requirement of ethical design.
+::
+
+::quote
+"The power of the Web is in its universality. Access by everyone regardless of disability is an essential aspect."
+— Tim Berners-Lee
 ::
 
 Note:
-Use this as your baseline hero. The image carries the emotional weight, and the short overlay keeps focus on a single idea.
+Use `::callout` for highlighted points and `::quote` for attributed quotations. Both support the `on-click` modifier for progressive reveal.
 
 ---
 
 # Hero Showcase: Opposite Corners
-## Top-left text with bottom-right logo
+## Top-left text with pan and saturation effects
 
-::image-hero text-top-left logo-bottom-right pan-right saturation-120
-![Presenter introducing a session in front of a skyline backdrop](https://dummyimage.com/1280x720/0b3d91/ffffff.png&text=Top-Left+Bottom-Right)
+::image-hero text-top-left logo-bottom-right pan-right saturation-120 stay-3 transition-8 final-0.25
+![Presenter introducing a session in front of a skyline backdrop](https://dummyimage.com/1280x720/2E5090/ffffff.png&text=Skyline+Backdrop)
 ---
 Set context fast
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 60" role="img" aria-label="Event mark"><rect width="180" height="60" rx="12" fill="#ffffff"/><text x="90" y="38" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" fill="#0b3d91">Event Mark</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 60" role="img" aria-label="Event mark"><rect width="180" height="60" rx="12" fill="#ffffff"/><text x="90" y="38" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" fill="#2E5090">Event Mark</text></svg>
 ::
 
 ---
 
-# Hero Showcase: Visible Heading Variant
-## Bottom-right text with visible title/subtitle
+# Hero Showcase: Visible Headings
+## Bottom-right text with visible title and subtitle
 
 ::image-hero text-bottom-right logo-top-left show-title show-subtitle blur-2px
 ![Crowd looking at a large projection screen during a plenary talk](https://dummyimage.com/1280x720/3a506b/ffffff.png&text=Visible+Headings)
@@ -181,7 +219,7 @@ This variant is useful when the title itself is part of the on-screen narrative 
 
 ---
 
-# Hero Showcase: Timed Reveal
+# Hero Showcase: Timed Cinematic Reveal
 ## Centered message after image-first pause
 
 ::image-hero text-center logo-bottom-left stay-2 transition-6 final-0.2 pan-up
@@ -206,33 +244,16 @@ Timed heroes let you pause on the photo first, then transition to text for empha
 
 ---
 
-# Non-hero wrap: Media left
-## Visual on the left, analysis on the right
+# Centered Content with Diagram
 
-::media-left
-![Dashboard screenshot with highlighted trend lines](https://dummyimage.com/560x360/dae8f5/102542.png&text=Dashboard+Detail)
----
-When detail matters, keep the image crisp and place the interpretation beside it.
+::center
+### The Design Feedback Loop
 
-- Anchor the room on one visual
-- Add only the supporting points you need
-- Move deeper detail into notes
-::
-
----
-
-# Non-hero wrap: Media right
-## Text first, visual support on the right
-
-::media-right
-![Annotated process diagram with three handoff stages](https://dummyimage.com/560x360/cbe7f5/0b3d91.png&text=Process+Diagram)
----
-This pattern works when your spoken story starts with text and the visual acts as confirmation.
-
-1. State the decision or recommendation
-2. Use the image to confirm the flow
-3. Keep visual and text in one screen without overlap
+Planning leads to prototyping, which leads to testing, which leads to iteration, which feeds back into planning. Each cycle produces insights that compound over time.
 ::
 
 Note:
-Use `::media-left` and `::media-right` as your non-hero wrapping options when you need compelling text-plus-image slides.
+The `::center` directive centers content horizontally. It works well for diagrams, key statements, or any content that benefits from visual emphasis through isolation.
+
+Script:
+Walk the audience through each stage of the loop. Emphasize that iteration is not rework but refinement. Point out that insights compound, meaning each cycle gets faster and more focused. Close by asking: "Where in this loop does your team spend the most time?"

@@ -1,7 +1,7 @@
 ---
 work_package_id: WP03
 title: Demo Deck Visual Variety
-lane: planned
+lane: done
 dependencies: []
 subtasks:
 - T013
@@ -21,6 +21,11 @@ history:
   agent: system
   shell_pid: ''
   action: Prompt generated via /spec-kitty.tasks
+- timestamp: '2026-05-24T23:00:00Z'
+  lane: done
+  agent: claude-opus
+  shell_pid: ''
+  action: 'Implemented T013-T017: rewrote deck with 15 slides, distinct hero configs, media-left/right, callout/quote, Notes/Resources/Script sections, both Note: and ::notes syntax'
 ---
 
 # Work Package Prompt: WP03 – Demo Deck Visual Variety
