@@ -91,6 +91,11 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
   let source = initialSource;
   let activeSlideIndex = 0;
   let lastCompiled = null;
+  // Suppress cursor-driven preview sync while setEditorSelection is in progress.
+  // The temporary editor.value truncation used for scroll measurement can cause
+  // the browser to fire a select event with selectionStart at the end of the full
+  // source, which would incorrectly override activeSlideIndex.
+  let suppressEditorSync = false;
   let editorCollapsed = false;
   let previewCollapsed = false;
   let outlineCollapsed = true;
@@ -507,6 +512,13 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
   }
 
   function setEditorSelection(start, end = start) {
+    // Suppress cursor-driven preview sync for the duration of this call.
+    // The temporary editor.value truncation used for scroll measurement can
+    // cause browsers to fire a select event with selectionStart at the end of
+    // the restored full text, which would incorrectly override activeSlideIndex.
+    // The flag is cleared after a microtask so that any async select events
+    // triggered by value restoration or focus changes are also suppressed.
+    suppressEditorSync = true;
     // preventScroll stops the browser from scrolling the page to reveal the
     // textarea whenever focus is programmatically set (e.g. toolbar buttons).
     editor.focus({ preventScroll: true });
@@ -523,6 +535,9 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
     // Position the cursor roughly in the upper third of the visible area so
     // there is context both above and below.
     editor.scrollTop = Math.max(0, cursorScrollTop - Math.round(editor.clientHeight * 0.3));
+    // Defer clearing the flag so async select events from focus/value-restore
+    // are also suppressed before normal user-driven sync resumes.
+    Promise.resolve().then(() => { suppressEditorSync = false; });
   }
 
   function jumpEditorToSlide(compiled, slideIndex) {
@@ -794,6 +809,7 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
   }
 
   function syncPreviewToEditorSelection() {
+    if (suppressEditorSync) return;
     const nextSlideIndex = getSlideIndexForSourceOffset(source, editor.selectionStart || 0);
     if (nextSlideIndex === activeSlideIndex) return;
     activeSlideIndex = Math.max(0, nextSlideIndex);

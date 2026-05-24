@@ -148,6 +148,31 @@ Body three
   }
 });
 
+test("source/slide mapping round-trips correctly for all slides in the default demo deck", async () => {
+  // Import is dynamic so the test file does not need a module-level import that
+  // would affect all other tests in the suite.
+  const { DEFAULT_SOURCE } = await import("../src/modules/storage.js");
+
+  const deck = parseSource(DEFAULT_SOURCE);
+  // The default deck has titleSlide and closingSlide, so 25 slides total.
+  assert.equal(deck.slides.length, 25);
+
+  for (let slideIndex = 0; slideIndex < deck.slides.length; slideIndex += 1) {
+    const slide = deck.slides[slideIndex];
+    if (slide.kind === "title" || slide.kind === "closing") {
+      // Generated slides return offset 0 and are handled separately in
+      // jumpEditorToSlide; they are not expected to round-trip.
+      continue;
+    }
+    const offset = getSourceOffsetForSlideIndex(DEFAULT_SOURCE, slideIndex, deck);
+    assert.equal(
+      getSlideIndexForSourceOffset(DEFAULT_SOURCE, offset),
+      slideIndex,
+      `Round-trip failed for slide ${slideIndex} (${slide.id})`,
+    );
+  }
+});
+
 test("getSourceOffsetForSlideIndex ignores directive-internal separators when mapping navigation", () => {
   const source = `# Intro
 
