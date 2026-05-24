@@ -130,6 +130,72 @@ Resources:
 # The Triple-Threat Matrix
 ## Displaying concurrent options or regional case studies cleanly
 
+---
+
+# Split Layout: Image Left
+## Magazine-style 50/50 with edge-to-edge image
+
+::split-left
+![Wide landscape photograph filling half the slide](https://dummyimage.com/640x720/2E5090/ffffff.png&text=Full+Bleed+Image)
+---
+### When visuals deserve equal billing
+
+Split layouts give images the full vertical half of the slide with no padding or cropping compromises.
+
+- **Edge-to-edge image** fills the left half
+- **Text adapts** to fit the remaining space
+- Ideal for photography-heavy decks
+::
+
+Note:
+Use `::split-left` when the image should anchor the left half. The text column gets its own padding and vertical centering automatically.
+
+---
+
+# Split Layout: Image Right
+## Mirror variant for visual variety
+
+::split-right
+![Architecture detail photograph](https://dummyimage.com/640x720/8B4513/ffffff.png&text=Architecture+Detail)
+---
+### Alternate the eye path
+
+Switching between `::split-left` and `::split-right` across slides keeps the audience visually engaged by varying the scan direction.
+
+1. Start with image-left for your opening point
+2. Switch to image-right for the counterpoint
+3. Return to image-left for the resolution
+::
+
+---
+
+# Large Text for Impact
+## When sparse content deserves presence
+
+::large
+This single idea fills the room.
+
+Use `::large` when your slide has one clear statement that should command attention without competing elements.
+::
+
+---
+
+# Small Text for Dense Reference
+## Fitting more on a slide when detail matters
+
+::small
+### Comparison Matrix
+
+| Feature | Option A | Option B | Option C |
+|---------|----------|----------|----------|
+| Speed | Fast | Medium | Slow |
+| Cost | High | Medium | Low |
+| Scale | Global | Regional | Local |
+| Support | 24/7 | Business hours | Community |
+
+Use `::small` when you need to display reference tables, fine print, or supplementary detail that doesn't need to dominate the slide.
+::
+
 ::column-left
 ### 01. Germany
 - **Sovereign Tech Fund**

@@ -182,6 +182,50 @@ Supporting text beside the image.
 
 This is the recommended way to place an image on the left or right with text beside it.
 
+## Text size variants
+
+Use `::large` or `::small` to adjust the text size of a content block.
+
+```md
+::large
+One powerful statement that fills the slide.
+::
+```
+
+```md
+::small
+Dense reference content, tables, or fine print.
+::
+```
+
+`::large` scales text to approximately 1.4× body size. `::small` scales to approximately 0.7×. The auto-scaling system still adjusts the overall slide body independently, so these directives work as relative adjustments within that system.
+
+## Split layout (magazine-style 50/50)
+
+Use `::split-left` or `::split-right` for a full-height image beside a text column. The image fills exactly half the slide edge-to-edge, and the text column is vertically centered in the other half.
+
+Separate the image and text with a `---` divider:
+
+```md
+::split-left
+![Alt text](https://example.com/photo.jpg)
+---
+### Heading
+
+Supporting text beside the image.
+::
+```
+
+```md
+::split-right
+![Alt text](https://example.com/photo.jpg)
+---
+Text on the left, image fills the right half.
+::
+```
+
+The image uses `object-fit: cover` so it fills its half without distortion regardless of aspect ratio.
+
 ## Callouts
 
 Use `::callout` for a highlighted point.

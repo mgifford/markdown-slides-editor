@@ -135,10 +135,59 @@ Quick reference:
 | `::column-left` / `::column-right` | Two-column layout |
 | `::media-left` / `::media-right` | Image or media beside text |
 | `::image-hero` | Full-bleed background image with short overlay text and optional corner logo |
+| `::split-left` / `::split-right` | Magazine-style 50/50 layout with edge-to-edge image |
+| `::large` | Increase text size for sparse, high-impact content |
+| `::small` | Decrease text size for dense reference content |
 | `::callout` | Highlighted callout box |
 | `::quote` | Styled blockquote |
 | `::mermaid` | Inline Mermaid diagram |
 | `::svg` | SVG figure wrapper for scalable custom graphics |
+
+### `::large` / `::small` — text size variants
+
+Use `::large` to increase text size for slides with sparse content that should fill the available space. Use `::small` when you need to fit denser reference material on a single slide.
+
+```md
+::large
+One clear idea deserves the full attention of the room.
+::
+```
+
+```md
+::small
+| Feature | A | B | C |
+|---------|---|---|---|
+| Speed   | Fast | Medium | Slow |
+::
+```
+
+These wrap the content in a size-adjusted container. `::large` scales text to roughly 1.4× body size; `::small` scales to roughly 0.7×. Both work alongside the auto-scaling system, which still adjusts the overall body text to fill the slide.
+
+### `::split-left` / `::split-right` — magazine-style 50/50 layout
+
+Use `::split-left` or `::split-right` for a full-height, edge-to-edge image beside a text column. The image fills exactly half the slide with no padding, and the text column is vertically centered in the other half.
+
+Separate the image and text sections with `---`:
+
+```md
+::split-left
+![Descriptive alt text](https://example.com/photo.jpg)
+---
+### Heading
+
+Body text beside the image.
+::
+```
+
+```md
+::split-right
+![Descriptive alt text](https://example.com/photo.jpg)
+---
+Text on the left, image on the right.
+::
+```
+
+`::split-left` places the image on the left; `::split-right` places it on the right. The image uses `object-fit: cover` to fill its half without distortion. Alternate between left and right across slides for visual variety.
 
 ### `::big-stat` — key number slides
 

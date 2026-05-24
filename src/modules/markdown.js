@@ -340,6 +340,14 @@ function renderSpecialDirective(block, state) {
     `;
   }
 
+  if (block.directive === "large") {
+    return `<div class="layout-text-large">${renderLines(block.content, state)}</div>`;
+  }
+
+  if (block.directive === "small") {
+    return `<div class="layout-text-small">${renderLines(block.content, state)}</div>`;
+  }
+
   if (block.directive === "callout") {
     if (isProgressive) state.stepCount += 1;
     return `<aside class="layout-callout${progressiveClass}">${renderLines(block.content, state)}</aside>`;
@@ -390,6 +398,20 @@ function renderSpecialDirective(block, state) {
       <div class="layout-media layout-media--${block.directive === "media-left" ? "left" : "right"}${progressiveClass}">
         <div class="layout-media__visual">${mediaHtml}</div>
         <div class="layout-media__body">${bodyHtml}</div>
+      </div>
+    `;
+  }
+
+  if (block.directive === "split-left" || block.directive === "split-right") {
+    if (isProgressive) state.stepCount += 1;
+    const { first, second } = splitOnDivider(block.content);
+    const imageHtml = renderLines(first, state);
+    const textHtml = renderLines(second, state);
+    const side = block.directive === "split-left" ? "left" : "right";
+    return `
+      <div class="layout-split layout-split--${side}${progressiveClass}">
+        <div class="layout-split__image">${imageHtml}</div>
+        <div class="layout-split__text">${textHtml}</div>
       </div>
     `;
   }

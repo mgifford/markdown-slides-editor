@@ -1,8 +1,8 @@
 const DEFAULT_SLIDE_WIDTH = 1280;
 const DEFAULT_SLIDE_HEIGHT = 720;
 const MIN_BODY_SCALE = 0.6;
-const MAX_BODY_SCALE = 1.56;
-const TARGET_BODY_FILL_RATIO = 0.82;
+const MAX_BODY_SCALE = 2.0;
+const TARGET_BODY_FILL_RATIO = 0.78;
 const SCALE_STEP = 0.04;
 
 function parseDimension(value, fallback) {
