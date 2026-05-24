@@ -1675,3 +1675,139 @@ export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, rendered
   </body>
 </html>`;
 }
+
+export function buildNotesExportHtml({ title, cssText, themeStylesheetCss, renderedSlides, metadata }) {
+  const safeLang = escapeHtmlAttr(metadata.lang || "en");
+  const safeTheme = escapeHtmlAttr(metadata.theme || "default-high-contrast");
+  const safeDeckStyle = escapeHtmlAttr(buildDeckStyleAttribute(metadata));
+  const safeTitle = escapeHtmlAttr(title);
+
+  const slidesMarkup = renderedSlides
+    .map((slide, index) => {
+      const slideCardClass = getSlideCardClass(slide);
+      const hasNotes = slide.notesHtml?.trim();
+      const hasResources = slide.resourcesHtml?.trim();
+      const hasScript = slide.scriptHtml?.trim();
+      const hasSupplemental = hasNotes || hasResources || hasScript;
+
+      const supplementalHtml = hasSupplemental
+        ? `<div class="notes-export__supplemental">
+            ${hasNotes ? `<div class="notes-export__notes"><h3>Notes</h3>${slide.notesHtml}</div>` : ""}
+            ${hasResources ? `<div class="notes-export__resources"><h3>Resources</h3>${slide.resourcesHtml}</div>` : ""}
+            ${hasScript ? `<div class="notes-export__script"><h3>Script</h3>${slide.scriptHtml}</div>` : ""}
+          </div>`
+        : "";
+
+      return `
+      <section class="notes-export__slide">
+        <header class="notes-export__slide-header">
+          <span class="notes-export__slide-number">Slide ${index + 1}</span>
+        </header>
+        <div class="notes-export__content">
+          <article class="${slideCardClass} active">
+            <div class="slide-card__content">
+              ${slide.html}
+            </div>
+          </article>
+        </div>
+        ${supplementalHtml}
+      </section>`;
+    })
+    .join("");
+
+  return `<!doctype html>
+<html lang="${safeLang}" data-theme="${safeTheme}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${safeTitle} — Notes</title>
+    ${buildThemeHeadTag(themeStylesheetCss, metadata)}
+    <style>${escapeStyleText(cssText)}</style>
+    <style>
+      body {
+        max-width: 72rem;
+        margin: 0 auto;
+        padding: 2rem;
+        font-family: var(--font-body, sans-serif);
+        background: var(--bg);
+        color: var(--ink);
+      }
+      .notes-export__header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--border, #ccc);
+      }
+      .notes-export__header h1 {
+        margin: 0;
+        font-family: var(--font-display, serif);
+      }
+      .notes-export__slide {
+        margin-bottom: 3rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid var(--border, #ccc);
+      }
+      .notes-export__slide:last-child {
+        border-bottom: none;
+      }
+      .notes-export__slide-header {
+        margin-bottom: 0.75rem;
+      }
+      .notes-export__slide-number {
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted, #666);
+      }
+      .notes-export__content {
+        margin-bottom: 1.5rem;
+      }
+      .notes-export__content .slide-card {
+        max-width: 100%;
+        aspect-ratio: var(--slide-aspect-ratio, 16/9);
+        overflow: hidden;
+        border: 1px solid var(--border, #ccc);
+        border-radius: 6px;
+      }
+      .notes-export__supplemental {
+        padding: 1rem 1.5rem;
+        background: var(--panel, rgba(255,255,255,0.86));
+        border-radius: 6px;
+        border: 1px solid var(--border, #ccc);
+      }
+      .notes-export__supplemental h3 {
+        margin: 0 0 0.5rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--accent, #b14d2c);
+      }
+      .notes-export__notes,
+      .notes-export__resources,
+      .notes-export__script {
+        margin-bottom: 1rem;
+      }
+      .notes-export__notes:last-child,
+      .notes-export__resources:last-child,
+      .notes-export__script:last-child {
+        margin-bottom: 0;
+      }
+      @media print {
+        .notes-export__slide {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body style="${safeDeckStyle}">
+    <header class="notes-export__header">
+      <h1>${safeTitle}</h1>
+      ${metadata.subtitle ? `<p>${escapeHtmlAttr(metadata.subtitle)}</p>` : ""}
+    </header>
+    <main>
+      ${slidesMarkup}
+    </main>
+  </body>
+</html>`;
+}

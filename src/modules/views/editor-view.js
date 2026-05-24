@@ -6,6 +6,7 @@ import {
   buildOnePageHtml,
   buildOfflinePresentationHtml,
   buildSnapshotHtml,
+  buildNotesExportHtml,
   downloadFile,
   openHtmlInNewWindow,
 } from "../export.js";
@@ -305,6 +306,7 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
   const helpButton = createButton("Help");
   const exportBundleButton = createButton("Export");
   const onePageButton = createButton("1 Page View", "Opens all slides in a single scrollable page in a new tab — useful for printing or saving as PDF");
+  const notesExportButton = createButton("Notes Export", "Downloads a standalone HTML file with each slide followed by its speaker notes, resources, and script");
   const advancedToggle = createButton("Advanced");
   advancedToggle.setAttribute("aria-haspopup", "true");
   advancedToggle.setAttribute("aria-expanded", "false");
@@ -328,6 +330,7 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
     helpButton,
     exportBundleButton,
     onePageButton,
+    notesExportButton,
     advancedToggle,
     advancedMenu,
     importInput,
@@ -1196,6 +1199,39 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
       metadata: lastCompiled?.metadata || {},
     });
     openHtmlInNewWindow(html);
+  });
+
+  notesExportButton.addEventListener("click", async () => {
+    const cssText = await readCss();
+
+    let themeStylesheetCss = "";
+    const themeStylesheetUrl = lastCompiled?.metadata?.themeStylesheet;
+    if (isValidThemeStylesheetUrl(themeStylesheetUrl)) {
+      try {
+        const themeResponse = await fetch(themeStylesheetUrl);
+        if (themeResponse.ok) {
+          themeStylesheetCss = await themeResponse.text();
+        }
+      } catch {
+        // Theme CSS fetch failed; file will omit the external theme
+      }
+    }
+
+    const renderedSlides = lastCompiled?.renderedSlides || [];
+    const slidesForNotes = await embedImagesInRenderedSlides(renderedSlides);
+
+    const html = buildNotesExportHtml({
+      title: lastCompiled?.metadata.title || "Slide deck",
+      cssText,
+      themeStylesheetCss,
+      renderedSlides: slidesForNotes,
+      metadata: lastCompiled?.metadata || {},
+    });
+    const shortFilename = buildShortExportFilename(
+      lastCompiled?.metadata.title || "deck-notes",
+      lastCompiled?.metadata.date,
+    ).replace(/\.zip$/, "-notes.html");
+    downloadFile(shortFilename, html, "text/html");
   });
 
   advancedImportButton.addEventListener("click", () => {

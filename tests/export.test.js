@@ -9,6 +9,7 @@ import {
   buildOnePageHtml,
   buildOfflinePresentationHtml,
   buildSnapshotHtml,
+  buildNotesExportHtml,
 } from "../src/modules/export.js";
 import { buildThemeLinkTag } from "../src/modules/theme.js";
 
@@ -686,4 +687,77 @@ test("buildOdpPresentation includes SVG diagram placeholder for inline SVG block
   const zip = new TextDecoder().decode(odp);
   assert.equal(zip.includes("[SVG diagram]"), true, "inline SVG should produce a placeholder paragraph");
   assert.equal(zip.includes("Caption text"), true, "text after inline SVG should be present");
+});
+
+test("buildNotesExportHtml includes notes, resources, and script content", () => {
+  const html = buildNotesExportHtml({
+    title: "Test Deck",
+    cssText: "body { margin: 0; }",
+    themeStylesheetCss: "",
+    renderedSlides: [
+      {
+        html: "<h1>Slide One</h1><p>Content</p>",
+        headings: [{ level: 1, text: "Slide One" }],
+        notesHtml: "<p>These are speaker notes.</p>",
+        resourcesHtml: '<p><a href="https://example.com">A reference</a></p>',
+        scriptHtml: "<p>Full spoken script for this slide.</p>",
+        kind: "content",
+      },
+    ],
+    metadata: { title: "Test Deck", lang: "en" },
+  });
+
+  assert.ok(html.includes("These are speaker notes."), "should include notes content");
+  assert.ok(html.includes("A reference"), "should include resources content");
+  assert.ok(html.includes("Full spoken script"), "should include script content");
+  assert.ok(html.includes("Slide 1"), "should include slide number");
+  assert.ok(html.includes("notes-export__supplemental"), "should include supplemental section");
+});
+
+test("buildNotesExportHtml omits supplemental section for slides without notes", () => {
+  const html = buildNotesExportHtml({
+    title: "Test Deck",
+    cssText: "",
+    themeStylesheetCss: "",
+    renderedSlides: [
+      {
+        html: "<h1>Empty Slide</h1>",
+        headings: [{ level: 1, text: "Empty Slide" }],
+        notesHtml: "",
+        resourcesHtml: "",
+        scriptHtml: "",
+        kind: "content",
+      },
+    ],
+    metadata: { title: "Test Deck", lang: "en" },
+  });
+
+  const mainContent = html.substring(html.indexOf("<main>"));
+  assert.ok(!mainContent.includes("notes-export__supplemental"), "should not include supplemental section in slide content");
+  assert.ok(mainContent.includes("Empty Slide"), "should still include slide content");
+});
+
+test("buildNotesExportHtml only renders subsections that have content", () => {
+  const html = buildNotesExportHtml({
+    title: "Partial Notes",
+    cssText: "",
+    themeStylesheetCss: "",
+    renderedSlides: [
+      {
+        html: "<h1>Partial</h1>",
+        headings: [{ level: 1, text: "Partial" }],
+        notesHtml: "<p>Just notes here.</p>",
+        resourcesHtml: "",
+        scriptHtml: "",
+        kind: "content",
+      },
+    ],
+    metadata: { title: "Partial Notes", lang: "en" },
+  });
+
+  const mainContent = html.substring(html.indexOf("<main>"));
+  assert.ok(mainContent.includes("notes-export__supplemental"), "should include supplemental section");
+  assert.ok(mainContent.includes("notes-export__notes"), "should include notes subsection");
+  assert.ok(!mainContent.includes("notes-export__resources"), "should not include empty resources subsection");
+  assert.ok(!mainContent.includes("notes-export__script"), "should not include empty script subsection");
 });

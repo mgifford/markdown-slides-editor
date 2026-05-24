@@ -7,9 +7,9 @@ subtasks:
   - "T026"
 title: "Export with Speaker Notes"
 phase: "Phase 3 - Enhancement"
-lane: "planned"
+lane: "done"
 assignee: ""
-agent: ""
+agent: "claude-opus"
 shell_pid: ""
 review_status: ""
 reviewed_by: ""
@@ -20,6 +20,11 @@ history:
     agent: "system"
     shell_pid: ""
     action: "Prompt generated via /spec-kitty.tasks"
+  - timestamp: "2026-05-24T22:45:00Z"
+    lane: "done"
+    agent: "claude-opus"
+    shell_pid: ""
+    action: "Implemented T023-T026: buildNotesExportHtml function, Notes Export button in editor UI, omits empty supplemental sections, 3 new tests"
 ---
 
 # Work Package Prompt: WP05 – Export with Speaker Notes
