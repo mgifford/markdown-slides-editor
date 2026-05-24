@@ -1,0 +1,10 @@
+{
+  "feature_number": "001",
+  "slug": "001-rich-visual-layouts-and-presentation-export",
+  "friendly_name": "Rich Visual Layouts and Presentation Export",
+  "mission": "software-dev",
+  "source_description": "Fix timed hero transitions, hero overlay dark/light mode support, visual variety in demo deck, PDF export with readable final state, and notes/references export option.",
+  "created_at": "2026-05-24T18:00:00Z",
+  "target_branch": "main",
+  "vcs": "git"
+}
