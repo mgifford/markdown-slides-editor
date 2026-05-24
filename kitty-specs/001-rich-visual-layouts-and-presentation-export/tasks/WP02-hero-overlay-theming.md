@@ -1,7 +1,7 @@
 ---
 work_package_id: WP02
 title: Hero Overlay Light/Dark Mode
-lane: planned
+lane: done
 dependencies: []
 subtasks:
 - T007
@@ -22,6 +22,11 @@ history:
   agent: system
   shell_pid: ''
   action: Prompt generated via /spec-kitty.tasks
+- timestamp: '2026-05-24T22:15:00Z'
+  lane: done
+  agent: claude-opus
+  shell_pid: ''
+  action: 'Implemented T007-T012: hero overlay CSS custom properties for light/dark mode'
 ---
 
 # Work Package Prompt: WP02 – Hero Overlay Light/Dark Mode

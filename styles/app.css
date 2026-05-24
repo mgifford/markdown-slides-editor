@@ -21,6 +21,9 @@
   --panel-alt: rgba(255, 255, 255, 0.72);
   --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
   --font-body: "Avenir Next", "Segoe UI", sans-serif;
+  --hero-overlay-bg: rgba(0, 0, 0, 0.7);
+  --hero-overlay-color: #fff;
+  --hero-overlay-text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 :root[data-theme="paper-warm"] {
@@ -62,6 +65,9 @@
     --body-layer-1: radial-gradient(circle at top left, rgba(241, 178, 74, 0.12), transparent 28%);
     --body-layer-2: radial-gradient(circle at bottom right, rgba(145, 213, 255, 0.08), transparent 26%);
     --body-layer-3: linear-gradient(135deg, #08111b, #101a27 48%, #13202f);
+    --hero-overlay-bg: rgba(0, 0, 0, 0.7);
+    --hero-overlay-color: #fff;
+    --hero-overlay-text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
   }
 }
 
@@ -81,6 +87,9 @@
   --body-layer-1: radial-gradient(circle at top left, rgba(255, 224, 209, 0.7), transparent 28%);
   --body-layer-2: radial-gradient(circle at bottom right, rgba(17, 77, 109, 0.12), transparent 26%);
   --body-layer-3: linear-gradient(135deg, #f8f2e8, #f0efe9 48%, #e5ebef);
+  --hero-overlay-bg: rgba(255, 255, 255, 0.82);
+  --hero-overlay-color: #102542;
+  --hero-overlay-text-shadow: 0 1px 3px rgba(255, 255, 255, 0.4);
 }
 
 :root[data-color-mode="dark"] {
@@ -99,6 +108,9 @@
   --body-layer-1: radial-gradient(circle at top left, rgba(241, 178, 74, 0.12), transparent 28%);
   --body-layer-2: radial-gradient(circle at bottom right, rgba(145, 213, 255, 0.08), transparent 26%);
   --body-layer-3: linear-gradient(135deg, #08111b, #101a27 48%, #13202f);
+  --hero-overlay-bg: rgba(0, 0, 0, 0.7);
+  --hero-overlay-color: #fff;
+  --hero-overlay-text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 * {
@@ -1150,8 +1162,8 @@ input:focus-visible {
   position: absolute;
   z-index: 2;
   padding: 0.35em 0.65em;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
+  background: var(--hero-overlay-bg);
+  color: var(--hero-overlay-color);
   font-size: clamp(1.1rem, 2.5vw, 2rem);
   font-weight: 700;
   border-radius: 6px;
@@ -1255,7 +1267,7 @@ input:focus-visible {
   margin: auto;
   opacity: 1;
   transition: none;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  text-shadow: var(--hero-overlay-text-shadow);
 }
 
 .slide-card--image-hero-show-all .slide-card__content > :not(.layout-image-hero) {
@@ -1267,9 +1279,9 @@ input:focus-visible {
   margin-right: auto;
   padding: 0.25em 0.65em;
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.62);
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  background: var(--hero-overlay-bg);
+  color: var(--hero-overlay-color);
+  text-shadow: var(--hero-overlay-text-shadow);
 }
 
 /* Step directive: transparent progressive wrapper, no extra visual styling */
