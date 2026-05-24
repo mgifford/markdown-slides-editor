@@ -9,9 +9,9 @@ subtasks:
   - "T006"
 title: "Fix Hero Image Timed Transitions"
 phase: "Phase 1 - Foundation"
-lane: "planned"
+lane: "done"
 assignee: ""
-agent: ""
+agent: "claude-opus"
 shell_pid: ""
 review_status: ""
 reviewed_by: ""
@@ -22,6 +22,11 @@ history:
     agent: "system"
     shell_pid: ""
     action: "Prompt generated via /spec-kitty.tasks"
+  - timestamp: "2026-05-24T22:00:00Z"
+    lane: "done"
+    agent: "claude-opus"
+    shell_pid: ""
+    action: "Implemented T001-T006: deferActivation option, RAF activation in presentation view, RAF cleanup, prefers-reduced-motion verified, 4 new tests, editor/presenter verified static"
 ---
 
 # Work Package Prompt: WP01 – Fix Hero Image Timed Transitions

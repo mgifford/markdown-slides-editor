@@ -83,6 +83,7 @@ export function createPresentationView(root, initialSource) {
     render();
   });
   let tocOpen = false;
+  let pendingActivation = null;
   const frame = document.createElement("div");
   frame.className = "audience-shell";
 
@@ -153,7 +154,16 @@ export function createPresentationView(root, initialSource) {
     revealStep = position.revealStep;
     const slide = compiled.renderedSlides[activeSlideIndex] || compiled.renderedSlides[0];
     activeSlideIndex = slide?.index || 0;
-    mountSlideInto(frameNode, slide, { revealStep });
+    if (pendingActivation) {
+      cancelAnimationFrame(pendingActivation);
+      pendingActivation = null;
+    }
+    mountSlideInto(frameNode, slide, { revealStep, deferActivation: true });
+    pendingActivation = requestAnimationFrame(() => {
+      const article = frameNode.querySelector("article.slide-card");
+      if (article) article.classList.add("active");
+      pendingActivation = null;
+    });
     frameNode.style.setProperty("--presentation-text-zoom", String(textZoom));
     statusNode.textContent = compiled.renderedSlides.length
       ? `${compiled.metadata.title || "Untitled deck"} · ${activeSlideIndex + 1} / ${compiled.renderedSlides.length} · ${revealStep}/${slide?.stepCount || 0} reveals`

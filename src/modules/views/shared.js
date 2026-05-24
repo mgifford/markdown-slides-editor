@@ -93,7 +93,7 @@ export function mountSlideInto(container, renderedSlide, options = {}) {
     return;
   }
 
-  const { revealStep = renderedSlide.stepCount || 0, includeLabel = true } = options;
+  const { revealStep = renderedSlide.stepCount || 0, includeLabel = true, deferActivation = false } = options;
   const title = renderedSlide.headings.find((heading) => heading.level === 1)?.text || "Slide preview";
   const slideClasses = ["slide-card"];
   if (renderedSlide.isImageHero) {
@@ -105,9 +105,10 @@ export function mountSlideInto(container, renderedSlide, options = {}) {
     slideClasses.push("slide-card--title");
   }
   const slideClass = slideClasses.join(" ");
+  const activeClass = deferActivation ? "" : " active";
 
   container.innerHTML = `
-    <article class="${slideClass} active"${includeLabel ? ` aria-label="${escapeAttribute(title)}"` : ""}>
+    <article class="${slideClass}${activeClass}"${includeLabel ? ` aria-label="${escapeAttribute(title)}"` : ""}>
       <div class="slide-card__content">
         ${renderedSlide.html}
       </div>
