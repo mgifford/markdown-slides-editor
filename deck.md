@@ -98,7 +98,7 @@ The column layout gives you full control over proportions. You can use `::column
 ## Aggressive text reduction for maximum emotional resonance
 
 ::image-hero stay-0 transition-0 final-0.35 text-center
-![Cinematic broad landscape photography](https://dummyimage.com/1280x720/1a1a2e/e0e0e0.png&text=Cinematic+Dark+Scene)
+![Cinematic broad landscape photography](https://dummyimage.com/1280x720/1a1a2e/e0e0e0.png&text=+)
 ---
 One clear statement is more powerful than ten crowded bullet points.
 ::

@@ -1130,6 +1130,18 @@ input:focus-visible {
   border: 0;
 }
 
+.slide-card--image-hero-show-title .slide-card__content > h1:first-of-type,
+.slide-card--image-hero-show-subtitle .slide-card__content > h2:first-of-type {
+  position: relative;
+  z-index: 3;
+  color: var(--hero-overlay-color);
+  padding: 0.2em 0.5em;
+  background: var(--hero-overlay-bg);
+  border-radius: 4px;
+  width: fit-content;
+  text-shadow: var(--hero-overlay-text-shadow);
+}
+
 .layout-image-hero {
   position: relative;
   width: 100%;
