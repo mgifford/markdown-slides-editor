@@ -101,6 +101,7 @@ export function mountSlideInto(container, renderedSlide, options = {}) {
     if (renderedSlide.imageHeroShowAll) slideClasses.push("slide-card--image-hero-show-all");
     if (renderedSlide.imageHeroShowTitle) slideClasses.push("slide-card--image-hero-show-title");
     if (renderedSlide.imageHeroShowSubtitle) slideClasses.push("slide-card--image-hero-show-subtitle");
+    slideClasses.push(`slide-card--hero-text-${renderedSlide.imageHeroTextPos || "bottom-left"}`);
   } else if (renderedSlide.kind === "title") {
     slideClasses.push("slide-card--title");
   }

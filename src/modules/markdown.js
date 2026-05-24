@@ -484,6 +484,7 @@ function renderSpecialDirective(block, state) {
       defaultHorizontal: "left",
       allowCenter: true,
     });
+    state.imageHeroTextPos = textPos;
     const logoPos = resolveHeroPosition(block.modifiers, {
       prefix: "logo",
       defaultVertical: "top",
@@ -749,6 +750,7 @@ export function renderMarkdown(markdown) {
     imageHeroShowAll: false,
     imageHeroShowTitle: false,
     imageHeroShowSubtitle: false,
+    imageHeroTextPos: "bottom-left",
   };
 
   return {
@@ -759,5 +761,6 @@ export function renderMarkdown(markdown) {
     imageHeroShowAll: state.imageHeroShowAll,
     imageHeroShowTitle: state.imageHeroShowTitle,
     imageHeroShowSubtitle: state.imageHeroShowSubtitle,
+    imageHeroTextPos: state.imageHeroTextPos,
   };
 }

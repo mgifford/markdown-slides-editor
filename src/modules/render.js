@@ -170,6 +170,7 @@ export function renderDeck(deck) {
       imageHeroShowAll: rendered.imageHeroShowAll || false,
       imageHeroShowTitle: rendered.imageHeroShowTitle || false,
       imageHeroShowSubtitle: rendered.imageHeroShowSubtitle || false,
+      imageHeroTextPos: rendered.imageHeroTextPos || "bottom-left",
     };
   });
 
