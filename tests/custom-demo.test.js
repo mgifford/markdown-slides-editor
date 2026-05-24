@@ -23,7 +23,7 @@ test("custom demo deck demonstrates documented image-hero feature combinations",
     "includes documented heading-visibility modifiers",
   );
   assert.ok(
-    heroSlides.some((body) => body.includes("text-center") && body.includes("stay-2 transition-6 final-0.2")),
+    heroSlides.some((body) => body.includes("text-center") && body.includes("stay-3 transition-5 final-0.12")),
     "includes timed cinematic reveal modifiers with centered text",
   );
   assert.ok(

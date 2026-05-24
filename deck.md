@@ -18,7 +18,7 @@ closingPrompt: Let's build accessible, visually stunning presentation structures
 # Archetype 1: The Dynamic Hero Transition
 ## Programmatic sequencing: The image controls the room before the text appears
 
-::image-hero text-bottom-left logo-top-right pan-left saturation-85 stay-5 transition-10 final-0.2 blur-3px
+::image-hero text-bottom-left logo-top-right pan-left saturation-85 stay-3 transition-6 final-0.15 blur-6px
 ![High impact focal image](https://dummyimage.com/1280x720/8B4513/ffffff.png&text=Warm+Focal+Asset)
 ---
 Control the room's attention
@@ -26,8 +26,8 @@ Control the room's attention
 <img src="https://dummyimage.com/170x60/ffffff/8B4513.png&text=Summit+Logo" alt="Summit logo">
 ::
 
-- **Seconds 0 to 5:** The audience looks entirely at the crisp, clear image while listening to you.
-- **Seconds 5 to 15:** The asset melts back into a 20% background blur as this text fades in.
+- **Seconds 0 to 3:** The audience focuses entirely on the crisp, clear image while listening to you.
+- **Seconds 3 to 9:** The image blurs and fades to 15% as this text appears over a near-invisible background.
 - **The Result:** Complete focus control without requiring distracting standalone slide breaks.
 
 Note:
@@ -222,7 +222,7 @@ This variant is useful when the title itself is part of the on-screen narrative 
 # Hero Showcase: Timed Cinematic Reveal
 ## Centered message after image-first pause
 
-::image-hero text-center logo-bottom-left stay-2 transition-6 final-0.2 pan-up
+::image-hero text-center logo-bottom-left stay-3 transition-5 final-0.12 blur-4px pan-up
 ![Audience watching a transition from full image to message-first overlay](https://dummyimage.com/1280x720/0f4c5c/ffffff.png&text=Timed+Reveal)
 ---
 See the idea land
