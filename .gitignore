@@ -15,3 +15,5 @@ reports/
 .amazonq/
 .github/copilot/
 .kittify/.dashboard
+
+19: .DS_Store
