@@ -148,7 +148,7 @@ A centered image or statement works well when you want a simple visual moment.
 # Image only
 
 ::center
-![Wide panoramic photograph of a conference room with a projected slide on screen](https://live.staticflickr.com/65535/55288563529_bc9b599436_4k.jpg)
+![Wide panoramic photograph of a conference room with a projected slide on screen](./src/images/55288563529_02603f0ded_k.jpg)
 ::
 
 Note:
