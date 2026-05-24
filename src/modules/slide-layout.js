@@ -37,13 +37,24 @@ function wrapSlideBody(contentNode) {
   let bodyNode = contentNode.querySelector(":scope > .slide-card__body");
   if (bodyNode) return bodyNode;
 
-  const bodyChildren = [...contentNode.children].filter((child) => child.tagName !== "H1");
+  const children = [...contentNode.children];
+  const headerChildren = [];
+  const bodyChildren = [];
+  let pastHeaders = false;
+  for (const child of children) {
+    if (!pastHeaders && (child.tagName === "H1" || child.tagName === "H2")) {
+      headerChildren.push(child);
+    } else {
+      pastHeaders = true;
+      bodyChildren.push(child);
+    }
+  }
   if (bodyChildren.length === 0) return null;
 
   bodyNode = document.createElement("div");
   bodyNode.className = "slide-card__body";
-  const anchor = contentNode.querySelector(":scope > h1");
-  contentNode.insertBefore(bodyNode, anchor ? anchor.nextSibling : contentNode.firstChild);
+  const lastHeader = headerChildren[headerChildren.length - 1];
+  contentNode.insertBefore(bodyNode, lastHeader ? lastHeader.nextSibling : contentNode.firstChild);
   bodyChildren.forEach((child) => bodyNode.append(child));
   return bodyNode;
 }
