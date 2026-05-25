@@ -169,7 +169,14 @@ export function createPresentationView(root, initialSource) {
       mountSlideInto(frameNode, slide, { revealStep, deferActivation: true });
       pendingActivation = requestAnimationFrame(() => {
         const article = frameNode.querySelector("article.slide-card");
-        if (article) article.classList.add("active");
+        if (article) {
+          // Force a style recalculation so the browser records the initial
+          // CSS state (e.g. image opacity: 1) before we add `active`.
+          // Without this, browsers may skip the "from" value and jump
+          // directly to the final state, preventing timed CSS transitions.
+          void article.offsetHeight;
+          article.classList.add("active");
+        }
         pendingActivation = null;
       });
       currentMountedSlideIndex = activeSlideIndex;
