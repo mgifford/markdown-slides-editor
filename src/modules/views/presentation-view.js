@@ -191,6 +191,7 @@ export function createPresentationView(root, initialSource) {
       captionNode.classList.remove("captions-inactive");
       captionNode.hidden = false;
       captionNode.textContent = captionsState.text;
+      captionNode.scrollTop = captionNode.scrollHeight;
       if (captionHideTimer) {
         clearTimeout(captionHideTimer);
         captionHideTimer = null;
@@ -320,6 +321,7 @@ export function createPresentationView(root, initialSource) {
           captionNode.classList.remove("captions-inactive");
           captionNode.hidden = false;
           captionNode.textContent = message.text;
+          captionNode.scrollTop = captionNode.scrollHeight;
           if (captionHideTimer) {
             clearTimeout(captionHideTimer);
             captionHideTimer = null;

@@ -1872,7 +1872,7 @@ input:focus-visible {
   width: min(92vw, 72rem);
   min-height: 3.6em;
   max-height: 4.2em;
-  overflow: hidden;
+  overflow-y: scroll;
   padding: 0.8rem 1rem;
   border-radius: 18px;
   border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
