@@ -36,6 +36,25 @@ test("custom demo deck demonstrates documented image-hero feature combinations",
   );
 });
 
+test("custom demo deck contains no root-relative local image paths that would break on GitHub Pages subdirectory deployments", () => {
+  const rootRelativeMarkdownImage = /!\[[^\]]*\]\(\/[^)]+\)/g;
+  const rootRelativeHtmlSrc = /src="\//g;
+
+  const markdownMatches = CUSTOM_DEMO_SOURCE.match(rootRelativeMarkdownImage) ?? [];
+  const htmlSrcMatches = CUSTOM_DEMO_SOURCE.match(rootRelativeHtmlSrc) ?? [];
+
+  assert.deepEqual(
+    markdownMatches,
+    [],
+    `deck.md must not contain root-relative Markdown image paths (found: ${markdownMatches.join(", ")})`,
+  );
+  assert.deepEqual(
+    htmlSrcMatches,
+    [],
+    `deck.md must not contain root-relative HTML src attributes (found: ${htmlSrcMatches.join(", ")})`,
+  );
+});
+
 test("custom demo deck demonstrates non-hero image wrapping options", () => {
   const mediaSlides = parseSource(CUSTOM_DEMO_SOURCE).slides
     .map((slide) => slide.body)
