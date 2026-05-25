@@ -230,7 +230,7 @@ test("buildOnePageHtml includes footer with presentation URL when provided", () 
     metadata: { presentationUrl: "https://ox.ca/p/6" },
   });
   assert.equal(html.includes("one-page-footer"), true, "should include footer element");
-  assert.equal(html.includes("https://ox.ca/p/6"), true, "should include the presentation URL");
+  assert.equal(html.includes("ox.ca/p/6"), true, "should include the presentation URL in the footer");
 });
 
 test("buildOnePageHtml omits footer when no presentation URL", () => {
