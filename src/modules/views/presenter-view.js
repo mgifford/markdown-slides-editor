@@ -142,6 +142,7 @@ export function createPresenterView(root, initialSource) {
         </div>
         <div class="presenter-panel__body">
           <p id="presenter-captions-status" class="meta-text"></p>
+          ${sttSupported ? `<canvas id="stt-waveform" class="stt-waveform" width="200" height="32" aria-hidden="true" hidden></canvas>` : ""}
           ${sttSupported ? `<label class="captions-language-label"><span class="sr-only">Caption language</span><select id="captions-language-select">${CAPTION_LANGUAGES.map(([tag, label]) => `<option value="${tag}"${tag === getCaptionLanguage() ? " selected" : ""}>${label}</option>`).join("")}</select></label>` : ""}
           <div id="presenter-captions" class="notes-content captions-transcript"></div>
           ${sttSupported ? `<div class="captions-export-actions">
@@ -186,6 +187,7 @@ export function createPresenterView(root, initialSource) {
   const captionsSaveVttButton = sttSupported ? frame.querySelector("#captions-save-vtt") : null;
   const captionsSaveTxtButton = sttSupported ? frame.querySelector("#captions-save-txt") : null;
   const captionsCopyLlmButton = sttSupported ? frame.querySelector("#captions-copy-llm-prompt") : null;
+  const waveformCanvas = sttSupported ? frame.querySelector("#stt-waveform") : null;
   const timerNode = frame.querySelector("#presenter-timer");
   const remainingNode = frame.querySelector("#presenter-remaining");
   const outlineNode = frame.querySelector("#presenter-outline");
@@ -227,6 +229,54 @@ export function createPresenterView(root, initialSource) {
   addColorModeToggle(actions);
   actions.append(lockToggleButton);
   let timerAutoStart = true;
+
+  function createAudioMeter(canvas) {
+    if (!canvas || typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) return null;
+    let animId = null;
+    let audioCtx = null;
+    let stream = null;
+    return {
+      async start() {
+        if (audioCtx) return;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          audioCtx = new AudioContext();
+          const analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 32;
+          const src = audioCtx.createMediaStreamSource(stream);
+          src.connect(analyser);
+          const data = new Uint8Array(analyser.frequencyBinCount);
+          const ctx2d = canvas.getContext("2d");
+          function drawFrame() {
+            animId = requestAnimationFrame(drawFrame);
+            analyser.getByteFrequencyData(data);
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx2d.clearRect(0, 0, w, h);
+            const barW = Math.max(1, Math.floor(w / data.length) - 1);
+            for (let i = 0; i < data.length; i++) {
+              const bh = Math.round((data[i] / 255) * h);
+              const lightness = 45 + Math.round((data[i] / 255) * 25);
+              ctx2d.fillStyle = `hsl(215, 70%, ${lightness}%)`;
+              ctx2d.fillRect(i * (barW + 1), h - bh, barW, bh);
+            }
+          }
+          drawFrame();
+          canvas.hidden = false;
+        } catch {
+          // Mic access denied or unavailable — canvas stays hidden.
+        }
+      },
+      stop() {
+        if (animId) { cancelAnimationFrame(animId); animId = null; }
+        if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
+        if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null; }
+        canvas.hidden = true;
+      },
+    };
+  }
+
+  const audioMeter = createAudioMeter(waveformCanvas);
 
   function getAudiencePresentationUrl() {
     const audienceUrl = new URL("../present/", window.location.href);
@@ -331,6 +381,9 @@ export function createPresenterView(root, initialSource) {
       if (sttState.error === "not-allowed" || sttState.error === "service-not-allowed") {
         captionsStatusNode.textContent = "Live Captions · microphone permission denied";
         captionsNode.textContent = "Microphone access was denied. Enable it in your browser settings to use live captions.";
+      } else if (sttState.error === "not-supported") {
+        captionsStatusNode.textContent = "Live Captions · not available in this browser";
+        captionsNode.textContent = "Speech-to-text is not supported in this browser. Try Chrome or Edge for live captions.";
       } else {
         captionsStatusNode.textContent = sttEnabled
           ? `Live Captions · ${sttState.active ? "listening" : "starting…"}`
@@ -351,7 +404,7 @@ export function createPresenterView(root, initialSource) {
       captionsStatusNode.textContent = captionsState.available
         ? `${captionsState.provider === "whisper.cpp" ? "whisper.cpp" : "Caption source"} · ${captionsState.active ? "live" : "connected"}`
         : "";
-      captionsNode.textContent = captionsState.text || "Caption source is available and waiting for speech.";
+      captionsNode.textContent = captionsState.text || "Caption source is connected and waiting for speech.";
     }
     outlineNode.innerHTML = compiled.renderedSlides
       .map((renderedSlide, index) => {
@@ -592,8 +645,10 @@ export function createPresenterView(root, initialSource) {
       sttEnabled = !sttEnabled;
       if (sttEnabled) {
         sttSource.start();
+        audioMeter?.start();
       } else {
         sttSource.stop();
+        audioMeter?.stop();
         sync.postMessage({ type: "caption-update", text: "", timestamp: Date.now() });
       }
       render();
@@ -640,6 +695,7 @@ export function createPresenterView(root, initialSource) {
   captionMonitor.start();
   if (sttSource && sttEnabled) {
     sttSource.start();
+    audioMeter?.start();
   }
 
   const slideFrameObserver = new ResizeObserver((entries) => {

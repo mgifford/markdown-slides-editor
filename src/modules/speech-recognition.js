@@ -65,17 +65,18 @@ export const CAPTION_LANGUAGES = [
 
 /**
  * Returns the active caption language BCP 47 tag.
- * Reads from localStorage, falls back to the document lang attribute, then "en-US".
+ * Reads from localStorage, falls back to "en-US".
+ * Does not use the document lang attribute because it typically returns a
+ * two-letter code (e.g. "en") that does not match any BCP 47 entry in
+ * CAPTION_LANGUAGES, which would cause the select to fall through to its
+ * first option (Arabic).
  */
 export function getCaptionLanguage() {
   const stored =
     typeof localStorage !== "undefined"
       ? localStorage.getItem(CAPTION_LANGUAGE_STORAGE_KEY)
       : null;
-  if (stored) return stored;
-  const docLang =
-    typeof document !== "undefined" ? document.documentElement.lang : "";
-  return docLang || "en-US";
+  return stored || "en-US";
 }
 
 /**
@@ -195,7 +196,11 @@ export function createSpeechRecognitionSource(onUpdate) {
   };
 
   recognition.onerror = (event) => {
-    if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+    if (
+      event.error === "not-allowed" ||
+      event.error === "service-not-allowed" ||
+      event.error === "not-supported"
+    ) {
       enabled = false;
       started = false;
       onUpdate({ active: false, text: "", error: event.error });
