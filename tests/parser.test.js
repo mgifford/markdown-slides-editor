@@ -1512,6 +1512,24 @@ title: Test
   assert.equal(rendered.renderedSlides[0].imageHeroShowTitle, true, "title is shown when opted in");
   assert.equal(rendered.renderedSlides[0].imageHeroShowSubtitle, true, "subtitle is shown when opted in");
   assert.equal(rendered.renderedSlides[0].imageHeroShowAll, false, "show-all is off unless specified");
+  assert.equal(rendered.renderedSlides[0].imageHeroTextPos, "bottom-left", "default text position has no text- prefix");
+});
+
+test("renderDeck image-hero imageHeroTextPos stores position without text- prefix", () => {
+  const source = `---
+title: Test
+---
+
+# Hero Title
+## Hero Subtitle
+
+::image-hero text-bottom-right show-title show-subtitle
+![Big image](https://example.com/big.jpg)
+::
+`;
+  const deck = parseSource(source);
+  const rendered = renderDeck(deck);
+  assert.equal(rendered.renderedSlides[0].imageHeroTextPos, "bottom-right", "text-bottom-right stores without text- prefix");
 });
 
 test("renderDeck image-hero show-all enables full text mode and heading visibility", () => {
