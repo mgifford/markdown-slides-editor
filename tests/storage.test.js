@@ -117,3 +117,27 @@ test("default source includes non-hero image wrapping samples for media-left and
     "includes a media-right slide with image/text split",
   );
 });
+
+// Root-relative paths (starting with /) resolve to the domain root and break when
+// the app is deployed to a GitHub Pages subdirectory such as /markdown-slides-editor/.
+// All local asset references must use relative paths (e.g. src/images/...) so they
+// resolve correctly regardless of the deployment sub-path.
+test("default source contains no root-relative local image paths that would break on GitHub Pages subdirectory deployments", () => {
+  // Match Markdown image syntax ![alt](/...) and HTML src="/..." attribute values.
+  const rootRelativeMarkdownImage = /!\[[^\]]*\]\(\/[^)]+\)/g;
+  const rootRelativeHtmlSrc = /src="\//g;
+
+  const markdownMatches = DEFAULT_SOURCE.match(rootRelativeMarkdownImage) ?? [];
+  const htmlSrcMatches = DEFAULT_SOURCE.match(rootRelativeHtmlSrc) ?? [];
+
+  assert.deepEqual(
+    markdownMatches,
+    [],
+    `DEFAULT_SOURCE must not contain root-relative Markdown image paths (found: ${markdownMatches.join(", ")})`,
+  );
+  assert.deepEqual(
+    htmlSrcMatches,
+    [],
+    `DEFAULT_SOURCE must not contain root-relative HTML src attributes (found: ${htmlSrcMatches.join(", ")})`,
+  );
+});
