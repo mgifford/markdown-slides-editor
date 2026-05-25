@@ -497,7 +497,7 @@ function renderSpecialDirective(block, state) {
     // blur-Npx, saturation-N.
     let staySeconds = 0;
     let transSeconds = 2;
-    let finalOpacity = 0.3;
+    let finalOpacity = 1;
     let panDirection = "none";
     let blurAmount = "0px";
     let saturationLevel = 1;
