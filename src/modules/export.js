@@ -751,7 +751,7 @@ export function buildMhtmlDocument({ title, html }) {
   ].join("\r\n");
 }
 
-export function buildExportBundle({ markdownSource, snapshotHtml, deckJson, odpBytes, onePageHtml, offlineHtml, filePrefix }) {
+export function buildExportBundle({ markdownSource, snapshotHtml, deckJson, odpBytes, onePageHtml, filePrefix }) {
   const prefix = filePrefix || "presentation";
   return buildZipArchive([
     { name: "deck.md", contents: markdownSource },
@@ -759,7 +759,6 @@ export function buildExportBundle({ markdownSource, snapshotHtml, deckJson, odpB
     { name: `${prefix}.html`, contents: snapshotHtml },
     { name: `${prefix}.odp`, contents: odpBytes },
     { name: `${prefix}-one-page.html`, contents: onePageHtml },
-    ...(offlineHtml ? [{ name: `${prefix}-offline.html`, contents: offlineHtml }] : []),
   ]);
 }
 
