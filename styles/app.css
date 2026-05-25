@@ -2498,6 +2498,13 @@ input:focus-visible {
 }
 
 @media print {
+  /* Remove page margins so browsers do not render their default headers and
+     footers (file URL, page numbers, date/time). Content spacing is handled
+     by element-level padding below. */
+  @page {
+    margin: 0;
+  }
+
   :root {
     color-scheme: light;
   }
@@ -2537,7 +2544,7 @@ input:focus-visible {
   }
 
   .one-page-body {
-    padding: 0 !important;
+    padding: 0.5in !important;
   }
 
   .one-page-body .presentation-shell {
