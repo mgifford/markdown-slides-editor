@@ -1780,7 +1780,7 @@ Short text
   assert.ok(!rendered.html.includes("layout-image-hero--timed"), "no timed class without timing modifiers");
   assert.ok(rendered.html.includes("--hero-stay:0s"), "uses default stay");
   assert.ok(rendered.html.includes("--hero-transition:2s"), "uses default transition");
-  assert.ok(rendered.html.includes("--hero-opacity:0.3"), "uses default opacity");
+  assert.ok(rendered.html.includes("--hero-opacity:1"), "uses default opacity");
   assert.ok(!rendered.html.includes("animation:"), "does not include inline animation styles");
 });
 

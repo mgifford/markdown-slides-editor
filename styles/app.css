@@ -834,6 +834,7 @@ input:focus-visible {
 
 .layout-center img {
   margin-inline: auto;
+  max-width: 50%;
 }
 
 .layout-text-large {
@@ -2634,7 +2635,7 @@ input:focus-visible {
 
   /* Hero slides: force final state in print so overlay text is readable */
   .layout-image-hero .layout-image-hero__image {
-    opacity: var(--hero-final, 0.3) !important;
+    opacity: var(--hero-final, 1) !important;
     filter: blur(var(--hero-blur, 0px)) saturate(var(--hero-saturation, 1)) !important;
     transform: scale(1.05) translate(var(--hero-pan-x, 0%), var(--hero-pan-y, 0%)) !important;
     transition: none !important;
