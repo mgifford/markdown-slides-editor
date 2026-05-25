@@ -43,7 +43,8 @@ function renderTitleSlide(slide) {
             detail.label === "Speakers" && speakerList.length > 1
               ? `<ul class="title-slide__speakers">${speakerList.map((speaker) => `<li>${escapeHtml(speaker)}</li>`).join("")}</ul>`
               : `<p>${escapeHtml(detail.value)}</p>`;
-          return `<div><dt>${detail.label}</dt><dd>${valueHtml}</dd></div>`;
+          const dataAttr = ` data-meta="${detail.label.toLowerCase()}"`;
+          return `<div${dataAttr}><dt>${detail.label}</dt><dd>${valueHtml}</dd></div>`;
         })
         .join("")}</dl>`
     : "";

@@ -2125,6 +2125,57 @@ input:focus-visible {
   backdrop-filter: blur(14px);
 }
 
+.one-page-controls__fieldset {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.one-page-controls__legend {
+  float: left;
+  padding: 0;
+  margin-right: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.one-page-controls__radio,
+.one-page-controls__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+/* Hide notes/references when toggled off */
+.one-page-body.hide-notes .one-page-support__card--notes {
+  display: none;
+}
+
+.one-page-body.hide-references .one-page-support__card--references {
+  display: none;
+}
+
+/* Footer with slide link */
+.one-page-footer {
+  margin: 2rem auto 1rem;
+  width: min(110rem, 100%);
+  padding: 0.75rem 1.1rem;
+  font-size: 0.9rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.one-page-footer a {
+  color: var(--accent);
+}
+
 .one-page-body .presentation-shell {
   display: grid;
   gap: 1.75rem;
@@ -2690,5 +2741,34 @@ input:focus-visible {
 
   .next[hidden] {
     display: block !important;
+  }
+
+  /* Hide title-slide date in print for one-page view */
+  .one-page-body .title-slide__meta [data-meta="date"] {
+    display: none !important;
+  }
+
+  /* Respect notes/references visibility toggles in print */
+  .one-page-body.hide-notes .one-page-support__card--notes {
+    display: none !important;
+  }
+
+  .one-page-body.hide-references .one-page-support__card--references {
+    display: none !important;
+  }
+
+  /* Footer: show in print with link */
+  .one-page-footer {
+    display: block;
+    margin-top: 0.3in;
+    padding-top: 0.1in;
+    border-top: 1px solid #666;
+    font-size: 0.8rem;
+    color: black !important;
+  }
+
+  .one-page-footer a {
+    color: black !important;
+    text-decoration: underline;
   }
 }
