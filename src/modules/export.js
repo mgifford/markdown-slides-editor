@@ -1271,19 +1271,19 @@ export function buildOfflinePresentationHtml({ title, cssText, themeStylesheetCs
 function buildOnePageSupportMarkup(slide) {
   const sections = [
     slide.notesHtml
-      ? `<section class="one-page-support__card" aria-label="Speaker notes">
+      ? `<section class="one-page-support__card one-page-support__card--notes" aria-label="Speaker notes">
           <h2>Speaker notes</h2>
           <div class="one-page-support__content">${slide.notesHtml}</div>
         </section>`
       : "",
     slide.resourcesHtml
-      ? `<section class="one-page-support__card" aria-label="References and resources">
+      ? `<section class="one-page-support__card one-page-support__card--references" aria-label="References and resources">
           <h2>References</h2>
           <div class="one-page-support__content">${slide.resourcesHtml}</div>
         </section>`
       : "",
     slide.scriptHtml
-      ? `<section class="one-page-support__card" aria-label="Presentation script">
+      ? `<section class="one-page-support__card one-page-support__card--script" aria-label="Presentation script">
           <h2>Script</h2>
           <div class="one-page-support__content">${slide.scriptHtml}</div>
         </section>`
@@ -1326,6 +1326,14 @@ export function buildOnePageHtml({ title, cssText, themeStylesheetCss, renderedS
   const safeOnePageTheme = escapeHtmlAttr(metadata.theme || "default-high-contrast");
   const safeOnePageDeckStyle = escapeHtmlAttr(buildDeckStyleAttribute(metadata));
 
+  const presentationUrl = (metadata.presentationUrl || metadata.publishedUrl || "").trim();
+  const safePresUrl = escapeHtmlAttr(presentationUrl);
+  const footerHtml = presentationUrl
+    ? `<footer class="one-page-footer">
+      <p>Slides: <a href="${safePresUrl}">${safePresUrl}</a></p>
+    </footer>`
+    : "";
+
   return `<!doctype html>
 <html lang="${safeOnePageLang}" data-theme="${safeOnePageTheme}">
   <head>
@@ -1345,11 +1353,18 @@ export function buildOnePageHtml({ title, cssText, themeStylesheetCss, renderedS
     <nav class="snapshot-controls one-page-controls" aria-label="One-page view controls">
       <button type="button" data-action="save-html">Save HTML</button>
       <button type="button" data-action="print">Print / Save PDF</button>
-      <button type="button" data-action="toggle-layout" aria-pressed="false">4 per page</button>
+      <fieldset class="one-page-controls__fieldset">
+        <legend class="one-page-controls__legend">Slides per page</legend>
+        <label class="one-page-controls__radio"><input type="radio" name="slides-per-page" value="1" checked> 1</label>
+        <label class="one-page-controls__radio"><input type="radio" name="slides-per-page" value="4"> 4</label>
+      </fieldset>
+      <label class="one-page-controls__check"><input type="checkbox" id="one-page-show-notes" checked> Notes</label>
+      <label class="one-page-controls__check"><input type="checkbox" id="one-page-show-references" checked> References</label>
     </nav>
     <main class="presentation-shell" aria-label="All slides and supporting material">
       ${slidesMarkup}
     </main>
+    ${footerHtml}
     <script>
       async function renderMermaidBlocks(root = document) {
         const blocks = [...root.querySelectorAll(".mermaid:not([data-mermaid-rendered])")];
@@ -1401,18 +1416,26 @@ export function buildOnePageHtml({ title, cssText, themeStylesheetCss, renderedS
 
       document.querySelector('[data-action="save-html"]')?.addEventListener("click", saveHtmlDocument);
       document.querySelector('[data-action="print"]')?.addEventListener("click", () => window.print());
-      document.querySelector('[data-action="toggle-layout"]')?.addEventListener("click", function() {
-        const is4up = this.getAttribute("aria-pressed") === "true";
-        const next4up = !is4up;
-        this.setAttribute("aria-pressed", String(next4up));
-        this.textContent = next4up ? "1 per page" : "4 per page";
-        if (next4up) {
-          document.body.dataset.printLayout = "4up";
-          computeSlide4upScale();
-        } else {
-          delete document.body.dataset.printLayout;
-        }
+
+      document.querySelectorAll('input[name="slides-per-page"]').forEach(function(radio) {
+        radio.addEventListener("change", function() {
+          if (this.value === "4") {
+            document.body.dataset.printLayout = "4up";
+            computeSlide4upScale();
+          } else {
+            delete document.body.dataset.printLayout;
+          }
+        });
       });
+
+      document.getElementById("one-page-show-notes")?.addEventListener("change", function() {
+        document.body.classList.toggle("hide-notes", !this.checked);
+      });
+
+      document.getElementById("one-page-show-references")?.addEventListener("change", function() {
+        document.body.classList.toggle("hide-references", !this.checked);
+      });
+
       renderMermaidBlocks();
     </script>
   </body>

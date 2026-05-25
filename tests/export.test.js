@@ -210,10 +210,37 @@ test("buildOnePageHtml opens as a readable handout with save controls and suppor
   assert.equal(html.includes('aria-label="Slide 2"'), true);
   assert.equal(html.includes("Save HTML"), true);
   assert.equal(html.includes("Print / Save PDF"), true);
-  assert.equal(html.includes("4 per page"), true, "should include the 4-per-page layout toggle");
+  assert.equal(html.includes('name="slides-per-page"'), true, "should include the slides-per-page radio group");
+  assert.equal(html.includes('value="4"'), true, "should include the 4-per-page option");
+  assert.equal(html.includes("Slides per page"), true, "should include the slides per page legend");
+  assert.equal(html.includes("one-page-show-notes"), true, "should include notes checkbox");
+  assert.equal(html.includes("one-page-show-references"), true, "should include references checkbox");
+  assert.equal(html.includes("one-page-support__card--notes"), true, "notes card should have modifier class");
+  assert.equal(html.includes("one-page-support__card--references"), true, "references card should have modifier class");
   assert.equal(html.includes("Speaker notes"), true);
   assert.equal(html.includes("References"), true);
   assert.equal(html.includes("window.print()"), true);
+});
+
+test("buildOnePageHtml includes footer with presentation URL when provided", () => {
+  const html = buildOnePageHtml({
+    title: "Deck with URL",
+    cssText: "",
+    renderedSlides: [{ html: "<h1>Slide</h1>", kind: "content" }],
+    metadata: { presentationUrl: "https://ox.ca/p/6" },
+  });
+  assert.equal(html.includes("one-page-footer"), true, "should include footer element");
+  assert.equal(html.includes("ox.ca/p/6"), true, "should include the presentation URL in the footer");
+});
+
+test("buildOnePageHtml omits footer when no presentation URL", () => {
+  const html = buildOnePageHtml({
+    title: "Deck without URL",
+    cssText: "",
+    renderedSlides: [{ html: "<h1>Slide</h1>", kind: "content" }],
+    metadata: {},
+  });
+  assert.equal(html.includes("one-page-footer"), false, "should not include footer when no URL");
 });
 
 test("buildOdpPresentation creates an OpenDocument Presentation archive", () => {
