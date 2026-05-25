@@ -484,7 +484,7 @@ function renderSpecialDirective(block, state) {
       defaultHorizontal: "left",
       allowCenter: true,
     });
-    state.imageHeroTextPos = textPos;
+    state.imageHeroTextPos = textPos.replace(/^text-/, "");
     const logoPos = resolveHeroPosition(block.modifiers, {
       prefix: "logo",
       defaultVertical: "top",
