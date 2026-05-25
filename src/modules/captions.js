@@ -9,8 +9,8 @@ function isLocalLike(locationLike) {
 }
 
 function defaultLocalCaptionSource(locationLike) {
-  if (!locationLike?.href || !isLocalLike(locationLike)) return "";
-  return new URL("./whisper-demo/transcript.json", locationLike.href).toString();
+  // No server‑side transcript; rely on live STT or browser storage.
+  return "";
 }
 
 export function getCaptionConfig(metadata = {}, locationLike = globalThis.location) {

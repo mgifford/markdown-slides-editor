@@ -164,7 +164,7 @@ Columns work best when both sides stay balanced and readable.
 # Image with supporting text
 
 ::media-left
-![Photo of a presenter beside an audience-facing dashboard chart](https://dummyimage.com/520x360/cbe7f5/0b3d91.png&text=Visual+left)
+![Photo of a presenter beside an audience-facing dashboard chart](/src/images/55280259106_0a459f8306_k.jpg)
 ---
 Use media-left when you want the visual to lead and the explanation to wrap alongside it.
 
@@ -178,7 +178,7 @@ Use media-left when you want the visual to lead and the explanation to wrap alon
 # Image with supporting text (text-first)
 
 ::media-right
-![Screenshot placeholder showing a slide editor beside a preview](https://dummyimage.com/520x360/dae8f5/102542.png&text=Editor+preview)
+![Screenshot placeholder showing a slide editor beside a preview](/src/images/55280472939_dd369d4a6f_k.jpg)
 ---
 Use media layouts when a visual and a short explanation need to sit together on one slide.
 
@@ -192,7 +192,7 @@ Use media layouts when a visual and a short explanation need to sit together on 
 # Centered content
 
 ::center
-![Abstract blue and orange title graphic with accessible slides text](https://dummyimage.com/720x240/0b3d91/ffffff.png&text=Accessible+slides)
+![Abstract blue and orange title graphic with accessible slides text](/src/images/55279303272_9d354de7d0_k.jpg)
 ::
 
 ::center
@@ -204,7 +204,7 @@ A centered image or statement works well when you want a simple visual moment.
 # Image with title
 
 ::center
-![Wide panoramic photograph of a conference room with a projected slide on screen](https://dummyimage.com/1280x540/102542/dae8f5.png&text=Visual+with+title)
+![Wide panoramic photograph of a conference room with a projected slide on screen](/src/images/55288563529_02603f0ded_k.jpg)
 ::
 
 Note:
@@ -234,7 +234,7 @@ The next slides show the main hero-image variations directly in the starter deck
 ## Bottom-left overlay, hidden heading
 
 ::image-hero
-![Audience seated in a large room before an accessibility presentation begins](https://dummyimage.com/1280x720/102542/dae8f5.png&text=Default+hero)
+![Audience seated in a large room before an accessibility presentation begins](/src/images/55280251306_d54faa973b_k.jpg)
 ---
 Start with the room
 ::
@@ -248,7 +248,7 @@ This is the default hero-image layout: bottom-left overlay text, no logo, with t
 ## Add a logo in the opposite corner
 
 ::image-hero text-top-left logo-bottom-right pan-right saturation-120
-![Morning skyline behind a conference venue banner before the event begins](https://dummyimage.com/1280x720/0b3d91/ffffff.png&text=Top-left+hero)
+![Morning skyline behind a conference venue banner before the event begins](/src/images/55280473964_4ad1f14305_k.jpg)
 ---
 Open with context
 ---
@@ -264,7 +264,7 @@ This sample shows a top-left overlay and a bottom-right SVG logo.
 ## Swap the overlay and logo corners
 
 ::image-hero text-top-right logo-bottom-left blur-2px
-![People gathered around a poster wall during a conference break](https://dummyimage.com/1280x720/1b4965/ffffff.png&text=Top-right+hero)
+![People gathered around a poster wall during a conference break](/src/images/55279325267_3b9672eaa8_k.jpg)
 ---
 Show the evidence
 ---
@@ -280,7 +280,7 @@ Use this when the important part of the image needs to stay visible on the left 
 ## Keep the heading visible when needed
 
 ::image-hero text-bottom-right logo-top-left show-title show-subtitle
-![Stage view from the back of a room with attendees facing a projected slide](https://dummyimage.com/1280x720/3a506b/ffffff.png&text=Bottom-right+hero)
+![Stage view from the back of a room with attendees facing a projected slide](/src/images/55279327067_7f7c231bde_k.jpg)
 ---
 Make the title visible
 ---
@@ -296,11 +296,11 @@ This variant keeps both the slide title and subtitle visible while also placing 
 ## Center the message over the image
 
 ::image-hero text-center logo-top-right
-![Hands pointing at wireframes and design notes on a table](https://dummyimage.com/1280x720/5bc0be/102542.png&text=Centered+hero)
+![Hands pointing at wireframes and design notes on a table](/src/images/55273343196_125b0d99d7_4k.jpg)
 ---
 **Design** for trust
 ---
-<img src="https://dummyimage.com/160x56/ffffff/102542.png&text=Wordmark" alt="Example wordmark logo">
+<img src="/src/images/55288561759_6dd4156791_k.jpg" alt="Example wordmark logo">
 ::
 
 Note:
@@ -312,7 +312,7 @@ Centered overlay text is useful when the message should feel like a title card i
 ## Wait a moment for the full transition
 
 ::image-hero stay-2 transition-6 final-0.2 pan-up
-<img src="https://dummyimage.com/1280x720/0f4c5c/ffffff.png&text=Timed+hero" alt="Audience watching a keynote slide fade into a focused message">
+<img src="/src/images/55279327447_2f2bf3593f_k.jpg" alt="Audience watching a keynote slide fade into a focused message">
 ---
 See the idea land
 ::
@@ -326,7 +326,7 @@ Wait a second or two after the slide becomes active to see the reveal begin, the
 ## Full-bleed visual pause
 
 ::image-hero pan-left saturation-85
-![Wide photograph of a calm lake and mountains used as a visual pause between sections](https://dummyimage.com/1280x720/264653/ffffff.png&text=Image-only+hero)
+![Wide photograph of a calm lake and mountains used as a visual pause between sections](/src/images/55280251306_d54faa973b_k.jpg)
 ::
 
 Note:

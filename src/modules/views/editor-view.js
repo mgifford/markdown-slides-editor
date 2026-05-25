@@ -722,9 +722,11 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
 
     const slide = compiled.renderedSlides[activeSlideIndex] || compiled.renderedSlides[0];
     activeSlideIndex = slide?.index || 0;
+    const title = compiled.metadata.title || "Untitled deck";
+    const shortTitle = title.length > 20 ? title.slice(0,20) + "…" : title;
     deckMeta.textContent = compiled.renderedSlides.length
-      ? `${compiled.metadata.title || "Untitled deck"} · Slide ${activeSlideIndex + 1} of ${compiled.renderedSlides.length}`
-      : `${compiled.metadata.title || "Untitled deck"} · No slides`;
+      ? `${shortTitle} · Slide ${activeSlideIndex + 1} of ${compiled.renderedSlides.length}`
+      : `${shortTitle} · No slides`;
     const slideCount = compiled.renderedSlides.length;
     firstSlideButton.disabled = slideCount <= 1 || activeSlideIndex !== slideCount - 1;
     prevSlideButton.disabled = activeSlideIndex <= 0;

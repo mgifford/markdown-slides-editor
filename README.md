@@ -23,6 +23,11 @@ This is intended for real production presentations. It is not a training product
 - In-editor AI prompt generator for briefing Ollama or another LLM
 - Source import plus bundled ZIP export for Markdown, JSON, HTML, ODP, and MHTML
 - Portable HTML snapshot export
+- Print / Save PDF workflow with print‑friendly slide pages
+- Optional caption/transcript support: the app can use a local `whisper.cpp` process *or* a configured transcript service, but Whisper is **not bundled** and not a git sub‑module; it must be run separately by the user.
+- Built‑in theme presets plus optional external CSS override
+- Accessible light/dark mode that respects system preference and supports manual override
+- Portable HTML snapshot export
 - Print / Save PDF workflow with print-friendly slide pages
 - Optional caption/transcript support from local `whisper.cpp` or a configured transcript service
 - Built-in theme presets plus optional external CSS override

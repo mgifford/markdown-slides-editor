@@ -1201,6 +1201,11 @@ input:focus-visible {
 .slide-card--hero-text-bottom-left > .slide-card__content > h2:first-of-type { bottom: 5%; left: 5%; }
 .slide-card--hero-text-bottom-right > .slide-card__content > h1:first-of-type,
 .slide-card--hero-text-bottom-right > .slide-card__content > h2:first-of-type { bottom: 5%; right: 5%; }
+/* Adjust second heading offset for bottom positions */
+.slide-card--hero-text-bottom-left > .slide-card__content > h2:first-of-type { top: calc(5% + 2.5rem); left: 5%; }
+.slide-card--hero-text-bottom-right > .slide-card__content > h2:first-of-type { bottom: calc(5% + 2.5rem); right: 5%; }
+
+/* Existing center rule */
 .slide-card--hero-text-center > .slide-card__content > h1:first-of-type,
 .slide-card--hero-text-center > .slide-card__content > h2:first-of-type { top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
 
@@ -1321,7 +1326,7 @@ input:focus-visible {
 }
 
 .slide-card--image-hero.active .layout-image-hero .layout-image-hero__image {
-  opacity: var(--hero-opacity, var(--hero-final, 0.3));
+  opacity: var(--hero-opacity, var(--hero-final, 1));
   filter: blur(var(--hero-blur, 0px)) saturate(var(--hero-saturation, 1));
   transform: scale(1.05) translate(var(--hero-pan-x, 0%), var(--hero-pan-y, 0%));
 }
@@ -2574,6 +2579,14 @@ input:focus-visible {
     aspect-ratio: var(--slide-aspect-ratio) !important;
     min-height: 0 !important;
     overflow: hidden;
+  }
+
+  /* Ensure deck title in preview header truncates to a single line with ellipsis */
+  #deck-meta {
+    max-width: 20ch; /* approx 20 characters */
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   /* Scale content to fit the thumbnail: column = (100vw - gap) / 2 / native-slide-width */

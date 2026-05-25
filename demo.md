@@ -173,10 +173,10 @@ The next slides show the main hero-image variations directly in the starter deck
 ## Bottom-left overlay, hidden heading
 
 ::image-hero
-![Audience seated in a large room before an accessibility presentation begins](https://live.staticflickr.com/65535/55288475228_9853d1a60b_4k.jpg)
----
-Start with the room
-::
+![Audience seated in a large room before an accessibility presentation begins](./src/images/55280251306_d54faa973b_k.jpg)
+
+
+
 
 Note:
 This is the default hero-image layout: bottom-left overlay text, no logo, with the Markdown heading kept for navigation but hidden on screen.
