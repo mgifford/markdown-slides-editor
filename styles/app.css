@@ -2611,6 +2611,18 @@ input:focus-visible {
     page-break-inside: avoid;
   }
 
+  /* 1-per-page: restore slide aspect ratio so content is clipped to slide boundaries */
+  .one-page-body:not([data-print-layout="4up"]) .slide-card {
+    aspect-ratio: var(--slide-aspect-ratio) !important;
+    overflow: hidden !important;
+    min-height: 0 !important;
+  }
+
+  .one-page-body:not([data-print-layout="4up"]) .slide-card__content {
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
   .one-page-support {
     margin-top: 0.14in;
   }
