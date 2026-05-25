@@ -1002,6 +1002,11 @@ input:focus-visible {
   max-width: var(--column-basis);
 }
 
+.layout-columns__column--left,
+.layout-columns__column--right {
+  max-width: 50%;
+}
+
 .layout-media {
   display: grid;
   grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.2fr);
