@@ -151,6 +151,40 @@ test("createSpeechRecognitionSource disables on permission error", () => {
   delete globalThis.window;
 });
 
+test("createSpeechRecognitionSource disables on not-supported error", () => {
+  let instance = null;
+  function FakeSpeechRecognition() {
+    this.continuous = false;
+    this.interimResults = false;
+    this.onstart = null;
+    this.onresult = null;
+    this.onend = null;
+    this.onerror = null;
+    this._started = false;
+    this.start = () => {
+      this._started = true;
+      if (this.onstart) this.onstart();
+    };
+    this.stop = () => {
+      this._started = false;
+    };
+    instance = this;
+  }
+  globalThis.window = { SpeechRecognition: FakeSpeechRecognition };
+
+  const updates = [];
+  const source = createSpeechRecognitionSource((update) => updates.push(update));
+  source.start();
+
+  // Simulate the browser reporting the API as unsupported.
+  instance.onerror({ error: "not-supported" });
+  const lastUpdate = updates[updates.length - 1];
+  assert.equal(lastUpdate.active, false);
+  assert.equal(lastUpdate.error, "not-supported");
+
+  delete globalThis.window;
+});
+
 test("CAPTION_LANGUAGES contains BCP 47 tag, human label, and Whisper code", () => {
   assert.ok(Array.isArray(CAPTION_LANGUAGES), "CAPTION_LANGUAGES should be an array");
   assert.ok(CAPTION_LANGUAGES.length > 0, "CAPTION_LANGUAGES should not be empty");
