@@ -142,6 +142,7 @@ Quick reference:
 | `::quote` | Styled blockquote |
 | `::mermaid` | Inline Mermaid diagram |
 | `::svg` | SVG figure wrapper for scalable custom graphics |
+| `::slide-bg` | Inline SVG rendered as a background layer behind slide text |
 
 ### `::large` / `::small` — text size variants
 
@@ -313,6 +314,30 @@ Any combination of the three modifiers activates timed mode. They can be combine
 - Overlay text supports inline Markdown emphasis (for example `**keyword**`) so you can highlight only the words you want on screen.
 - Put the full argument, references, and context in `Note:` / `Resources:` so the offline export and presenter view carry the complete story.
 - The timed animation plays through once each time the slide becomes active. It does not loop and cannot be paused. Ensure your content is readable at the start and end states.
+
+### `::slide-bg` — SVG background layer
+
+Use `::slide-bg` to place an inline SVG behind all slide content. The SVG is absolutely positioned to fill the slide and is marked `aria-hidden` so screen readers skip it.
+
+```md
+# My slide heading
+
+Body text sits on top of the background.
+
+::slide-bg opacity-0.12
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="45" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+</svg>
+::
+```
+
+**Modifier:**
+
+- `opacity-N` — background opacity as a decimal between `0` and `1` (default `0.12`). Keep it low (0.08–0.20) so the background is noticeable but does not compete with the text.
+
+**Light/dark mode:** Use `fill="currentColor"` to inherit the current text colour, or reference design tokens directly in your SVG attributes (`fill="var(--ink)"`, `fill="var(--accent)"`, `fill="var(--accent-soft)"`, etc.). These tokens are already defined for both light and dark modes in the app stylesheet, so your background adapts automatically whenever the colour mode changes.
+
+**Accessibility note:** The background layer is `aria-hidden="true"`, so it is invisible to screen readers. Do not put meaningful content (such as text) inside it.
 
 ## Theming
 

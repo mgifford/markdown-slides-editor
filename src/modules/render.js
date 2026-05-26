@@ -172,6 +172,7 @@ export function renderDeck(deck) {
       imageHeroShowTitle: rendered.imageHeroShowTitle || false,
       imageHeroShowSubtitle: rendered.imageHeroShowSubtitle || false,
       imageHeroTextPos: rendered.imageHeroTextPos || "bottom-left",
+      hasSlideBg: rendered.hasSlideBg || false,
     };
   });
 
