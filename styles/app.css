@@ -1537,7 +1537,7 @@ input:focus-visible {
 }
 
 .title-slide--closing {
-  grid-template-columns: minmax(0, 1.8fr) minmax(180px, 260px);
+  grid-template-columns: minmax(0, 1.8fr) minmax(80px, 220px);
   align-items: center;
 }
 
@@ -2498,7 +2498,11 @@ input:focus-visible {
   }
 
   .title-slide--closing {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(80px, 140px);
+  }
+
+  .title-slide__qr img {
+    padding: 0.5rem;
   }
 }
 
