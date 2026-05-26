@@ -216,6 +216,18 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
               </button>
               <div id="layout-warning-tooltip" class="layout-warning__tooltip" role="tooltip" hidden></div>
             </div>
+            <div id="editorial-hints" class="editorial-hints" hidden>
+              <button type="button" id="editorial-hints-button" class="editorial-hints__button" aria-label="Editorial hints" title="Editorial hints" aria-haspopup="true" aria-expanded="false">
+                <svg viewBox="0 0 16 16" aria-hidden="true" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 2.5l2 2L5 13H3v-2L11.5 2.5z"/><line x1="9.5" y1="4.5" x2="11.5" y2="6.5"/></svg>
+              </button>
+              <div id="editorial-hints-panel" class="editorial-hints__panel" hidden>
+                <div class="editorial-hints__header">
+                  <p class="editorial-hints__title">Editorial hints</p>
+                  <button type="button" id="editorial-hints-dismiss" class="editorial-hints__dismiss">Dismiss</button>
+                </div>
+                <ul id="editorial-hints-list" class="editorial-hints__list"></ul>
+              </div>
+            </div>
             <div class="theme-menu">
               <button type="button" id="theme-menu-toggle" aria-label="Choose a Theme" title="Choose a Theme" aria-haspopup="true" aria-expanded="false">Theme</button>
               <div id="theme-menu-panel" class="theme-menu__panel" hidden>
@@ -270,6 +282,12 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
   const layoutWarning = frame.querySelector("#layout-warning");
   const layoutWarningButton = frame.querySelector("#layout-warning-button");
   const layoutWarningTooltip = frame.querySelector("#layout-warning-tooltip");
+  const editorialHintsContainer = frame.querySelector("#editorial-hints");
+  const editorialHintsButton = frame.querySelector("#editorial-hints-button");
+  const editorialHintsPanel = frame.querySelector("#editorial-hints-panel");
+  const editorialHintsList = frame.querySelector("#editorial-hints-list");
+  const editorialHintsDismissButton = frame.querySelector("#editorial-hints-dismiss");
+  let dismissedEditorialHintsKey = null;
   const outlineNode = frame.querySelector("#slide-outline");
   const themeMenuToggle = frame.querySelector("#theme-menu-toggle");
   const themeMenuPanel = frame.querySelector("#theme-menu-panel");
@@ -753,6 +771,18 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
       layoutWarningTooltip.textContent = "";
       hideLayoutWarningTooltip();
     }
+    const editorialIssues = compiled.issues.filter((issue) => issue.category === "editorial");
+    const currentEditorialKey = editorialIssues.map((i) => i.message).sort().join("|");
+    if (editorialIssues.length > 0 && currentEditorialKey !== dismissedEditorialHintsKey) {
+      editorialHintsContainer.hidden = false;
+      editorialHintsList.innerHTML = editorialIssues
+        .map((issue) => `<li>${escapeHtml(issue.message)}</li>`)
+        .join("");
+    } else {
+      editorialHintsContainer.hidden = true;
+      editorialHintsPanel.hidden = true;
+      editorialHintsButton.setAttribute("aria-expanded", "false");
+    }
     outlineNode.innerHTML = compiled.renderedSlides
       .map((renderedSlide, index) => {
         const currentClass = index === activeSlideIndex ? ' class="is-current"' : "";
@@ -907,6 +937,30 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
       hideLayoutWarningTooltip();
       layoutWarningButton.blur();
     }
+  });
+
+  editorialHintsButton.addEventListener("click", () => {
+    const isOpen = !editorialHintsPanel.hidden;
+    editorialHintsPanel.hidden = isOpen;
+    editorialHintsButton.setAttribute("aria-expanded", String(!isOpen));
+    if (!isOpen) editorialHintsDismissButton.focus();
+  });
+  editorialHintsButton.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      editorialHintsPanel.hidden = true;
+      editorialHintsButton.setAttribute("aria-expanded", "false");
+      editorialHintsButton.blur();
+    }
+  });
+  editorialHintsDismissButton.addEventListener("click", () => {
+    const currentKey = [...editorialHintsList.querySelectorAll("li")]
+      .map((li) => li.textContent)
+      .sort()
+      .join("|");
+    dismissedEditorialHintsKey = currentKey;
+    editorialHintsContainer.hidden = true;
+    editorialHintsPanel.hidden = true;
+    editorialHintsButton.setAttribute("aria-expanded", "false");
   });
 
   themeSelect.addEventListener("change", () => {
