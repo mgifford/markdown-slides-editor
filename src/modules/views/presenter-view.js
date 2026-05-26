@@ -203,7 +203,8 @@ export function createPresenterView(root, initialSource) {
   timerAutoStartToggle.innerHTML = `<input id="presenter-timer-autostart" type="checkbox" checked /> Auto-start after first slide`;
   frame.querySelector('[data-panel-id="timer"] .presenter-panel__body').append(timerAutoStartToggle);
   const timerAutoStartInput = timerAutoStartToggle.querySelector("input");
-  const openAudienceButton = createButton("Open Audience Window", "Open the audience presentation in a separate window or tab");
+  const openAudienceButton = createButton("Open Audience Window", "Open the audience presentation in a separate window");
+  let audienceWindow = null;
   const previousButton = createButton("<", "Previous Slide");
   previousButton.setAttribute("aria-label", "Previous Slide");
   const nextButton = createButton(">", "Next Slide");
@@ -501,7 +502,13 @@ export function createPresenterView(root, initialSource) {
     timerNode?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   });
   openAudienceButton.addEventListener("click", () => {
-    window.open(getAudiencePresentationUrl(), "markdown-slides-audience", "noopener,noreferrer");
+    const url = getAudiencePresentationUrl();
+    if (audienceWindow && !audienceWindow.closed) {
+      audienceWindow.location.href = url;
+      audienceWindow.focus();
+      return;
+    }
+    audienceWindow = window.open(url, "markdown-slides-audience", "width=1280,height=720");
   });
   zoomOutButton.addEventListener("click", () => updateZoom(-0.1));
   zoomResetButton.addEventListener("click", () => {
