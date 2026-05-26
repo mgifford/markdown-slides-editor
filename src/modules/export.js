@@ -1136,6 +1136,23 @@ export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, rendered
         });
       }
 
+      function updateHash() {
+        const slideNumber = activeIndex + 1;
+        const nextHash = revealStep > 0 ? \`#\${slideNumber}.\${revealStep}\` : \`#\${slideNumber}\`;
+        if (window.location.hash !== nextHash) {
+          history.replaceState(null, "", nextHash);
+        }
+      }
+
+      function applyHashPosition() {
+        const match = /^#(\\d+)(?:\\.(\\d+))?$/.exec(window.location.hash || "");
+        if (!match) return;
+        const slideNumber = parseInt(match[1], 10);
+        if (!isFinite(slideNumber) || slideNumber < 1) return;
+        activeIndex = Math.max(0, Math.min(slides.length - 1, slideNumber - 1));
+        revealStep = match[2] ? Math.max(0, parseInt(match[2], 10)) : 0;
+      }
+
       function render() {
         slides.forEach((slide, index) => {
           slide.classList.toggle("is-active", index === activeIndex);
@@ -1147,6 +1164,7 @@ export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, rendered
           }
         });
         status.textContent = \`\${activeIndex + 1} / \${slides.length} · \${revealStep} / \${Number(slides[activeIndex]?.dataset.stepCount || 0)} reveals\`;
+        updateHash();
       }
 
       function move(delta) {
@@ -1189,8 +1207,14 @@ export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, rendered
         }
       }, { passive: true });
 
+      window.addEventListener("hashchange", () => {
+        applyHashPosition();
+        render();
+      });
+
       window.addEventListener("resize", render);
 
+      applyHashPosition();
       render();
     </script>
   </body>
