@@ -544,6 +544,67 @@ test("buildNotesExportHtml omits supplemental section for slides without notes",
   assert.ok(mainContent.includes("Empty Slide"), "should still include slide content");
 });
 
+test("buildSnapshotHtml includes URL hash navigation: updateHash writes #N and #N.M, applyHashPosition reads them", () => {
+  const html = buildSnapshotHtml({
+    title: "Hash nav test",
+    cssText: "",
+    renderedSlides: [
+      { html: "<h1>Slide 1</h1>", stepCount: 0 },
+      { html: "<h1>Slide 2</h1>", stepCount: 2 },
+    ],
+    metadata: {},
+    source: "",
+  });
+
+  // updateHash should write #N for reveal-step 0 and #N.M for step > 0
+  assert.ok(
+    html.includes("history.replaceState"),
+    "snapshot should call history.replaceState to update the URL hash without a page reload",
+  );
+  assert.ok(
+    html.includes("window.location.hash"),
+    "snapshot should read window.location.hash to restore slide position from a direct link",
+  );
+  // Verify the hash format strings are present
+  assert.ok(
+    html.includes("#${slideNumber}.${revealStep}") || html.includes("`#${slideNumber}.${revealStep}`") || html.includes("`#\\${slideNumber}.\\${revealStep}`") || /`#\$\{slideNumber\}\.\$\{revealStep\}`/.test(html),
+    "snapshot should build a #N.M hash for slides with active reveal steps",
+  );
+  // hashchange listener must re-apply position so browser back/forward works
+  assert.ok(
+    html.includes("hashchange"),
+    "snapshot should listen for the hashchange event so the browser back button restores the correct slide",
+  );
+  // applyHashPosition and render must be called on page load so a direct link like #2.1 works
+  assert.ok(
+    html.includes("applyHashPosition()"),
+    "snapshot should call applyHashPosition() on page load to support direct links like index.html#2.1",
+  );
+});
+
+test("buildSnapshotHtml marks only the first slide as is-active in the initial HTML so CSS can hide the rest without JavaScript", () => {
+  const html = buildSnapshotHtml({
+    title: "Active slide test",
+    cssText: "",
+    renderedSlides: [
+      { html: "<h1>Slide 1</h1>", stepCount: 0 },
+      { html: "<h1>Slide 2</h1>", stepCount: 0 },
+      { html: "<h1>Slide 3</h1>", stepCount: 0 },
+    ],
+    metadata: {},
+    source: "",
+  });
+
+  // Exactly one section should have "is-active" in the initial markup
+  const isActiveCount = (html.match(/class="slide is-active"/g) || []).length;
+  assert.equal(isActiveCount, 1, "exactly one slide section should have is-active in the initial HTML");
+  // Remaining sections should NOT have is-active
+  assert.ok(
+    html.includes('class="slide is-active"'),
+    "the first slide should have the is-active class so CSS shows it before JavaScript runs",
+  );
+});
+
 test("buildNotesExportHtml only renders subsections that have content", () => {
   const html = buildNotesExportHtml({
     title: "Partial Notes",
