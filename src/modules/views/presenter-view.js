@@ -18,6 +18,7 @@ import {
   adjustPresenterTimerMinutes,
   createPresenterTimerState,
   formatPresenterTimerMinutes,
+  getPaceDeviation,
   getPaceIndicator,
   getPresenterTimerProgress,
   getPresenterTimerTone,
@@ -198,6 +199,7 @@ export function createPresenterView(root, initialSource) {
   const progressNode = frame.querySelector("#presenter-timer-progress");
   const slideProgressNode = frame.querySelector("#presenter-slide-progress");
   const paceNode = frame.querySelector("#presenter-pace-indicator");
+  const progressBarsNode = frame.querySelector(".presenter-progress-bars");
   const timerAutoStartToggle = document.createElement("label");
   timerAutoStartToggle.className = "timer-autostart-toggle";
   timerAutoStartToggle.innerHTML = `<input id="presenter-timer-autostart" type="checkbox" checked /> Auto-start after first slide`;
@@ -421,7 +423,7 @@ export function createPresenterView(root, initialSource) {
         ? `Ready on slide 1 · ${timerState.durationMinutes} min total`
         : `${timerState.paused ? "Paused" : "Time left"} · ${Math.ceil(timerState.remainingMs / 60000)} min of ${timerState.durationMinutes}`;
     pauseTimerButton.textContent = timerState.started ? (timerState.paused ? "Resume" : "Pause") : "Start";
-    progressNode.style.setProperty("--timer-progress", `${getPresenterTimerProgress(timerState) * 100}%`);
+    progressNode.style.setProperty("--timer-progress", `${(1 - getPresenterTimerProgress(timerState)) * 100}%`);
     progressNode.dataset.tone = timerTone;
     const slideCount = compiled.renderedSlides.length;
     const slideProgressPct = slideCount > 1 ? (activeSlideIndex / (slideCount - 1)) * 100 : 0;
@@ -436,6 +438,9 @@ export function createPresenterView(root, initialSource) {
     } else {
       paceNode.hidden = true;
     }
+    const paceDeviation = Math.abs(getPaceDeviation(timerState, activeSlideIndex, slideCount));
+    const extraPx = Math.min(4, Math.max(0, (paceDeviation - 0.2) / 0.2) * 4);
+    progressBarsNode.style.setProperty("--progress-bar-height", `${4 + extraPx}px`);
     timerStatusButton.textContent = `Timer: ${Math.ceil(timerState.remainingMs / 60000)}`;
     timerStatusButton.dataset.tone = timerTone;
     timerStatusButton.title =

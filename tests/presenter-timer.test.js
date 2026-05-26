@@ -4,6 +4,7 @@ import {
   adjustPresenterTimerMinutes,
   createPresenterTimerState,
   formatPresenterTimerMinutes,
+  getPaceDeviation,
   getPaceIndicator,
   getPresenterTimerProgress,
   getPresenterTimerTone,
@@ -126,4 +127,43 @@ test("getPaceIndicator returns null when pace difference is within threshold", (
   const started = setPresenterTimerPaused(base, false, 0);
   const running = { ...started, remainingMs: 30 * 60 * 1000 * 0.5 };
   assert.equal(getPaceIndicator(running, 5, 10), null);
+});
+
+test("getPaceDeviation returns 0 when timer not started", () => {
+  const state = createPresenterTimerState(30);
+  assert.equal(getPaceDeviation(state, 5, 10), 0);
+});
+
+test("getPaceDeviation returns 0 for single-slide decks", () => {
+  const state = setPresenterTimerPaused(createPresenterTimerState(30), false, 0);
+  assert.equal(getPaceDeviation(state, 0, 1), 0);
+});
+
+test("getPaceDeviation returns positive value when ahead of schedule", () => {
+  // 70% through slides (slide 7 of 10), only 30% of time elapsed (70% remaining)
+  const base = createPresenterTimerState(30);
+  const started = setPresenterTimerPaused(base, false, 0);
+  const running = { ...started, remainingMs: 30 * 60 * 1000 * 0.7 };
+  // slideProgress = 7/9 ≈ 0.778, timeElapsedRatio = 0.3, deviation ≈ 0.478
+  const deviation = getPaceDeviation(running, 7, 10);
+  assert.ok(deviation > 0.2, `expected deviation > 0.2, got ${deviation}`);
+});
+
+test("getPaceDeviation returns negative value when behind schedule", () => {
+  // 10% through slides (slide 1 of 10), 70% of time elapsed (30% remaining)
+  const base = createPresenterTimerState(30);
+  const started = setPresenterTimerPaused(base, false, 0);
+  const running = { ...started, remainingMs: 30 * 60 * 1000 * 0.3 };
+  // slideProgress = 1/9 ≈ 0.111, timeElapsedRatio = 0.7, deviation ≈ -0.589
+  const deviation = getPaceDeviation(running, 1, 10);
+  assert.ok(deviation < -0.2, `expected deviation < -0.2, got ${deviation}`);
+});
+
+test("getPaceDeviation returns near zero when on schedule", () => {
+  // 50% through slides (slide 4 of 9 → 4/8 = 0.5), 50% of time elapsed
+  const base = createPresenterTimerState(30);
+  const started = setPresenterTimerPaused(base, false, 0);
+  const running = { ...started, remainingMs: 30 * 60 * 1000 * 0.5 };
+  const deviation = getPaceDeviation(running, 4, 9);
+  assert.ok(Math.abs(deviation) < 0.05, `expected near-zero deviation, got ${deviation}`);
 });
