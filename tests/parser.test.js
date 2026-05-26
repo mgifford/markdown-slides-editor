@@ -1836,3 +1836,85 @@ Timed text
   assert.ok(rendered.html.includes("--hero-opacity:0.25"), "has correct opacity with <img> syntax");
   assert.ok(rendered.html.includes("--hero-final:0.25"), "has correct final opacity with <img> syntax");
 });
+
+test("renderMarkdown slide-bg directive renders aria-hidden SVG background div", () => {
+  const rendered = renderMarkdown(`
+# Slide
+
+Body text.
+
+::slide-bg
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="45" fill="var(--accent-soft)"/>
+</svg>
+::
+`);
+  assert.ok(rendered.html.includes('class="slide-bg-svg"'), "has slide-bg-svg class");
+  assert.ok(rendered.html.includes('aria-hidden="true"'), "background is aria-hidden");
+  assert.ok(rendered.html.includes("--slide-bg-opacity:0.12"), "default opacity CSS var");
+  assert.ok(rendered.html.includes("<svg"), "contains SVG markup");
+  assert.ok(rendered.html.includes("<circle"), "contains SVG circle element");
+  assert.equal(rendered.hasSlideBg, true, "hasSlideBg flag is set");
+});
+
+test("renderMarkdown slide-bg directive respects opacity modifier", () => {
+  const rendered = renderMarkdown(`
+::slide-bg opacity-0.25
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" fill="var(--ink)"/>
+</svg>
+::
+`);
+  assert.ok(rendered.html.includes("--slide-bg-opacity:0.25"), "custom opacity value applied");
+});
+
+test("renderMarkdown slide-bg opacity is clamped to 0–1", () => {
+  const high = renderMarkdown(`
+::slide-bg opacity-5
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100"/></svg>
+::
+`);
+  assert.ok(high.html.includes("--slide-bg-opacity:1"), "opacity clamped to 1");
+
+  const low = renderMarkdown(`
+::slide-bg opacity--0.5
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100"/></svg>
+::
+`);
+  assert.ok(low.html.includes("--slide-bg-opacity:0.12"), "negative opacity falls back to default");
+});
+
+test("renderMarkdown slide-bg sanitizes SVG scripts and event handlers", () => {
+  const rendered = renderMarkdown(`
+::slide-bg
+<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script><rect onclick="alert(2)" width="10" height="10"/></svg>
+::
+`);
+  assert.ok(!rendered.html.includes("<script"), "script tag removed from SVG background");
+  assert.ok(!rendered.html.includes("onclick"), "event handler removed from SVG background");
+});
+
+test("renderMarkdown slide-bg without valid SVG returns null (no output)", () => {
+  const rendered = renderMarkdown(`
+::slide-bg
+Not an SVG block.
+::
+`);
+  assert.ok(!rendered.html.includes("slide-bg-svg"), "no slide-bg-svg rendered without SVG content");
+});
+
+test("renderDeck propagates hasSlideBg to rendered slide", () => {
+  const source = `---
+title: Test
+---
+
+# Slide
+
+::slide-bg
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/></svg>
+::
+`;
+  const deck = parseSource(source);
+  const result = renderDeck(deck);
+  assert.equal(result.renderedSlides[0].hasSlideBg, true, "hasSlideBg propagated by renderDeck");
+});

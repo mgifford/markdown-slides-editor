@@ -467,6 +467,26 @@ function renderSpecialDirective(block, state) {
     return `<div class="layout-step${progressiveClass}">${renderLines(block.content, state)}</div>`;
   }
 
+  if (block.directive === "slide-bg") {
+    if (isProgressive) state.stepCount += 1;
+    state.hasSlideBg = true;
+
+    let opacity = 0.12;
+    for (const mod of block.modifiers) {
+      const opacityMatch = /^opacity-(\d+(?:\.\d+)?)$/.exec(mod);
+      if (opacityMatch) {
+        opacity = Math.min(1, Math.max(0, parseFloat(opacityMatch[1])));
+      }
+    }
+
+    const svgLines = block.content.filter((l) => l.trim());
+    const rawSvg = svgLines.length > 0 ? collectInlineSvgBlock(svgLines, 0) : null;
+    if (!rawSvg) return null;
+
+    const safeSvg = sanitizeSvgMarkup(rawSvg.markup);
+    return `<div class="slide-bg-svg${progressiveClass}" aria-hidden="true" style="--slide-bg-opacity:${opacity}">${safeSvg}</div>`;
+  }
+
   if (block.directive === "image-hero") {
     if (isProgressive) state.stepCount += 1;
     state.hasImageHero = true;
@@ -751,6 +771,7 @@ export function renderMarkdown(markdown) {
     imageHeroShowTitle: false,
     imageHeroShowSubtitle: false,
     imageHeroTextPos: "bottom-left",
+    hasSlideBg: false,
   };
 
   return {
@@ -762,5 +783,6 @@ export function renderMarkdown(markdown) {
     imageHeroShowTitle: state.imageHeroShowTitle,
     imageHeroShowSubtitle: state.imageHeroShowSubtitle,
     imageHeroTextPos: state.imageHeroTextPos,
+    hasSlideBg: state.hasSlideBg,
   };
 }
