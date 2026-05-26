@@ -77,11 +77,16 @@ export function getPresenterTimerTone(timerState) {
   return "safe";
 }
 
-export function getPaceIndicator(timerState, slideIndex, slideCount) {
-  if (!timerState.started || slideCount <= 1) return null;
+export function getPaceDeviation(timerState, slideIndex, slideCount) {
+  if (!timerState.started || slideCount <= 1) return 0;
   const timeElapsedRatio = 1 - getPresenterTimerProgress(timerState);
   const slideProgress = slideIndex / (slideCount - 1);
-  const pace = slideProgress - timeElapsedRatio;
+  return slideProgress - timeElapsedRatio;
+}
+
+export function getPaceIndicator(timerState, slideIndex, slideCount) {
+  const pace = getPaceDeviation(timerState, slideIndex, slideCount);
+  if (!timerState.started || slideCount <= 1) return null;
   if (pace > 0.2) return "rabbit";
   if (pace < -0.2) return "turtle";
   return null;
