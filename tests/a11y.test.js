@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { assessSlideDensity, lintDeck } from "../src/modules/a11y.js";
+import { assessSlideDensity, lintDeck, lintEditorialHints } from "../src/modules/a11y.js";
 
 test("assessSlideDensity marks moderate slides as full before they become dense", () => {
   const density = assessSlideDensity({
@@ -102,4 +102,120 @@ test("lintDeck includes the slide number in each issue", () => {
     assert.equal(typeof issue.slide, "number");
     assert.equal(issue.slide, 1);
   }
+});
+
+// ── Editorial hints ────────────────────────────────────────────────────────────
+
+test("lintEditorialHints warns about 'and' when warnSpelledOutAnd is true", () => {
+  const deck = {
+    metadata: { warnSpelledOutAnd: true },
+    slides: [{ body: "# Ethics and Technology\n\nSomething and something else." }],
+  };
+  const renderedSlides = [{ headings: [{ level: 1, text: "Ethics and Technology" }] }];
+  const issues = lintEditorialHints(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.category === "editorial" && i.message.includes('"and"')), true);
+});
+
+test("lintEditorialHints does not warn about 'and' when warnSpelledOutAnd is not set", () => {
+  const deck = {
+    metadata: {},
+    slides: [{ body: "# Ethics and Technology\n\nSomething and something else." }],
+  };
+  const renderedSlides = [{ headings: [{ level: 1, text: "Ethics and Technology" }] }];
+  const issues = lintEditorialHints(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.category === "editorial" && i.message.includes('"and"')), false);
+});
+
+test("lintEditorialHints does not warn about 'and' when editorialHints is false", () => {
+  const deck = {
+    metadata: { editorialHints: false, warnSpelledOutAnd: true },
+    slides: [{ body: "# Ethics and Technology" }],
+  };
+  const renderedSlides = [{ headings: [{ level: 1, text: "Ethics and Technology" }] }];
+  const issues = lintEditorialHints(deck, renderedSlides);
+  assert.equal(issues.length, 0);
+});
+
+test("lintEditorialHints warns when an H1 heading is longer than 45 characters", () => {
+  const longTitle = "A Very Long Heading That Exceeds The Recommended Limit";
+  const deck = { metadata: {}, slides: [{ body: "" }] };
+  const renderedSlides = [{ headings: [{ level: 1, text: longTitle }] }];
+  const issues = lintEditorialHints(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.category === "editorial" && i.message.includes("H1 heading")), true);
+});
+
+test("lintEditorialHints does not warn about a short H1 heading", () => {
+  const deck = { metadata: {}, slides: [{ body: "" }] };
+  const renderedSlides = [{ headings: [{ level: 1, text: "Short title" }] }];
+  const issues = lintEditorialHints(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.category === "editorial" && i.message.includes("H1 heading")), false);
+});
+
+test("lintEditorialHints does not warn about long headings when warnLongHeadings is false", () => {
+  const longTitle = "A Very Long Heading That Exceeds The Recommended Limit For Presentations";
+  const deck = { metadata: { warnLongHeadings: false }, slides: [{ body: "" }] };
+  const renderedSlides = [{ headings: [{ level: 1, text: longTitle }] }];
+  const issues = lintEditorialHints(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.category === "editorial" && i.message.includes("heading")), false);
+});
+
+test("lintEditorialHints warns when bullet punctuation is inconsistent", () => {
+  const deck = {
+    metadata: {},
+    slides: [{ body: "# Title\n\n- Point one.\n- Point two\n- Point three." }],
+  };
+  const renderedSlides = [{ headings: [{ level: 1, text: "Title" }] }];
+  const issues = lintEditorialHints(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.category === "editorial" && i.message.includes("bullet punctuation")), true);
+});
+
+test("lintEditorialHints does not warn when all bullets end with periods", () => {
+  const deck = {
+    metadata: {},
+    slides: [{ body: "# Title\n\n- Point one.\n- Point two.\n- Point three." }],
+  };
+  const renderedSlides = [{ headings: [{ level: 1, text: "Title" }] }];
+  const issues = lintEditorialHints(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.category === "editorial" && i.message.includes("bullet punctuation")), false);
+});
+
+test("lintEditorialHints does not warn when no bullets end with periods", () => {
+  const deck = {
+    metadata: {},
+    slides: [{ body: "# Title\n\n- Point one\n- Point two\n- Point three" }],
+  };
+  const renderedSlides = [{ headings: [{ level: 1, text: "Title" }] }];
+  const issues = lintEditorialHints(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.category === "editorial" && i.message.includes("bullet punctuation")), false);
+});
+
+test("lintEditorialHints does not warn about bullet punctuation when warnBulletPunctuation is false", () => {
+  const deck = {
+    metadata: { warnBulletPunctuation: false },
+    slides: [{ body: "# Title\n\n- Point one.\n- Point two\n- Point three." }],
+  };
+  const renderedSlides = [{ headings: [{ level: 1, text: "Title" }] }];
+  const issues = lintEditorialHints(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.category === "editorial" && i.message.includes("bullet punctuation")), false);
+});
+
+test("lintEditorialHints skips slides with fewer than 2 bullets for punctuation check", () => {
+  const deck = {
+    metadata: {},
+    slides: [{ body: "# Title\n\n- Only one bullet." }],
+  };
+  const renderedSlides = [{ headings: [{ level: 1, text: "Title" }] }];
+  const issues = lintEditorialHints(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.category === "editorial" && i.message.includes("bullet punctuation")), false);
+});
+
+test("lintDeck includes editorial hints in its results", () => {
+  const longTitle = "A Very Long Heading That Exceeds The Recommended Limit For H1";
+  const deck = {
+    metadata: {},
+    slides: [{ body: `# ${longTitle}`, notes: "Notes" }],
+  };
+  const renderedSlides = [{ headings: [{ level: 1, text: longTitle }], html: `<h1>${longTitle}</h1>` }];
+  const issues = lintDeck(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.category === "editorial"), true);
 });

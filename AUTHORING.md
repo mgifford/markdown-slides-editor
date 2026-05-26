@@ -88,6 +88,10 @@ Optional full script text can go here for delivery support or to share with atte
 | `contactUrl` | Shown on the closing slide |
 | `socialLinks` | Semicolon-separated social handles shown on the closing slide |
 | `presentationUrl` / `publishedUrl` | Published deck URL; used for the closing-slide QR code |
+| `editorialHints` | `false` to silence all editorial hints in the editor |
+| `warnSpelledOutAnd` | `true` to show a hint when "and" appears in slide copy (opt-in) |
+| `warnLongHeadings` | `false` to suppress hints about H1/H2 headings that may wrap (opt-out) |
+| `warnBulletPunctuation` | `false` to suppress hints about inconsistent bullet punctuation (opt-out) |
 
 ### Speaker support sections
 
@@ -436,6 +440,30 @@ The editor and presenter interfaces support accessible light and dark modes.
 - A manual toggle is available in the editor and presenter headers.
 - The selected mode is saved locally in the browser.
 - Audience view respects the saved choice and supports `D` as a keyboard toggle.
+
+## Editorial hints
+
+The editor surfaces lightweight per-slide reminders when it detects common style inconsistencies. These hints are visible only in the editor; they never appear in audience or presenter views.
+
+A small pencil icon appears in the preview header when there are active hints. Clicking it opens a panel listing all hints. The **Dismiss** button hides the panel and suppresses those hints until the content changes.
+
+### Available hints
+
+| Hint | Default | Disable via front matter |
+|---|---|---|
+| **Long headings** — H1 or H2 text that may wrap to a second line | On | `warnLongHeadings: false` |
+| **Inconsistent bullet punctuation** — some bullets end with a period and some don't | On | `warnBulletPunctuation: false` |
+| **Spelled-out "and"** — "and" used where "&" might be preferred in a visual slide | Off | Enable with `warnSpelledOutAnd: true` |
+
+To turn off all editorial hints at once, add `editorialHints: false` to front matter.
+
+```md
+---
+title: My Presentation
+warnSpelledOutAnd: true
+warnBulletPunctuation: false
+---
+```
 
 ## Presenter view
 
