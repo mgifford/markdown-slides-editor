@@ -63,6 +63,15 @@ Optional full script text can go here for delivery support or to share with atte
 | `durationMinutes` | Presentation length used by the countdown timer |
 | `slideWidth` / `slideHeight` | Fixed presentation surface size (default 1280×720) |
 | `themeStylesheet` | URL of an external CSS stylesheet loaded after the built-in theme |
+| `colorAccent` / `colorAccentLight` / `colorAccentDark` | Accent color override (all modes / light / dark) |
+| `colorCanvas` / `colorCanvasLight` / `colorCanvasDark` | Background color override |
+| `colorCard` / `colorCardLight` / `colorCardDark` | Card/panel background override |
+| `colorCardStrong` / `colorCardStrongLight` / `colorCardStrongDark` | Elevated card background override |
+| `colorCardSoft` / `colorCardSoftLight` / `colorCardSoftDark` | Subdued card background override |
+| `colorInk` / `colorInkLight` / `colorInkDark` | Body text color override |
+| `colorMuted` / `colorMutedLight` / `colorMutedDark` | Muted text color override |
+| `colorH1` / `colorH1Light` / `colorH1Dark` | Slide H1 heading color override |
+| `colorH2` / `colorH2Light` / `colorH2Dark` | Slide H2 heading color override |
 | `captionsProvider` | Caption source type (`whisper.cpp` or `service`) |
 | `captionsSource` | URL of the transcript JSON endpoint |
 | `titleSlide` | `true` to generate an opening title slide from front matter fields |
@@ -366,6 +375,58 @@ theme: default-high-contrast
 themeStylesheet: https://mgifford.github.io/markdown-slides-editor/styles/civicactions-ox.css
 ---
 ```
+
+### Per-deck color overrides
+
+You can override specific color tokens directly in front matter without writing a custom stylesheet. Each token supports three variants:
+
+| Variant | When it applies |
+|---|---|
+| `colorAccent: …` | Both light and dark modes |
+| `colorAccentLight: …` | Light mode only |
+| `colorAccentDark: …` | Dark mode only |
+
+**Available tokens:**
+
+| Front matter key | CSS role |
+|---|---|
+| `colorAccent` | Primary accent color (interactive elements, highlights) |
+| `colorCanvas` | Page and slide background |
+| `colorCard` | Card and panel background |
+| `colorCardStrong` | Elevated card background |
+| `colorCardSoft` | Subdued card background |
+| `colorInk` | Body text |
+| `colorMuted` | Secondary / muted text |
+| `colorH1` | Slide H1 heading color |
+| `colorH2` | Slide H2 heading color |
+
+Accepted value formats: hex (`#d83933`), named colors (`white`), `rgb()`, `rgba()`, `hsl()`, `hsla()`, `oklch()`. Values containing `;`, `{`, `}`, or `<` are rejected for security.
+
+**Example — organization brand colors with full light/dark support:**
+
+```md
+---
+title: My Presentation
+colorH1Light: "#162e51"
+colorH1Dark: "#91d5ff"
+colorH2Light: "#4a4a4a"
+colorH2Dark: "#b0c4de"
+colorAccentLight: "#d83933"
+colorAccentDark: "#f4908a"
+---
+```
+
+**Example — single accent color for both modes:**
+
+```md
+---
+title: My Presentation
+colorAccent: "#d83933"
+colorH1: "#162e51"
+---
+```
+
+**Accessibility note:** When overriding colors you are responsible for maintaining sufficient contrast between foreground and background values. Test combinations with a tool such as the [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/). The WCAG 2.2 AA minimum is 4.5:1 for normal text and 3:1 for large text. Consider testing both light and dark mode values before sharing a deck.
 
 ## Color mode
 
