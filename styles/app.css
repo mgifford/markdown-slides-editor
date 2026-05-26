@@ -1432,6 +1432,11 @@ input:focus-visible {
   display: contents;
 }
 
+/* display:contents overrides the UA [hidden] rule; restore it explicitly */
+.layout-step[hidden] {
+  display: none;
+}
+
 .slide-card--title {
   display: grid;
   align-items: center;

@@ -1110,6 +1110,10 @@ export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, rendered
           content.insertBefore(body, anchor ? anchor.nextSibling : content.firstChild);
           children.forEach((child) => body.append(child));
         }
+        // Temporarily reveal all progressive items so the scale is sized for the
+        // fully-revealed slide, preventing overflow on the last reveal step.
+        const hiddenNextItems = [...content.querySelectorAll(".next")].filter((el) => el.hidden);
+        hiddenNextItems.forEach((el) => { el.hidden = false; });
         const scale = calculateBodyScale((nextScale) => {
           body.style.setProperty("--slide-body-scale", nextScale);
           return {
@@ -1117,6 +1121,7 @@ export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, rendered
             fillRatio: content.scrollHeight / Math.max(1, content.clientHeight),
           };
         });
+        hiddenNextItems.forEach((el) => { el.hidden = true; });
         body.style.setProperty("--slide-body-scale", scale);
       }
 
