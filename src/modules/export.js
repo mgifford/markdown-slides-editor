@@ -1,4 +1,4 @@
-import { buildDeckStyleAttribute, buildThemeLinkTag } from "./theme.js";
+import { buildDeckStyleAttribute, buildThemeLinkTag, buildDeckColorStyle } from "./theme.js";
 import { stripProtocol } from "./utils.js";
 
 const textEncoder = new TextEncoder();
@@ -834,6 +834,7 @@ export function buildOnePageHtml({ title, cssText, themeStylesheetCss, renderedS
     <title>${title}</title>
     ${buildThemeHeadTag(themeStylesheetCss, metadata)}
     <style>${escapeStyleText(cssText)}</style>
+    ${buildDeckColorStyle(metadata) ? `<style>${escapeStyleText(buildDeckColorStyle(metadata))}</style>` : ""}
     <style>
       .one-page-body .slide {
         display: grid !important;
@@ -973,6 +974,7 @@ export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, rendered
     <title>${title}</title>
     ${buildThemeHeadTag(themeStylesheetCss, metadata)}
     <style>${escapeStyleText(cssText)}</style>
+    ${buildDeckColorStyle(metadata) ? `<style>${escapeStyleText(buildDeckColorStyle(metadata))}</style>` : ""}
     <style>
       .snapshot-viewer .slide__content {
         overflow: hidden;

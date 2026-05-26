@@ -24,9 +24,9 @@
   --hero-overlay-bg: rgba(0, 0, 0, 0.7);
   --hero-overlay-color: #fff;
   --hero-overlay-text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  --slide-h1-color: inherit;
+  --slide-h2-color: inherit;
 }
-
-:root[data-theme="paper-warm"] {
   --accent: #9a4c1d;
   --accent-soft: #f6dbc8;
   --font-display: "Georgia", "Times New Roman", serif;
@@ -1536,11 +1536,13 @@ input:focus-visible {
   font-size: clamp(2rem, 4vw, 3.5rem);
   margin-top: 0;
   margin-bottom: 1rem;
+  color: var(--slide-h1-color);
 }
 
 .slide-card h2 {
   font-size: clamp(1.75rem, 3.5vw, 2.8rem);
   margin-bottom: 0.75rem;
+  color: var(--slide-h2-color);
 }
 
 .slide-card h1:has(+ h2) {
