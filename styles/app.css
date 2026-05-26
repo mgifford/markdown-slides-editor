@@ -1028,6 +1028,16 @@ input:focus-visible {
   max-width: 50%;
 }
 
+/* Prevent text reflow in the visible column when a sibling column is
+   hidden by an on-click reveal. Keeping the hidden column as visibility:hidden
+   rather than display:none preserves its space in the flex layout so
+   line-breaks do not change when the column is revealed. */
+.slide-card .layout-columns .layout-columns__column.next[hidden] {
+  display: block;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .layout-media {
   display: grid;
   grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.2fr);
@@ -2291,6 +2301,11 @@ input:focus-visible {
 
 .one-page-body span.next[hidden] {
   display: inline !important;
+}
+
+/* Restore full visibility for hidden on-click columns in one-page view */
+.one-page-body .layout-columns .layout-columns__column.next[hidden] {
+  visibility: visible;
 }
 
 .one-page-body li.next.active,

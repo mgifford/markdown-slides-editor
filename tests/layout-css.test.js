@@ -68,3 +68,40 @@ test("column-left and column-right with explicit width override the 50% cap", ()
     ".layout-columns__column[style] should set max-width to var(--column-basis) for explicit widths",
   );
 });
+
+test("on-click hidden column uses visibility:hidden not display:none to prevent layout shift", () => {
+  const css = readFileSync(new URL("../styles/app.css", import.meta.url), "utf8");
+
+  // The rule must set display:block (to override the UA [hidden] rule)
+  // and visibility:hidden so the column still occupies flex space.
+  const ruleMatch = css.match(
+    /\.slide-card\s+\.layout-columns\s+\.layout-columns__column\.next\[hidden\][\s\S]*?\{([\s\S]*?)\}/,
+  );
+  assert.ok(
+    ruleMatch,
+    "CSS should include a rule for .slide-card .layout-columns .layout-columns__column.next[hidden]",
+  );
+
+  const ruleBody = ruleMatch[1];
+  assert.ok(
+    /display\s*:\s*block/.test(ruleBody),
+    "hidden on-click column should set display:block to override UA [hidden] rule",
+  );
+  assert.ok(
+    /visibility\s*:\s*hidden/.test(ruleBody),
+    "hidden on-click column should use visibility:hidden so the column still occupies flex space and the sibling column does not reflow",
+  );
+
+  // One-page view must restore full visibility for those same elements
+  const onePageMatch = css.match(
+    /\.one-page-body\s+\.layout-columns\s+\.layout-columns__column\.next\[hidden\][\s\S]*?\{([\s\S]*?)\}/,
+  );
+  assert.ok(
+    onePageMatch,
+    "CSS should include a one-page-body rule that restores visibility for hidden on-click columns",
+  );
+  assert.ok(
+    /visibility\s*:\s*visible/.test(onePageMatch[1]),
+    "one-page-body rule should restore visibility:visible for hidden on-click columns",
+  );
+});
