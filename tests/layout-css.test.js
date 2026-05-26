@@ -105,3 +105,46 @@ test("on-click hidden column uses visibility:hidden not display:none to prevent 
     "one-page-body rule should restore visibility:visible for hidden on-click columns",
   );
 });
+
+test("h1+h2 heading pair uses min-height and margin-bottom to keep the subtitle block at a fixed size", () => {
+  const css = readFileSync(new URL("../styles/app.css", import.meta.url), "utf8");
+
+  // Find the .slide-card h1 + h2 rule
+  const h1h2Match = css.match(/\.slide-card\s+h1\s*\+\s*h2\s*\{([\s\S]*?)\}/);
+  assert.ok(
+    h1h2Match,
+    "CSS should include a .slide-card h1 + h2 rule for heading-pair layout",
+  );
+
+  const ruleBody = h1h2Match[1];
+  assert.ok(
+    /min-height/.test(ruleBody),
+    ".slide-card h1 + h2 should set min-height to reserve consistent space for the subtitle " +
+    "so the body content start-position does not shift when navigating between slides",
+  );
+  assert.ok(
+    /margin-bottom/.test(ruleBody),
+    ".slide-card h1 + h2 should set margin-bottom to create a consistent gap before body content",
+  );
+});
+
+test("slide body is top-aligned when h1+h2 are present at the slide content level", () => {
+  const css = readFileSync(new URL("../styles/app.css", import.meta.url), "utf8");
+
+  // The selector anchors body content to the top when H1 and H2 are slide-level headings,
+  // preventing the body from floating at different vertical positions on different slides.
+  const anchorRuleMatch = css.match(
+    /\.slide-card__content\s*>\s*h1\s*\+\s*h2\s*\+\s*\.slide-card__body\s*\{([\s\S]*?)\}/,
+  );
+  assert.ok(
+    anchorRuleMatch,
+    "CSS should include a rule for .slide-card__content > h1 + h2 + .slide-card__body to anchor body below headings",
+  );
+
+  const ruleBody = anchorRuleMatch[1];
+  assert.ok(
+    /justify-content\s*:\s*flex-start/.test(ruleBody),
+    ".slide-card__content > h1 + h2 + .slide-card__body should use justify-content:flex-start " +
+    "so body content anchors below the heading block instead of floating in the center",
+  );
+});

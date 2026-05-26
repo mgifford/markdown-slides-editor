@@ -901,6 +901,16 @@ input:focus-visible {
   font-size: calc(1em * var(--slide-body-scale, 1));
 }
 
+/* When a slide has both H1 and H2 at the top of the content area, anchor the
+   body to the top of the remaining space so columns and other elements sit
+   immediately below the headings.  Without this, justify-content:center would
+   shift body content (and any H2 inside it) up or down as content height
+   changes — which is visually distracting when navigating slides or revealing
+   a column on-click. */
+.slide-card__content > h1 + h2 + .slide-card__body {
+  justify-content: flex-start;
+}
+
 .slide-card__body p,
 .slide-card__body li,
 .slide-card__body blockquote {
@@ -1631,7 +1641,14 @@ input:focus-visible {
 
 .slide-card h1 + h2 {
   margin-top: 0;
-  margin-bottom: 0;
+  /* Reserve two full lines of H2 height so the body content start-position stays
+     the same across slides regardless of whether the subtitle wraps to one or two
+     lines.  Short subtitles sit inside the reserved block; two-line subtitles fill
+     it exactly.  This prevents the distracting layout shift audiences see when
+     navigating between slides where H2 varies in height. */
+  min-height: calc(1.45em * 2);
+  /* Provide a consistent gap below the heading block before body content begins. */
+  margin-bottom: 0.75rem;
 }
 
 .slide-card h3 {
