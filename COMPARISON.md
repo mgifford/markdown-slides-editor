@@ -9,13 +9,13 @@ This document compares `markdown-slides-editor` with the most widely-used Markdo
 | Tool | Primary model | Requires install | Browser editor | Export formats | Stars (approx.) | License |
 |------|--------------|-----------------|----------------|----------------|-----------------|---------|
 | [markdown-slides-editor](https://github.com/mgifford/markdown-slides-editor) | Static web app | ❌ | ✅ Full live editor | HTML, PDF, ODP, ZIP | — | AGPLv3 |
-| [Marp CLI / core](https://marp.app/) | CLI conversion pipeline | ✅ Node.js / npx | ❌ (VS Code ext adds preview) | HTML, PDF, PPTX, images | ~14 k | MIT |
+| [Marp CLI / core](https://marp.app/) | CLI conversion pipeline | ✅ Node.js / npx | ❌ (VS Code ext adds preview) | HTML, PDF, PPTX, images | ~14k | MIT |
 | [Marp.live](https://marp.live/) | Browser live editor for Marp | ❌ | ✅ Editor + preview | (browser-only; exports via clipboard/download) | — | MIT |
-| [Slidev](https://sli.dev/) | Dev-server + Vue | ✅ Node.js ≥ 20 | ✅ Browser sidebar | PDF, PNG, PPTX | ~34 k | MIT |
-| [Reveal.js](https://revealjs.com/) | HTML/JS framework | ❌ (CDN) | ❌ (Slides.com is a paid cloud editor) | HTML, PDF (print) | ~68 k | MIT |
-| [Remark.js](https://remarkjs.com/) | In-browser runtime | ❌ (single JS file) | ❌ | — (browser only) | ~13 k | MIT |
+| [Slidev](https://sli.dev/) | Dev-server + Vue | ✅ Node.js ≥ 20 | ✅ Browser sidebar | PDF, PNG, PPTX | ~34k | MIT |
+| [Reveal.js](https://revealjs.com/) | HTML/JS framework | ❌ (CDN) | ❌ (Slides.com is a paid cloud editor) | HTML, PDF (print) | ~68k | MIT |
+| [Remark.js](https://remarkjs.com/) | In-browser runtime | ❌ (single JS file) | ❌ | — (browser only) | ~13k | MIT |
 | [Pandoc + Beamer](https://pandoc.org/) | Document converter | ✅ Pandoc + LaTeX | ❌ | PDF (LaTeX), HTML, reveal.js, PPTX | — | GPL / various |
-| [MkSlides](https://martenbe.github.io/mkslides/) | CLI (Reveal.js wrapper) | ✅ Python pip | ❌ | HTML | ~0.5 k | MIT |
+| [MkSlides](https://martenbe.github.io/mkslides/) | CLI (Reveal.js wrapper) | ✅ Python pip | ❌ | HTML | ~0.5k | MIT |
 
 ---
 
@@ -65,7 +65,7 @@ Marp is primarily a **conversion pipeline**: you author in a text editor and run
 
 ## Reveal.js
 
-[Reveal.js](https://revealjs.com/) is the most widely-used open-source HTML presentation framework (~68 k stars). It renders slides from HTML markup, with optional Markdown loaded from an external file or inline `<section data-markdown>` elements.
+[Reveal.js](https://revealjs.com/) is the most widely-used open-source HTML presentation framework (~68k stars). It renders slides from HTML markup, with optional Markdown loaded from an external file or inline `<section data-markdown>` elements.
 
 **Strengths:**
 - Largest ecosystem: hundreds of plugins, themes, and integrations
@@ -361,8 +361,8 @@ The problem statement raises an honest question: *is it better to extend this pr
 
 ### Arguments for building on an existing community
 
-- **Slidev** has the most active developer ecosystem (~34 k stars, regular releases, Discord, docs in six languages). Vue/Vite expertise translates to the whole frontend ecosystem. Its npm theme/plugin model enables a sustainable extension community. The main gap is: it is not a zero-install browser app, and it is not designed for non-developers.
-- **Reveal.js** has the largest reach (~68 k stars) and the most plugins. Slides.com shows there is commercial interest in a hosted editor on top of it. The plugin API is the most mature.
+- **Slidev** has the most active developer ecosystem (~34k stars, regular releases, Discord, docs in six languages). Vue/Vite expertise translates to the whole frontend ecosystem. Its npm theme/plugin model enables a sustainable extension community. The main gap is: it is not a zero-install browser app, and it is not designed for non-developers.
+- **Reveal.js** has the largest reach (~68k stars) and the most plugins. Slides.com shows there is commercial interest in a hosted editor on top of it. The plugin API is the most mature.
 - **Marp.live** is the closest to this project's UX model (browser editor, no install), but is a thin wrapper around Marp's CLI pipeline and does not attempt to be a full authoring environment.
 
 ### A pragmatic path forward
@@ -390,4 +390,4 @@ The problem statement raises an honest question: *is it better to extend this pr
 | Offline / local-first | Service worker, IndexedDB | File system + CLI | File system + CLI | ✅ CDN no install | ✅ single JS file |
 | License | AGPLv3 | MIT | MIT | MIT | MIT |
 | Zero install | ✅ | ❌ (npx) | ❌ | ✅ (CDN) | ✅ |
-| Community size | Small / early | Medium | Large (34 k ⭐) | Very large (68 k ⭐) | Medium (13 k ⭐) |
+| Community size | Small / early | Medium | Large (34k ⭐) | Very large (68k ⭐) | Medium (13k ⭐) |
