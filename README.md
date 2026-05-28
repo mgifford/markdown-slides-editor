@@ -57,6 +57,7 @@ Then open:
 - `AGENTS.md`: repository instructions for coding agents and automation tools
 - `FEATURES.md`: technical inventory of the implemented and maintained feature set
 - `LICENSE`: AGPLv3 license for the project
+- `COMPARISON.md`: feature comparison against other Markdown presentation tools
 - `SBOM.md`: software bill of materials with technology versions and licenses used
 - `STYLES.md`: writing, design, and styling standards for the app and repository docs
 - `.agents/skills/`: repo-local GitHub Copilot accessibility skills for planning, testing, and reviewing UI interactions
