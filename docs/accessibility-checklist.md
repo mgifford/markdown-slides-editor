@@ -25,6 +25,19 @@ This checklist is informed by project goals, WCAG guidance, and the Intopia arti
 - Complex visuals such as charts and diagrams should include a short on-slide summary and fuller notes for presentation delivery.
 - Videos should include captions and, where needed, audio description.
 
+## Live captions and time-based media
+
+Live captions for presentations satisfy [WCAG 2.2 SC 1.2.4 — Captions (Live)](https://www.w3.org/WAI/WCAG22/Understanding/captions-live).
+Exported VTT caption files from recorded presentations satisfy [WCAG 2.2 SC 1.2.2 — Captions (Prerecorded)](https://www.w3.org/WAI/WCAG22/Understanding/captions-prerecorded).
+
+- The caption panel must remain hidden until a caption source is actually available.
+- Do not display live caption UI or status text in Firefox, Safari, or other non-Chromium browsers where `SpeechRecognition` is unavailable.
+- When providing live captions at an in-person event, announce the caption section to the audience at the start.
+- Reserve seating near the caption monitor for audience members who need captions.
+- Caption text in the presenter and audience views must maintain at least 4.5:1 contrast.
+- The exported `.vtt` file should be attached to video recordings of the presentation when the recording is published.
+- See [`docs/live-captioning-guide.md`](live-captioning-guide.md) for event room setup, captioning approaches, volunteer guidance, and privacy notes.
+
 ## Visual presentation
 
 - Themes must maintain at least 4.5:1 contrast for normal text.

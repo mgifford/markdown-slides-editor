@@ -126,7 +126,9 @@ The repository includes `404.html` so GitHub Pages can redirect deep links back 
 
 ## Accessibility and AI
 
-Accessibility applies to both the editor UI and the generated slide output. The project is targeting accessible HTML, keyboard navigation, visible focus states, and reduced-motion support.
+Accessibility applies to both the editor UI and the generated slide output. The project targets WCAG 2.2 AA for both surfaces, covering accessible HTML, keyboard navigation, visible focus states, and reduced-motion support.
+
+**Live captions** are a first-class accessibility feature. The presenter view supports three captioning modes — browser-native Web Speech API, local whisper.cpp, and external caption services — satisfying [WCAG 2.2 SC 1.2.4 — Captions (Live)](https://www.w3.org/WAI/WCAG22/Understanding/captions-live). The caption panel stays hidden until a source is confirmed available, so the static baseline is never affected. See [`docs/live-captioning-guide.md`](docs/live-captioning-guide.md) for event setup and [`ACCESSIBILITY.md`](ACCESSIBILITY.md) for the full conformance posture.
 
 Repo-local GitHub Copilot skills are available for accessibility work, including `a11y-planner`, `a11y-critic`, `a11y-test`, `a11y-workflow`, and `perspective-audit`. They can be used to probe button behavior such as the editor page's previous/next slide controls against the default deck.
 

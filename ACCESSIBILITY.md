@@ -65,10 +65,12 @@ Current semantic expectations for rendered output:
 
 Current related files:
 
-- [docs/accessibility-checklist.md](/Users/mike.gifford/markdown-slides-editor/docs/accessibility-checklist.md)
-- [docs/resources.md](/Users/mike.gifford/markdown-slides-editor/docs/resources.md)
-- [src/modules/a11y.js](/Users/mike.gifford/markdown-slides-editor/src/modules/a11y.js)
-- [tests/parser.test.js](/Users/mike.gifford/markdown-slides-editor/tests/parser.test.js)
+- [`docs/accessibility-checklist.md`](docs/accessibility-checklist.md)
+- [`docs/live-captioning-guide.md`](docs/live-captioning-guide.md)
+- [`docs/speech-to-text-architecture.md`](docs/speech-to-text-architecture.md)
+- [`docs/resources.md`](docs/resources.md)
+- [`src/modules/a11y.js`](src/modules/a11y.js)
+- [`tests/parser.test.js`](tests/parser.test.js)
 
 ## Definition Of Done
 
@@ -119,11 +121,18 @@ Always review, when relevant:
 - whether spoken delivery guidance in notes supports an equivalent experience for people who cannot see the slide content
 - whether transitions, animation, or timed movement are unnecessary or distracting
 
+## Live Captions and Accessibility
+
+Live captions are a primary accessibility feature, not an optional enhancement. They are the mechanism by which this project satisfies [WCAG 2.2 SC 1.2.4 — Captions (Live)](https://www.w3.org/WAI/WCAG22/Understanding/captions-live) for presentations with live audio. Exported VTT files from recorded sessions address [SC 1.2.2 — Captions (Prerecorded)](https://www.w3.org/WAI/WCAG22/Understanding/captions-prerecorded).
+
+The three captioning modes (browser-native Web Speech API, local whisper.cpp, and external caption service) all converge in the presenter view and display on both the presenter and audience surfaces. For event setup instructions, room layout, volunteer guidance, and privacy notes, see [`docs/live-captioning-guide.md`](docs/live-captioning-guide.md). For the technical implementation, see [`docs/speech-to-text-architecture.md`](docs/speech-to-text-architecture.md).
+
 ## AI And Speech-To-Text
 
 - Whisper or other AI-assisted transcription must remain optional.
 - Do not expose AI controls unless local or API-backed AI capability is actually available.
 - Static GitHub Pages mode must not imply live captions are available when they are not.
+- The caption panel must stay hidden until a caption source is confirmed available.
 - If AI features are added, document privacy, consent, and failure modes clearly.
 
 ## Planned Automation

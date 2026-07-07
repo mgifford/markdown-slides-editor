@@ -3,6 +3,12 @@
 Live captions make presentations accessible to audience members who are deaf or hard of hearing,
 non-native speakers, or anyone who benefits from reading spoken words alongside a slide deck.
 
+Providing live captions for spoken presentations satisfies
+[WCAG 2.2 Success Criterion 1.2.4 — Captions (Live)](https://www.w3.org/WAI/WCAG22/Understanding/captions-live),
+which requires real-time captions for all live audio content in synchronised media.
+See [`ACCESSIBILITY.md`](../ACCESSIBILITY.md) and [`docs/accessibility-checklist.md`](accessibility-checklist.md)
+for the broader accessibility posture of this project.
+
 This guide covers how to enable live captions with this editor, drawing on the experience of
 [MidCamp](https://www.midcamp.org/), whose [live-captioning tool](https://github.com/MidCamp/live-captioning)
 was developed when a hearing-impaired attendee asked about accessibility at the Midwest Drupal Camp.
@@ -13,6 +19,10 @@ was developed when a hearing-impaired attendee asked about accessibility at the 
 
 Captions are always optional in this editor. The caption panel stays hidden until a caption source
 is actually available.
+
+> **Technical reference:** For the implementation details behind each captioning mode — module
+> structure, event loops, buffer management, and transcript export formats — see
+> [`docs/speech-to-text-architecture.md`](speech-to-text-architecture.md).
 
 ## Captioning approaches
 
@@ -255,6 +265,22 @@ server unless an external captioning service is configured via `captionsSource`.
 
 ## Accessibility guidance for caption displays
 
+### WCAG compliance summary
+
+Live captions in a presentation context map to the following WCAG 2.2 success criteria:
+
+| Criterion | Level | What it requires |
+|---|---|---|
+| [1.2.4 Captions (Live)](https://www.w3.org/WAI/WCAG22/Understanding/captions-live) | AA | Real-time captions for all live audio in synchronised media |
+| [1.2.2 Captions (Prerecorded)](https://www.w3.org/WAI/WCAG22/Understanding/captions-prerecorded) | A | Captions for all prerecorded audio in synchronised media |
+| [1.2.6 Sign Language (Prerecorded)](https://www.w3.org/WAI/WCAG22/Understanding/sign-language-prerecorded) | AAA | Sign language interpretation for prerecorded audio |
+
+The exported `.vtt` caption file produced by this editor can satisfy 1.2.2 when attached to a video recording of the presentation.
+
+See [`docs/accessibility-checklist.md`](accessibility-checklist.md) for the full project accessibility validation checklist and [`ACCESSIBILITY.md`](../ACCESSIBILITY.md) for contributor guidance.
+
+### Physical caption display
+
 When setting up a physical caption display:
 
 - Use high-contrast text. White text on a dark background or black text on a white background works
@@ -288,14 +314,16 @@ a full technical description of how this pipeline is built.
 
 ## Further resources
 
+- [WCAG 2.2 Guideline 1.2 — Time-Based Media](https://www.w3.org/WAI/WCAG22/Understanding/time-based-media) — success
+  criteria for captions, audio description, and time-based media alternatives.
 - [MidCamp live-captioning](https://github.com/MidCamp/live-captioning) — the open-source browser
   captioning tool that this guide draws on for room setup, known issues, and accessibility guidance.
 - [Web Speech API specification](https://webaudio.github.io/web-speech-api/) — W3C specification for
   the browser speech recognition API.
 - [whisper.cpp](https://github.com/ggerganov/whisper.cpp) — local, offline speech recognition using
   OpenAI's Whisper model.
-- [WCAG 2.2 Guideline 1.2](https://www.w3.org/WAI/WCAG22/Understanding/time-based-media) — success
-  criteria for captions, audio description, and time-based media alternatives.
 - [Intopia — How To Create More Accessible Presentations](https://intopia.digital/articles/how-to-create-more-accessible-presentations/) — broader presentation accessibility guidance this project follows.
-- `docs/speech-to-text-architecture.md` — full technical description of the browser STT
+- [`docs/speech-to-text-architecture.md`](speech-to-text-architecture.md) — full technical description of the browser STT
   pipeline, prompt engine, whisper.cpp bridge, and BroadcastChannel audience sync.
+- [`docs/accessibility-checklist.md`](accessibility-checklist.md) — project accessibility validation checklist.
+- [`ACCESSIBILITY.md`](../ACCESSIBILITY.md) — contributor accessibility guidance and conformance targets.
