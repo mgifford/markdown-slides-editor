@@ -69,6 +69,7 @@ Then open:
 - `docs/editor-vision.md`: longer-term product direction for the editor and runtime
 - `docs/layout-syntax.md`: layout directives for centered content, columns, media blocks, callouts, and quotes
 - `docs/live-captioning-guide.md`: event room setup, browser-native and whisper.cpp captioning, volunteer guidance, known issues, and privacy
+- `docs/speech-to-text-architecture.md`: full technical description of the browser STT pipeline (Web Speech API, whisper.cpp bridge, transcript cleanup prompt engine, BroadcastChannel audience sync)
 - `docs/manual-a11y-testing.md`: Sa11y-assisted and manual accessibility review workflow
 - `docs/resources.md`: accessibility references and source material
 
