@@ -266,6 +266,26 @@ When setting up a physical caption display:
 - Where possible, include the caption monitor in the main room setup diagrams shared with event
   attendees in advance so they know it is available.
 
+## Transcript cleanup and LLM integration
+
+After a session, the presenter view offers three export options in the captions panel
+(visible when browser-native speech recognition has been active):
+
+- **Save as .VTT** — a WebVTT caption file with timestamps, suitable for attaching to a video
+  recording of the presentation.
+- **Save as text** — the raw recognised transcript as plain text.
+- **Copy cleanup prompt** — a structured prompt for an LLM that includes:
+  - instructions to remove repetitions, fix recognition errors, and format the output as
+    readable paragraphs;
+  - the full deck Markdown source as a terminology reference, so the LLM can correct
+    domain-specific terms, names, and acronyms the speech engine may have misheard;
+  - the raw transcript text.
+
+The resulting prompt can be pasted into Claude, ChatGPT, Gemini, Ollama, or any other LLM.
+Including the slide content means the model can recognise when "whisker" should be "Whisper",
+or that "C-civic actions" is "CivicActions". See `docs/speech-to-text-architecture.md` for
+a full technical description of how this pipeline is built.
+
 ## Further resources
 
 - [MidCamp live-captioning](https://github.com/MidCamp/live-captioning) — the open-source browser
@@ -277,3 +297,5 @@ When setting up a physical caption display:
 - [WCAG 2.2 Guideline 1.2](https://www.w3.org/WAI/WCAG22/Understanding/time-based-media) — success
   criteria for captions, audio description, and time-based media alternatives.
 - [Intopia — How To Create More Accessible Presentations](https://intopia.digital/articles/how-to-create-more-accessible-presentations/) — broader presentation accessibility guidance this project follows.
+- `docs/speech-to-text-architecture.md` — full technical description of the browser STT
+  pipeline, prompt engine, whisper.cpp bridge, and BroadcastChannel audience sync.

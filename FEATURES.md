@@ -368,6 +368,9 @@ Currently implemented optional AI-related features:
 
 - in-editor AI prompt generator
 - structured prompt generation from title, presenters, duration, topics, and references
+- transcript cleanup prompt engine — generates an LLM prompt containing the raw speech-to-text
+  transcript and the deck Markdown source, so an external LLM can correct recognition errors using
+  slide-specific terminology, names, and vocabulary as a reference
 - guidance for AI-assisted drafting in `docs/ai-authoring-workflow.md`
 
 No in-browser LLM is currently run by default.
@@ -376,14 +379,20 @@ No in-browser LLM is currently run by default.
 
 Optional caption support currently includes:
 
+- browser-native speech recognition using the Web Speech API (Chromium browsers)
 - transcript-source capability detection
 - hidden-unless-available caption UI
 - localhost-friendly default transcript lookup for `whisper.cpp`
 - explicit front matter configuration for transcript sources
 - presenter and audience caption display when available
 - local helper scripts for transcript mirroring and Whisper development flows
+- WebVTT export from browser-native recognition sessions
+- plain-text transcript export from browser-native recognition sessions
+- LLM cleanup prompt export that includes the deck Markdown source as terminology context
 
 Speech-to-text UI must stay hidden when transcript capability is not available.
+
+Full technical details are in `docs/speech-to-text-architecture.md`.
 
 ## Local-First and Offline-Oriented Features
 
