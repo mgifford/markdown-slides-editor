@@ -1,10 +1,8 @@
-Here’s how I would write it. I would deliberately avoid making this read like a project roadmap. Instead, I’d write it as a vision document that could eventually live in its own repository. It should make it clear that markdown-slides-editor is simply the first implementation.
+# Open Presentation Companion
 
-Open Presentation Companion
+## A Vision for Accessible, Connected, and Open Presentations
 
-A Vision for Accessible, Connected, and Open Presentations
-
-Executive Summary
+## Executive Summary
 
 Presentations are still largely one-way experiences.
 
@@ -14,15 +12,15 @@ Accessibility features such as captions, sign language interpretation, CART serv
 
 Modern web technologies allow us to rethink this model.
 
-The Open Presentation Companion is a proposal for an open, browser-based protocol that allows presentations to publish structured, live information to audience devices. Instead of limiting attendees to what appears on a projector, every participant receives a personalized companion experience on their own device.
+The **Open Presentation Companion** is a proposal for an open, browser-based protocol that allows presentations to publish structured, live information to audience devices. Instead of limiting attendees to what appears on a projector, every participant receives a personalized companion experience on their own device.
 
-The goal is not to replace presentation software.
+The goal is **not** to replace presentation software.
 
 The goal is to define an open ecosystem that any presentation software can support.
 
-⸻
+---
 
-Why
+# Why
 
 The web has standards for documents, video, audio, forms, maps, and real-time communication.
 
@@ -30,22 +28,22 @@ There is no widely adopted standard for live presentations.
 
 Every presentation platform reinvents:
 
-* captions
-* audience questions
-* polls
-* handouts
-* links
-* speaker notes
-* translations
-* accessibility support
+- captions
+- audience questions
+- polls
+- handouts
+- links
+- speaker notes
+- translations
+- accessibility support
 
 These capabilities should be interoperable.
 
 Just as HTML allows many browsers to display the same document, an Open Presentation Companion should allow many presentation tools to share the same live presentation experience.
 
-⸻
+---
 
-Vision
+# Vision
 
 Imagine attending a conference.
 
@@ -55,22 +53,22 @@ Immediately your phone becomes your personal presentation companion.
 
 You choose:
 
-* language
-* font size
-* colour theme
-* reduced motion
-* caption behaviour
+- language
+- font size
+- colour theme
+- reduced motion
+- caption behaviour
 
 As the speaker talks, you receive:
 
-* live captions
-* translated captions
-* current slide
-* links mentioned by the presenter
-* glossary definitions
-* image descriptions
-* references
-* downloadable resources
+- live captions
+- translated captions
+- current slide
+- links mentioned by the presenter
+- glossary definitions
+- image descriptions
+- references
+- downloadable resources
 
 You bookmark important ideas.
 
@@ -80,409 +78,529 @@ You answer polls.
 
 After the presentation you leave with:
 
-* searchable transcript
-* personal notes
-* exported Markdown
-* AI-generated summary
-* list of resources
-* glossary
-* action items
+- searchable transcript
+- personal notes
+- exported Markdown
+- AI-generated summary
+- list of resources
+- glossary
+- action items
 
 None of this requires an app.
 
 Everything works inside a browser.
 
-⸻
+---
 
-Principles
+# Design Principles
 
-Open Standards
+## Open Standards
 
-No proprietary protocol should be required.
+The protocol should be openly documented and freely implementable.
 
-The specification should be openly documented and freely implementable.
+No proprietary software should be required.
 
-⸻
+Multiple compatible implementations should be encouraged.
 
-Browser First
+---
+
+## Browser First
 
 A modern browser should be sufficient.
 
 No dedicated application should be required.
 
-⸻
+The browser should become the universal presentation companion.
 
-Progressive Enhancement
+---
 
-Presentations should still function without companion devices.
+## Progressive Enhancement
 
-The companion should enhance rather than replace the presentation.
+Presentations should continue to work without a companion device.
 
-⸻
+The companion enhances the experience rather than replacing the presentation.
 
-Accessibility by Default
+---
+
+## Accessibility by Default
 
 Accessibility should be built into the protocol rather than added afterwards.
 
 Examples include:
 
-* captions
-* synchronized image descriptions
-* keyboard support
-* screen reader compatibility
-* language selection
-* personalization
-* high contrast
-* reduced motion
+- captions
+- synchronized image descriptions
+- keyboard support
+- screen reader compatibility
+- language selection
+- personalization
+- high contrast
+- reduced motion
+- simplified reading modes
 
-⸻
+Accessibility is not a feature.
 
-Privacy First
+It is a core design requirement.
 
-Audience participation should not require creating accounts.
+---
 
-Personal preferences should remain on the user’s device whenever possible.
+## Privacy First
+
+Attendees should not need to create accounts.
+
+Preferences should remain on the user's device whenever possible.
 
 Analytics should be optional rather than assumed.
 
-⸻
+Conference organizers should not need to collect personal information simply to provide an accessible experience.
 
-Local First
+---
+
+## Local First
 
 Whenever practical:
 
-* speech recognition
-* translation
-* summarization
-* note taking
+- speech recognition
+- translation
+- summarization
+- note taking
+- AI assistance
 
-should happen on the user’s own device.
+should happen on the attendee's own device.
 
-This reduces costs, improves privacy, and increases resilience.
+This improves privacy, reduces infrastructure costs, and allows functionality even with unreliable internet connections.
 
-⸻
+---
 
-Interoperability
+## Interoperability
 
-The protocol should work with:
+The protocol should be usable by many presentation systems, including:
 
-* Reveal.js
-* Marp
-* Slidev
-* Quarto
-* PowerPoint
-* Keynote
-* Google Slides
-* markdown-slides-editor
-* conference platforms
-* digital signage
-* museums
-* classrooms
+- markdown-slides-editor
+- Reveal.js
+- Marp
+- Slidev
+- Quarto
+- PowerPoint
+- Keynote
+- Google Slides
+- conference platforms
+- museum exhibits
+- classrooms
+- government meeting systems
 
-The goal is an ecosystem, not a single implementation.
+The goal is an ecosystem rather than a single implementation.
 
-⸻
+---
 
-Potential Capabilities
+# The Presentation Companion
 
-Live Captions
+Instead of thinking about a presentation as a slideshow, think about it as a stream of structured events.
 
-Real-time speech-to-text.
+Slides are only one of those events.
 
-⸻
+Others include:
 
-Translation
+- captions
+- translations
+- glossary terms
+- references
+- image descriptions
+- polls
+- questions
+- downloadable resources
+- speaker changes
+- bookmarks
+- announcements
 
-Translate captions into the audience’s preferred language.
+Each attendee chooses which events they want to receive.
 
-Translation may occur:
+The projector shows one view.
 
-* locally
-* on a relay server
-* using external services
+Every attendee sees the presentation in the way that best meets their own needs.
 
-⸻
+---
 
-Speaker Identification
+# Example Experience
+
+An attendee scans a QR code.
+
+Their browser opens:
+
+```
+https://slides.example.org/session/A4PK
+```
+
+They immediately receive:
+
+- the current slide
+- the latest captions
+- synchronized presentation state
+
+They choose:
+
+- English
+- Large text
+- Dark mode
+- High contrast
+- Auto-scroll captions
+
+As the presentation continues they receive:
+
+- live captions
+- translated captions
+- glossary explanations
+- image descriptions
+- links shared by the presenter
+- downloadable resources
+
+At the end of the presentation they already have:
+
+- searchable transcript
+- personal notes
+- bookmarked moments
+- references
+- exported Markdown
+- AI-generated summary
+
+No app installation.
+
+No account.
+
+No email signup.
+
+---
+
+# Core Capabilities
+
+## Live Captions
+
+Real-time speech-to-text from one or more speakers.
+
+---
+
+## Translation
+
+Translate captions into the attendee's preferred language.
+
+Translation may happen:
+
+- locally
+- using a trusted service
+- using a local LLM
+- using browser capabilities
+
+---
+
+## Speaker Identification
 
 Support multiple speakers.
 
 Useful for:
 
-* panels
-* meetings
-* workshops
-* informal discussions
+- panels
+- workshops
+- meetings
+- conversations
+- classroom discussions
 
-⸻
+---
 
-Slide Synchronization
+## Slide Synchronization
 
-Audience devices know which slide is currently active.
+Audience devices know which slide is active.
 
 Late arrivals immediately synchronize.
 
-⸻
+---
 
-Resources
+## Resources
 
-Presenters publish:
+Presenters can publish:
 
-* URLs
-* GitHub repositories
-* PDFs
-* videos
-* datasets
+- URLs
+- GitHub repositories
+- PDFs
+- datasets
+- videos
+- standards
+- documentation
 
-without requiring attendees to photograph slides.
+Attendees no longer need to photograph slides containing URLs.
 
-⸻
+---
 
-Glossary
+## Glossary
 
-Technical terms are explained automatically.
+Technical terms are explained as they appear.
 
 Examples:
 
-* WCAG
-* WebRTC
-* OSPO
-* SPDX
-* SBOM
+- WCAG
+- WebRTC
+- SBOM
+- SPDX
+- OSPO
 
 Definitions may be localized.
 
-⸻
+---
 
-Image Descriptions
+## Image Descriptions
 
-Presenters publish image descriptions separately from visible slides.
+Presenters publish descriptions separately from visible slides.
 
 Audience devices may:
 
-* display them
-* read them aloud
-* translate them
-* save them
+- display them
+- read them aloud
+- translate them
+- save them
 
-⸻
+This benefits blind attendees, people taking notes, and anyone who briefly looked away.
 
-Polls
+---
+
+## Polls
 
 Interactive audience participation.
 
-⸻
+---
 
-Questions
+## Questions
 
-Anonymous or identified audience questions.
+Audience members submit questions.
 
-Moderation optional.
+Questions may be:
 
-⸻
+- anonymous
+- identified
+- moderated
+- voted on
 
-Personal Notes
+---
+
+## Personal Notes
 
 Attendees bookmark:
 
-* captions
-* slides
-* resources
-* questions
+- captions
+- slides
+- resources
+- glossary terms
 
 Everything remains associated with the presentation.
 
-⸻
+---
 
-AI Assistance
+## AI Assistance
 
-After a session attendees might request:
+After the presentation attendees may request:
 
-* summarize this talk
-* list action items
-* compare this presentation with another
-* generate social media posts
-* explain unfamiliar concepts
-* export meeting notes
+- summarize this talk
+- explain unfamiliar concepts
+- compare with another presentation
+- generate meeting notes
+- create social media posts
+- produce action items
 
-These functions should be optional and should operate on the user’s own copy of the presentation data whenever practical.
+These features should operate on the attendee's own copy of the presentation whenever practical.
 
-⸻
+---
 
-Example Architecture
+# Beyond Conferences
 
+This protocol is useful anywhere information is presented.
+
+## Education
+
+Students receive synchronized lecture notes, diagrams, and references.
+
+---
+
+## Government
+
+Public consultations become multilingual and accessible by default.
+
+Supporting documents arrive alongside the discussion.
+
+---
+
+## Museums
+
+Visitors receive contextual information and accessible descriptions while exploring exhibits.
+
+---
+
+## Community Meetings
+
+Participants receive captions, documents, and summaries without requiring specialized equipment.
+
+---
+
+## Public Hearings
+
+Citizens receive legislation references, supporting documents, transcripts, and links as discussions happen.
+
+---
+
+## Hybrid Events
+
+Remote and in-person attendees receive the same experience.
+
+---
+
+# Architecture
+
+```
 Presenter
+
 Speech Recognition
+
 Presentation Software
+
 ↓
+
 Presentation Companion Publisher
+
 ↓
-Open Companion Protocol
+
+Open Presentation Companion Protocol
+
 ↓
-Presentation Relay (optional)
+
+Optional Relay Service
+
 ↓
+
 Audience Devices
+```
 
-The relay may be:
+Possible transport mechanisms include:
 
-* WebSocket
-* Server-Sent Events
-* WebRTC
-* ActivityPub
-* local network
+- WebSockets
+- Server-Sent Events
+- WebRTC
+- ActivityPub
+- Local network services
 
-The transport mechanism is less important than the message format.
+The transport mechanism is intentionally separate from the protocol.
 
-⸻
+---
 
-Event Model
+# Event Model
 
 Everything is an event.
 
 Examples include:
 
-* caption
-* slide
-* glossary
-* resource
-* poll
-* question
-* image description
-* transcript segment
+- caption
+- slide
+- resource
+- glossary
+- image description
+- poll
+- question
+- transcript segment
+- bookmark
+- announcement
 
-Clients decide which event types they support.
+Clients choose which event types they support.
 
-⸻
+New event types can be added over time without changing the overall architecture.
 
-Beyond Conferences
+---
 
-This model applies to far more than conference presentations.
+# Relationship to Existing Standards
 
-Examples include:
-
-Education
-
-Students receive synchronized lecture notes and accessible diagrams.
-
-Government
-
-Public consultations become multilingual and accessible by default.
-
-Museums
-
-Visitors receive accessible descriptions and contextual information while exploring exhibits.
-
-Community Meetings
-
-Participants follow discussions in their preferred language and export meeting summaries afterwards.
-
-Hybrid Events
-
-Remote and in-person attendees receive the same companion experience.
-
-Public Hearings
-
-Citizens receive captions, supporting documents, legislation references, and live transcripts.
-
-⸻
-
-Relationship to Existing Standards
-
-This work should build upon existing standards wherever possible.
+The Open Presentation Companion should build upon existing standards wherever possible.
 
 Potential relationships include:
 
-* HTML
-* ARIA
-* WebSockets
-* Server-Sent Events
-* WebRTC
-* Media Session API
-* Web Speech API
-* JSON-LD
-* RDF
-* ActivityPub
-* WCAG
-* Web Sustainability Guidelines
+- HTML
+- ARIA
+- WCAG
+- WebRTC
+- WebSockets
+- Server-Sent Events
+- Web Speech API
+- Media Session API
+- JSON-LD
+- RDF
+- ActivityPub
+- Web Sustainability Guidelines
 
-The protocol should complement these standards rather than replace them.
+The goal is integration rather than replacement.
 
-⸻
+---
 
-Initial Reference Implementation
+# Reference Implementation
 
-The first implementation is expected to be developed within markdown-slides-editor.
+The first implementation is expected to be developed within **markdown-slides-editor**.
 
-This is intended to demonstrate feasibility, gather feedback, and validate the protocol.
+That implementation serves as a proof of concept.
 
-The long-term objective is for the protocol to be adopted by many presentation systems.
+The long-term objective is for multiple independent projects to implement the protocol.
 
 The implementation should never become the specification.
 
-⸻
+---
 
-Roadmap
+# Roadmap
 
-Phase 1
+## Phase 1
 
-* QR code audience companion
-* live captions
-* responsive companion interface
-* local preferences
+- QR code audience companion
+- live captions
+- responsive companion interface
+- personalization
+- local preferences
 
-Phase 2
+## Phase 2
 
-* synchronized slides
-* resources
-* glossary
-* image descriptions
+- synchronized slides
+- resources
+- glossary
+- image descriptions
 
-Phase 3
+## Phase 3
 
-* audience questions
-* polls
-* bookmarks
-* note taking
+- audience questions
+- polls
+- bookmarks
+- note taking
 
-Phase 4
+## Phase 4
 
-* translation
-* AI summaries
-* local knowledge base
-* export formats
+- translation
+- AI summaries
+- personal knowledge base
+- export formats
 
-Phase 5
+## Phase 5
 
-* independent specification
-* reference libraries
-* multiple implementations
-* community governance
+- independent specification
+- reference libraries
+- multiple implementations
+- community governance
+- W3C Community Group or similar standards venue
 
-⸻
+---
 
-Success Looks Like
+# Long-Term Vision
 
-Success is not one presentation tool supporting these features.
+The Open Presentation Companion is not about one presentation tool.
 
-Success is:
+It is about defining a common language for presentations.
 
-* multiple compatible implementations
-* an openly documented protocol
-* interoperability across presentation software
-* accessibility becoming the default rather than an add-on
-* attendees retaining ownership of their own presentation history
-* presentations becoming richer, more inclusive, and easier to learn from
+Just as HTML transformed documents into interoperable web pages, an open presentation protocol could transform presentations into rich, accessible, interactive experiences that work across browsers, devices, presentation software, and conference platforms.
 
-When someone creates a new presentation platform, adding companion support should be as straightforward as adding HTML export or WebSocket support today.
+The objective is not simply better captions.
 
-That is the long-term goal.
+It is to create an open ecosystem where accessibility, personalization, multilingual participation, AI assistance, and knowledge sharing become natural parts of every presentation.
 
-I would also add a docs/spec/ directory in the future with an evolving protocol, separate from the vision:
+The browser becomes each attendee's personal companion, while presenters remain free to choose whichever presentation software best suits their needs.
 
-* COMPANION_PROTOCOL.md: Wire protocol, event types, versioning, transport independence.
-* EVENT_MODEL.md: JSON schemas for captions, slides, resources, polls, glossary terms, image descriptions, etc.
-* ACCESSIBILITY.md: Accessibility requirements for companion clients.
-* SECURITY_AND_PRIVACY.md: Local-first design, authentication, session lifecycle, data retention.
-* IMPLEMENTATIONS.md: A growing list of projects that implement the protocol.
+The projector shows one presentation.
 
-That separation keeps the vision stable while allowing the technical specification to evolve independently and eventually move into its own repository under neutral governance if the community forms around it.
+Every attendee experiences their own.
