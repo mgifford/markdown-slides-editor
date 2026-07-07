@@ -2,6 +2,14 @@
 
 This document describes how live speech-to-text works in this editor: where it runs, what code drives it, how the transcript is cleaned up with an LLM, and where whisper.cpp fits in.
 
+> **User guide:** If you are setting up live captions for an event — room layout, step-by-step
+> instructions for each captioning approach, volunteer guidance, known issues, and privacy notes —
+> see [`docs/live-captioning-guide.md`](live-captioning-guide.md).
+>
+> **Accessibility reference:** Live captions satisfy
+> [WCAG 2.2 SC 1.2.4 — Captions (Live)](https://www.w3.org/WAI/WCAG22/Understanding/captions-live).
+> See [`ACCESSIBILITY.md`](../ACCESSIBILITY.md) for the project conformance target.
+
 ---
 
 ## Overview
@@ -15,6 +23,8 @@ Speech-to-text in this project runs in three modes:
 | External caption service | Any compatible polling endpoint | `src/modules/captions.js` |
 
 All three modes converge in the **presenter view** (`src/modules/views/presenter-view.js`), which shows the live caption panel and broadcasts caption text to the audience window.
+
+For a description of when to use each mode and how to configure them in a presentation's front matter, see [`docs/live-captioning-guide.md`](live-captioning-guide.md).
 
 ---
 
@@ -251,8 +261,11 @@ This is a tracked future direction in `TODO.md`. No in-browser AI is currently s
 
 ## Further reading
 
+- [WCAG 2.2 SC 1.2.4 — Captions (Live)](https://www.w3.org/WAI/WCAG22/Understanding/captions-live) — the accessibility criterion that live captions satisfy.
+- [WCAG 2.2 Guideline 1.2 — Time-Based Media](https://www.w3.org/WAI/WCAG22/Understanding/time-based-media) — full set of success criteria for captions and audio description.
 - [Web Speech API — MDN](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API)
 - [Web Speech API — Google Developers](https://developers.google.com/web/updates/2013/01/Voice-Driven-Web-Apps-Introduction-to-the-Web-Speech-API)
 - [whisper.cpp](https://github.com/ggerganov/whisper.cpp)
 - [WebVTT specification](https://www.w3.org/TR/webvtt1/)
-- `docs/live-captioning-guide.md` — event room setup, accessibility guidance, and privacy notes for live presentations
+- [`docs/live-captioning-guide.md`](live-captioning-guide.md) — event room setup, step-by-step configuration, accessibility guidance, and privacy notes for live presentations.
+- [`ACCESSIBILITY.md`](../ACCESSIBILITY.md) — contributor accessibility guidance and project conformance target.
