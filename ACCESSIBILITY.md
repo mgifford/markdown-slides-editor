@@ -72,6 +72,23 @@ Current related files:
 - [`src/modules/a11y.js`](src/modules/a11y.js)
 - [`tests/parser.test.js`](tests/parser.test.js)
 
+## Mathematics
+
+Mathematical notation is authored in LaTeX (`$...$` inline, `$$...$$` display) and typeset by MathJax 4.
+
+Accessibility behaviour:
+
+- The raw LaTeX source is preserved on every math node (`data-math-source`) and set as an `aria-label`, so assistive technology has a meaning even before typesetting completes.
+- MathJax is configured to attach assistive MathML, giving screen readers proper mathematical semantics rather than the raw source string.
+- Math inherits the current text colour, so it meets the same contrast expectations as surrounding text in both light and dark modes.
+- Display math scrolls horizontally within its own container so wide equations never force the slide body to overflow.
+- **Good failure state:** if MathJax cannot load, the readable LaTeX source is shown in place of a broken render, and the `aria-label` still carries the source.
+
+Current boundaries (Phase 1):
+
+- Math typesetting runs on the active slide body in the editor preview via the shared mount path. Wiring it into the audience view, presenter view, speaker notes/resources/script, and the exported HTML/ODP outputs is planned follow-up work.
+- ODP export currently renders math as its LaTeX source text (no typeset image), consistent with the text-only ODP body.
+
 ## Definition Of Done
 
 A change that affects UI, rendering, navigation, or export is not done until:

@@ -1082,6 +1082,47 @@ input:focus-visible {
   background: color-mix(in srgb, var(--panel-strong) 94%, transparent);
 }
 
+/* Mathematics (LaTeX rendered by MathJax). Inline math sits in the text flow;
+   display math is a centred block that scrolls horizontally when very wide so
+   the slide body never overflows the page. Colours inherit --ink, so light and
+   dark themes are handled without further rules. */
+.math-tex--inline {
+  display: inline;
+}
+
+.math-tex--display {
+  display: block;
+  margin: 0.75rem 0;
+  text-align: center;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.math-tex mjx-container {
+  color: inherit;
+}
+
+.math-tex mjx-container[display="true"] {
+  margin: 0 auto;
+}
+
+/* Good failure state: when MathJax cannot load, the raw LaTeX source is shown
+   as readable monospace rather than a broken render. */
+.math-tex[data-math-fallback] {
+  font-family: var(--font-mono, ui-monospace, "SFMono-Regular", Menlo, monospace);
+  white-space: pre-wrap;
+  color: inherit;
+}
+
+.math-tex--display[data-math-fallback] {
+  padding: 0.4rem 0.6rem;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel-strong) 94%, transparent);
+  text-align: left;
+}
+
 .layout-columns {
   display: flex;
   gap: 1.25rem;

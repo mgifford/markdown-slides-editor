@@ -60,3 +60,20 @@ Feature: Markdown rendering
     When I render the Markdown
     Then the output contains "alt=\"A cat\""
     And the output contains "src=\"cat.jpg\""
+
+  Scenario: Inline math is protected and preserves its LaTeX source
+    Given Markdown text "The area is $A = \pi r^2$ overall."
+    When I render the Markdown
+    Then the output contains "math-tex math-tex--inline"
+    And the output contains "data-math-source=\"A = \pi r^2\""
+
+  Scenario: Display math is rendered as a block node
+    Given Markdown text "$$E = mc^2$$"
+    When I render the Markdown
+    Then the output contains "math-tex math-tex--display"
+    And the output contains "\\[E = mc^2\\]"
+
+  Scenario: A lone dollar sign is not treated as math
+    Given Markdown text "It costs $5 today."
+    When I render the Markdown
+    Then the output contains "It costs $5 today."

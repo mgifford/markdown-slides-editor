@@ -13,6 +13,7 @@ const APP_SHELL_ASSETS = [
   "./src/modules/color-mode.js",
   "./src/modules/export.js",
   "./src/modules/markdown.js",
+  "./src/modules/math.js",
   "./src/modules/mermaid.js",
   "./src/modules/parser.js",
   "./src/modules/presentation-state.js",

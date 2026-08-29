@@ -94,6 +94,21 @@ Use numbered lists when order matters — processes, instructions, or ranked pri
 
 ---
 
+# Mathematics
+
+Write inline math with single dollars, such as the mass–energy relation $E = mc^2$, and display math with double dollars:
+
+$$
+\int_0^1 x^2 \, dx = \frac{1}{3}
+$$
+
+Paste LaTeX straight from a paper — indices like $a_1$ and $a_2$ and operators like $x^2 * y$ stay intact.
+
+Note:
+Math is typeset by MathJax with assistive MathML for screen readers. If MathJax cannot load, the LaTeX source stays visible so no meaning is lost.
+
+---
+
 # Text and bullets
 
 Slides can mix a short paragraph with a list when that helps provide context.

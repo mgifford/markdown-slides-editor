@@ -89,6 +89,7 @@ Supported content patterns include:
 - images
 - blockquotes
 - progressive disclosure list items using `- [>]`
+- mathematics via LaTeX delimiters: inline `$...$` and display `$$...$$`
 
 Supported layout directives include:
 
