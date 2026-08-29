@@ -52,3 +52,37 @@ test("mountSlideInto with hero slide omits active class when deferActivation is 
   assert.ok(html.includes("slide-card--image-hero"), "should have hero class");
   assert.ok(!html.includes("active"), "active should not appear in class");
 });
+
+// Integration: the full deck pipeline (parseSource -> renderDeck) must produce a
+// mountable math node for native LaTeX delimiters, and flag the slide as
+// containing math so the view knows to load MathJax. This is the app-level path
+// that catches "the running app does not recognise \( \) / \[ \]".
+
+test("deck pipeline produces a MathJax-ready node for native inline \\( \\) math", () => {
+  const slide = buildRenderedSlide("# Math\n\nEnergy \\( E = mc^2 \\) is famous.");
+  assert.ok(slide.hasMath, "slide must be flagged as containing math");
+  assert.ok(
+    slide.html.includes('class="math-tex math-tex--inline"'),
+    "must emit an inline math node",
+  );
+  assert.ok(
+    slide.html.includes('data-math-source="E = mc^2"'),
+    "must preserve the LaTeX source",
+  );
+  assert.ok(slide.html.includes("\\(E = mc^2\\)"), "must wrap in MathJax delimiters");
+});
+
+test("deck pipeline produces a display math node for native \\[ \\] math", () => {
+  const slide = buildRenderedSlide("# Math\n\n\\[\nE = mc^2\n\\]");
+  assert.ok(slide.hasMath, "slide must be flagged as containing math");
+  assert.ok(
+    slide.html.includes('class="math-tex math-tex--display"'),
+    "must emit a display math node",
+  );
+});
+
+test("deck pipeline leaves a plain deck free of math markup", () => {
+  const slide = buildRenderedSlide("# Plain\n\nJust text, no math.");
+  assert.equal(slide.hasMath, false);
+  assert.ok(!slide.html.includes("math-tex"), "must not emit math nodes");
+});
