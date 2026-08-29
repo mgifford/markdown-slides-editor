@@ -1,9 +1,24 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import vm from "node:vm";
 
 const serviceWorkerSource = await readFile(new URL("../service-worker.js", import.meta.url), "utf8");
+
+/** Recursively list every `.js` file under `dir`, returning repo-root-relative paths. */
+async function listJsFiles(dir, baseUrl, prefix = "") {
+  const entries = await readdir(new URL(dir, baseUrl), { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const rel = `${prefix}${entry.name}`;
+    if (entry.isDirectory()) {
+      files.push(...(await listJsFiles(`${dir}${entry.name}/`, baseUrl, `${rel}/`)));
+    } else if (entry.name.endsWith(".js")) {
+      files.push(rel);
+    }
+  }
+  return files;
+}
 
 function toCacheKey(requestOrUrl) {
   if (typeof requestOrUrl === "string") return requestOrUrl;
@@ -115,4 +130,33 @@ test("service worker keeps cache-first behavior for non-shell assets", async () 
   const response = await runFetch(listeners, request);
   assert.equal(await response.text(), "cached-logo");
   assert.equal(fetchCalls.length, 0);
+});
+
+// Guards against the class of bug where a returning visitor keeps an old cached
+// copy of the renderer (which broke native `\( \)` math): every source module
+// must be listed in the app-shell cache, and it must all live under one bumpable
+// cache version.
+
+test("service worker caches every source module in the app shell", async () => {
+  const moduleFiles = await listJsFiles("../src/", import.meta.url, "src/");
+  // Ignore nothing: all runtime modules must be cacheable for offline parity.
+  const missing = moduleFiles.filter(
+    (file) => !serviceWorkerSource.includes(`"./${file}"`),
+  );
+  assert.deepEqual(
+    missing,
+    [],
+    `Service worker APP_SHELL_ASSETS is missing modules: ${missing.join(", ")}. ` +
+      "Add them to service-worker.js and bump CACHE_NAME so returning visitors refresh.",
+  );
+});
+
+test("service worker declares a single versioned cache name", async () => {
+  const match = /const CACHE_NAME = "([^"]+)";/.exec(serviceWorkerSource);
+  assert.ok(match, "service-worker.js must declare a CACHE_NAME constant");
+  assert.match(
+    match[1],
+    /-v(\d+)$/,
+    "CACHE_NAME must end with a bumpable -vN suffix so caches can be invalidated",
+  );
 });
