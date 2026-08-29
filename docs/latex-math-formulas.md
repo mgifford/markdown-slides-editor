@@ -153,6 +153,61 @@ formula rather than being read as Markdown emphasis:
 \]
 ```
 
+## Highlighting part of an equation
+
+Sometimes you want to draw attention to one element of an equation, or step
+through a derivation with a specific term called out. Two approaches are
+supported.
+
+### Semantic emphasis (recommended)
+
+Wrap a part of the equation in `\class{math-emph}{...}` to call it out. This is
+the recommended way, because the emphasis is **never conveyed by colour alone**:
+the highlighted part is shown in the theme accent colour **and** in bold **and**
+underlined, so the call-out survives greyscale printing, colour blindness, and
+Windows High Contrast.
+
+```md
+\[
+E = \class{math-emph}{m} c^2
+\]
+```
+
+When stepping through an equation you can use a second, visually distinct
+call-out (`math-emph-2`, a dotted underline) and fade surrounding context with
+`math-muted` (dimmed and italic):
+
+```md
+\[
+F = \class{math-muted}{m}\,\class{math-emph}{a}
+\]
+```
+
+| Class | Purpose | Visual cues (not colour alone) |
+|-------|---------|--------------------------------|
+| `math-emph` | Primary call-out | accent colour + bold + solid underline |
+| `math-emph-2` | Second, distinct call-out | accent + bold + dotted underline |
+| `math-muted` | Fade context | dimmed + italic |
+
+A note on screen readers: the highlight is a **visual** aid. The equation's
+spoken and Braille output (from MathJax) reads the full expression in order, so
+no one misses a term — but the *fact that a part is highlighted* is not spoken.
+If a specific term is important to your point, say so in your narration or
+speaker notes as well; do not rely on the highlight alone to carry meaning.
+
+### Raw colour
+
+You can also use LaTeX's `\color` directly for a one-off colour:
+
+```md
+\[
+E = \color{teal}{m} c^2
+\]
+```
+
+Prefer `\class{math-emph}{...}` over raw `\color`: a bare colour carries meaning
+by colour alone, which fails for many readers and in high-contrast modes.
+
 ## Showing LaTeX as source (not as a formula)
 
 To document math syntax without rendering it, use code — inline code or a fenced
@@ -168,16 +223,53 @@ E = mc^2
 ```
 ````
 
-## Accessibility notes
+## Accessibility
 
-- Every expression is given an `aria-label` from its LaTeX source, and MathJax
-  attaches assistive MathML so screen readers announce the mathematics rather
-  than the raw source.
-- Math inherits the current text colour, so it adapts to light and dark modes.
-- Wide display math scrolls horizontally within its own container so it never
-  forces the slide to overflow.
-- If MathJax cannot load, the LaTeX source is shown with a note that rendering is
-  unavailable, so the meaning is never lost.
+Mathematics is rendered as **structured, explorable math** — never flattened to
+an image or an opaque object.
+
+### Screen readers
+
+MathJax 4 attaches assistive MathML with generated speech and (where the
+assistive technology supports it) Braille. Screen readers announce the
+mathematics — "E equals m c squared" — rather than reading the raw LaTeX. The
+editor does not add its own competing label once MathJax has rendered, so the
+mathematical semantics are what reach the user. Before rendering (and if
+rendering fails) the LaTeX source is used as the accessible name so nothing is
+ever silent.
+
+### Keyboard exploration
+
+A rendered equation is focusable. With it focused you can use MathJax's
+interactive explorer to step through sub-expressions with the arrow keys, and
+Escape leaves the explorer. Focus is shown with a visible outline.
+
+In **presentation and presenter modes**, the slide-navigation keys (arrows,
+space, Page Up/Down, Home/End) are handed to MathJax while an equation is
+focused, so exploring an equation does not also change slides. Move focus off the
+equation (Tab, or Escape then Tab) to return those keys to slide navigation.
+
+### Zoom, reflow, and long equations
+
+Math scales with browser zoom and larger default text sizes. Wide display
+equations reflow onto multiple lines where the mathematics allows; when an
+equation still cannot fit, its container scrolls horizontally rather than
+clipping, and that scroll container is keyboard-focusable and labelled so a
+keyboard user can reach the whole equation. The page itself never scrolls
+sideways.
+
+### Colour and contrast
+
+Math inherits the current text colour, so it adapts to the default, light, dark,
+high-contrast, and author-override themes without hard-coded colours. Emphasis
+classes pair colour with non-colour cues (see above) and map to system colours
+under Windows High Contrast / forced-colors.
+
+### Failure state
+
+If MathJax cannot load, the readable LaTeX source is shown in place of the
+equation, with a note that mathematical rendering is unavailable, so the meaning
+is never lost.
 
 ## Related
 

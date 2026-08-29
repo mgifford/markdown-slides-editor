@@ -46,6 +46,21 @@ export function hasMath(root = getDocument()) {
 }
 
 /**
+ * True when keyboard focus is inside a MathJax equation, i.e. the user may be
+ * exploring the maths with the arrow keys / Enter / Escape. Slide-navigation
+ * handlers use this to yield those keys to MathJax so exploration does not also
+ * change slides. `target` is optional; the current activeElement is used
+ * otherwise. Keeps MathJax's DOM shape (the `mjx-container` focus target) known
+ * only to this module.
+ */
+export function isMathExplorationActive(target) {
+  const doc = getDocument();
+  const node = target || (doc && doc.activeElement);
+  if (!node || typeof node.closest !== "function") return false;
+  return Boolean(node.closest("mjx-container"));
+}
+
+/**
  * Load MathJax 4 once and reuse the result. Rejections are not cached, so a
  * failed CDN request can be retried on a later render.
  */
@@ -87,6 +102,13 @@ export async function renderMathBlocks(root = getDocument()) {
     for (const node of nodes) {
       node.dataset.mathRendered = "true";
       delete node.dataset.mathFallback;
+      // MathJax attaches assistive MathML with proper spoken/Braille semantics.
+      // Our pre-render aria-label (the raw LaTeX) would now compete with and
+      // override that, so remove it and let MathJax own the accessible name.
+      if (typeof node.removeAttribute === "function") {
+        node.removeAttribute("aria-label");
+      }
+      makeOverflowingMathScrollable(node);
     }
     return { available: true, rendered: nodes.length };
   } catch (error) {
@@ -125,6 +147,13 @@ function defaultBrowserLoader() {
         inlineMath: [["\\(", "\\)"]],
         displayMath: [["\\[", "\\]"]],
       },
+      chtml: {
+        // Wrap wide display equations to the container width so they reflow at
+        // high zoom / narrow viewports instead of being clipped; horizontal
+        // scrolling (CSS overflow-x on .math-tex--display) is the last resort.
+        displayOverflow: "linebreak",
+        linebreaks: { inline: true },
+      },
       options: {
         // Attach assistive MathML for screen readers; keep the context menu off
         // so it does not interfere with the presentation keyboard model.
@@ -157,6 +186,36 @@ function defaultBrowserLoader() {
     });
     doc.head.appendChild(script);
   });
+}
+
+/**
+ * When a display equation is wider than its container (horizontal scrolling is
+ * the last-resort strategy), make the scroll container reachable and operable by
+ * keyboard: give it a tabindex and an accessible name so a keyboard user can
+ * focus it and scroll with the arrow keys. No-ops when the equation fits, in a
+ * non-DOM environment, or for inline math.
+ */
+function makeOverflowingMathScrollable(node) {
+  if (!node || typeof node.classList === "undefined") return;
+  if (!node.classList.contains("math-tex--display")) return;
+  // scrollWidth/clientWidth are only meaningful in a real layout (browser).
+  const scrollWidth = node.scrollWidth || 0;
+  const clientWidth = node.clientWidth || 0;
+  const overflows = scrollWidth > clientWidth + 1;
+  if (overflows) {
+    node.setAttribute("tabindex", "0");
+    node.setAttribute("role", "group");
+    // A short, generic name for the scroll container. The equation's own
+    // spoken/Braille semantics come from MathJax inside it, so this label must
+    // NOT repeat the LaTeX (which would compete with those semantics).
+    if (!node.hasAttribute("aria-label")) {
+      node.setAttribute("aria-label", "Scrollable equation");
+    }
+  } else {
+    // Ensure a previously-overflowing equation that now fits is not left focusable.
+    node.removeAttribute("tabindex");
+    if (node.getAttribute("role") === "group") node.removeAttribute("role");
+  }
 }
 
 /** Set an aria-label baseline from the LaTeX source on each math node. */

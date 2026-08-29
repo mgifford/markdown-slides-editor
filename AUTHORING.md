@@ -399,9 +399,24 @@ Code is never typeset as mathematics. LaTeX inside inline code stays code — ``
 ```
 ````
 
+### Highlighting part of an equation
+
+To call out one element of an equation — for example when stepping through a
+derivation — wrap it in `\class{math-emph}{...}`. The highlight uses the accent
+colour **and** bold **and** an underline, so it never depends on colour alone:
+
+```md
+\[
+E = \class{math-emph}{m} c^2
+\]
+```
+
+See [docs/latex-math-formulas.md](../docs/latex-math-formulas.md) for the full
+set of emphasis classes and the accessibility details.
+
 **Rendering:** Math is typeset by [MathJax 4](https://www.mathjax.org/). MathJax loads only for decks that actually contain math, and only when a slide with math is shown — so decks without math carry no extra cost.
 
-**Accessibility:** Each expression is given an `aria-label` from its LaTeX source, and MathJax attaches assistive MathML so screen readers announce the mathematics rather than the raw source. Math inherits the current text colour, so it adapts to light and dark modes automatically.
+**Accessibility:** Rendered equations are structured, keyboard-explorable mathematics with assistive MathML — not images — so screen readers announce the maths, and slide-navigation keys are yielded to the equation explorer while an equation is focused. Math adapts to light, dark, and high-contrast themes. Full details are in [docs/latex-math-formulas.md](../docs/latex-math-formulas.md).
 
 **If MathJax cannot load** (for example, offline with no cached copy), the readable LaTeX source is shown in its place rather than a broken render, so the meaning is never lost.
 

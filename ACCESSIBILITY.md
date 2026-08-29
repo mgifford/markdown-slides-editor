@@ -76,18 +76,32 @@ Current related files:
 
 Mathematical notation is authored in LaTeX — native `\(...\)` / `\[...\]` (first-class, for paste compatibility), plus `$$...$$` and guarded single-dollar `$...$` — and typeset by MathJax 4. Code (inline `` `...` `` and fenced ```` ``` ````) is never typeset, so LaTeX shown as an example stays readable source.
 
-Accessibility behaviour:
+Accessibility is part of the feature, not an add-on. Equations are rendered as structured, explorable mathematics — never flattened to an image or a single opaque object. Behaviour was verified against MathJax 4 (not MathJax 2/3 guidance).
 
-- The raw LaTeX source is preserved on every math node (`data-math-source`) and set as an `aria-label`, so assistive technology has a meaning even before typesetting completes.
-- MathJax is configured to attach assistive MathML, giving screen readers proper mathematical semantics rather than the raw source string.
-- Math inherits the current text colour, so it meets the same contrast expectations as surrounding text in both light and dark modes.
-- Display math scrolls horizontally within its own container so wide equations never force the slide body to overflow.
-- **Good failure state:** if MathJax cannot load, the readable LaTeX source is shown in place of a broken render, and the `aria-label` still carries the source.
+Screen readers and semantics:
 
-Current boundaries (Phase 1):
+- MathJax 4 attaches assistive MathML with generated speech and Braille metadata (`data-semantic-speech`, `data-semantic-braille`), and marks sub-expressions collapsible/expandable for exploration. Screen readers announce the mathematics rather than the raw LaTeX.
+- Before typesetting (and as the failure fallback) the raw LaTeX source is used as the node's `aria-label` so nothing is ever silent. Once MathJax renders, that label is **removed** so it does not compete with MathJax's mathematical semantics — MathJax owns the accessible name.
 
-- Math typesetting runs on the active slide body in the editor preview via the shared mount path. Wiring it into the audience view, presenter view, speaker notes/resources/script, and the exported HTML/ODP outputs is planned follow-up work.
-- ODP export currently renders math as its LaTeX source text (no typeset image), consistent with the text-only ODP body.
+Keyboard:
+
+- A rendered equation is focusable, with a visible focus outline. MathJax's explorer (arrow keys to step through sub-expressions, Escape to leave) is reachable and does not trap focus.
+- In presentation and presenter modes, slide-navigation keys (arrows, space, Page Up/Down, Home/End, Enter, Escape) are yielded to MathJax while an equation is focused, so exploring an equation does not also change slides. Moving focus off the equation returns those keys to navigation.
+
+Zoom, reflow, contrast:
+
+- Math scales with browser zoom and larger text sizes. Wide display equations reflow onto multiple lines where possible; otherwise the container scrolls horizontally rather than clipping, and that scroll container is keyboard-focusable and labelled. The page never scrolls sideways.
+- Math inherits the current text colour, adapting to the default, light, dark, high-contrast, and author-override themes without hard-coded colours, and maps to system colours under forced-colors.
+- Emphasis inside equations (`\class{math-emph}{...}`) never relies on colour alone: colour is paired with weight and underline cues.
+
+Good failure state:
+
+- If MathJax cannot load, the readable LaTeX source is shown in place of a broken render, with a `title` noting that rendering is unavailable, and the `aria-label` still carries the source.
+
+Current boundaries:
+
+- Math typesetting runs on the active slide body via the shared mount path (editor preview, audience, presenter). Speaker notes/resources/script surfaces and the exported HTML/ODP outputs are planned follow-up work.
+- ODP export renders math as its LaTeX source text (no typeset image), consistent with the text-only ODP body.
 
 ## Definition Of Done
 
