@@ -67,6 +67,7 @@ Then open:
 - `docs/ai-authoring-workflow.md`: recommended workflow and prompt template for AI-assisted deck drafting
 - `docs/cloudflare-sync-plan.md`: optional Cloudflare Worker + D1 plan for authenticated online save, load, and comments
 - `docs/editor-vision.md`: longer-term product direction for the editor and runtime
+- `docs/latex-math-formulas.md`: writing LaTeX math formulas in slides, with copy/paste examples
 - `docs/layout-syntax.md`: layout directives for centered content, columns, media blocks, callouts, and quotes
 - `docs/live-captioning-guide.md`: event room setup, browser-native and whisper.cpp captioning, volunteer guidance, known issues, and privacy
 - `docs/speech-to-text-architecture.md`: full technical description of the browser STT pipeline (Web Speech API, whisper.cpp bridge, transcript cleanup prompt engine, BroadcastChannel audience sync)
