@@ -89,7 +89,8 @@ Supported content patterns include:
 - images
 - blockquotes
 - progressive disclosure list items using `- [>]`
-- mathematics via LaTeX delimiters: inline `$...$` and display `$$...$$`
+- mathematics via LaTeX delimiters: native `\(...\)` / `\[...\]`, plus `$$...$$` and guarded single-dollar `$...$`
+- fenced code blocks (```` ``` ````) with an optional language, shown as source
 
 Supported layout directives include:
 

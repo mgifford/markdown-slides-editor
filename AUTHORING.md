@@ -356,18 +356,48 @@ Body text sits on top of the background.
 
 Write mathematical notation with LaTeX delimiters and paste expressions straight from an existing LaTeX document — in most cases no rewriting is needed.
 
-- **Inline math** — wrap LaTeX in single dollar signs: `$E = mc^2$`. It renders in the flow of the sentence.
-- **Display math** — wrap LaTeX in double dollar signs, on one line or across several:
+### Delimiters
+
+Native LaTeX delimiters are first-class, so LaTeX copied from a paper works without editing:
+
+- **Inline** — `\( E = mc^2 \)`
+- **Display** — `\[ ... \]`, on one line or across several:
 
   ```md
-  $$
-  \int_0^1 x^2 \, dx = \frac{1}{3}
-  $$
+  \[
+  \psi^*(x)\psi(x)
+  \]
   ```
 
-Characters that are meaningful to both LaTeX and Markdown (`*`, `_`, `` ` ``, `<`, `>`) are protected inside math, so `$a_1 * b_2$` stays intact instead of turning into italics.
+The common Markdown display convention is also supported:
 
-**Literal dollar signs:** A lone `$` (for example `$5`) is left as-is. To write a dollar sign next to other math-like text without starting math, escape it: `\$5`.
+```md
+$$
+\int_0^1 x^2 \, dx = \frac{1}{3}
+$$
+```
+
+### Single-dollar inline math and the currency caveat
+
+Single dollars also work for inline math — `$x^2 + y^2$` — but `$` is also an ordinary currency sign, so single-dollar math is **guarded** to avoid turning prices into equations:
+
+- A `$` immediately followed by a space or a digit is treated as currency, not math. So `The cost rose from $50 to $100.` renders literally, and `$ 5` is left alone.
+- Because of that guard, math that genuinely starts with a digit (for example `2x`) should use the unambiguous `\( 2x \)` form.
+- To write a literal dollar sign next to math-like text, escape it: `\$5`.
+
+When in doubt, prefer `\( ... \)` and `\[ ... \]`: they are never ambiguous.
+
+Characters that are meaningful to both LaTeX and Markdown (`*`, `_`, `#`, `` ` ``, `<`, `>`, `&`, braces, brackets) are protected inside math, so `\( \psi^*(x) \)` and `\[ A_{i,j} \]` survive unchanged instead of being read as Markdown.
+
+### Math versus code
+
+Code is never typeset as mathematics. LaTeX inside inline code stays code — `` `\( E = mc^2 \)` `` shows the delimiters literally — and a fenced code block shows its source:
+
+````md
+```latex
+\[ E = mc^2 \]
+```
+````
 
 **Rendering:** Math is typeset by [MathJax 4](https://www.mathjax.org/). MathJax loads only for decks that actually contain math, and only when a slide with math is shown — so decks without math carry no extra cost.
 

@@ -77,3 +77,44 @@ Feature: Markdown rendering
     Given Markdown text "It costs $5 today."
     When I render the Markdown
     Then the output contains "It costs $5 today."
+
+  Scenario: Native inline delimiters are recognised as math
+    Given Markdown text "Energy \( E = mc^2 \) is famous."
+    When I render the Markdown
+    Then the output contains "math-tex math-tex--inline"
+    And the output contains "data-math-source=\"E = mc^2\""
+
+  Scenario: Native display delimiters protect Markdown-significant characters
+    Given Markdown text containing display math:
+      """
+      \[
+      \psi^*(x)\psi(x)
+      \]
+      """
+    When I render the Markdown
+    Then the output contains "math-tex math-tex--display"
+    And the output contains "data-math-source=\"\psi^*(x)\psi(x)\""
+    And the output does not contain "<em>"
+
+  Scenario: Currency ranges are not treated as math
+    Given Markdown text "The cost increased from $50 to $100."
+    When I render the Markdown
+    Then the output contains "from $50 to $100."
+    And the output does not contain "math-tex"
+
+  Scenario: LaTeX inside inline code stays code
+    Given Markdown text "Use `\( E = mc^2 \)` to create inline math."
+    When I render the Markdown
+    Then the output contains "<code>\( E = mc^2 \)</code>"
+    And the output does not contain "math-tex"
+
+  Scenario: A fenced code block of LaTeX stays source
+    Given Markdown text containing a fenced code block:
+      """
+      ```latex
+      \[ E = mc^2 \]
+      ```
+      """
+    When I render the Markdown
+    Then the output contains "language-latex"
+    And the output does not contain "math-tex"
