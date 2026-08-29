@@ -250,3 +250,130 @@ test("renderMarkdown reports hasMath false when there is no math", () => {
   assert.equal(result.hasMath, false);
   assert.equal(result.mathCount, 0);
 });
+
+// --- Native LaTeX delimiters: \( ... \) and \[ ... \] ------------------------
+
+test("renderMarkdown recognises native inline \\( ... \\) math", () => {
+  const result = renderMarkdown("Energy \\( E = mc^2 \\) is famous.");
+  assert.equal(result.html.includes('class="math-tex math-tex--inline"'), true);
+  assert.equal(result.html.includes('data-math-source="E = mc^2"'), true);
+  assert.equal(result.html.includes("\\(E = mc^2\\)"), true);
+  assert.equal(result.hasMath, true);
+  assert.equal(result.mathCount, 1);
+});
+
+test("renderMarkdown recognises native display \\[ ... \\] math on one line", () => {
+  const result = renderMarkdown("\\[ E = mc^2 \\]");
+  assert.equal(result.html.includes('class="math-tex math-tex--display"'), true);
+  assert.equal(result.html.includes('data-math-source="E = mc^2"'), true);
+  assert.equal(result.html.includes("\\[E = mc^2\\]"), true);
+  assert.equal(result.mathCount, 1);
+});
+
+test("renderMarkdown recognises native display \\[ ... \\] across multiple lines", () => {
+  const result = renderMarkdown("\\[\n\\psi^*(x)\\psi(x)\n\\]");
+  assert.equal(result.html.includes('class="math-tex math-tex--display"'), true);
+  // The asterisk inside must NOT become emphasis, and the source survives.
+  assert.equal(result.html.includes("<em>"), false);
+  assert.equal(result.html.includes('data-math-source="\\psi^*(x)\\psi(x)"'), true);
+  assert.equal(result.mathCount, 1);
+});
+
+test("renderMarkdown recognises inline \\( ... \\) alongside prose emphasis", () => {
+  const result = renderMarkdown("This is *emphasised* and \\( a_{i,j} \\) is math.");
+  assert.equal(result.html.includes("<em>emphasised</em>"), true);
+  assert.equal(result.html.includes('data-math-source="a_{i,j}"'), true);
+});
+
+// --- Math source must survive Markdown-significant characters -----------------
+
+test("renderMarkdown preserves math containing markdown-significant characters", () => {
+  const cases = [
+    ["\\( a*b \\)", "a*b"],
+    ["\\( a_b \\)", "a_b"],
+    ["\\( \\#1 \\)", "\\#1"],
+    ["\\( \\alpha \\)", "\\alpha"],
+    ["\\( \\{x\\} \\)", "\\{x\\}"],
+    ["\\( [0,1] \\)", "[0,1]"],
+  ];
+  for (const [input, source] of cases) {
+    const result = renderMarkdown(input);
+    assert.equal(
+      result.html.includes(`data-math-source="${source}"`),
+      true,
+      `expected source ${source} preserved for ${input}`,
+    );
+    assert.equal(result.html.includes("<em>"), false, `no emphasis for ${input}`);
+    assert.equal(result.html.includes("<strong>"), false, `no strong for ${input}`);
+  }
+});
+
+test("renderMarkdown escapes ampersands, pipes and angle brackets in math source", () => {
+  const result = renderMarkdown("\\[\n\\begin{matrix} a & b \\\\ c & d \\end{matrix}\n\\]");
+  // Ampersands are HTML-escaped in both the stored source and the delimited output.
+  assert.equal(result.html.includes("a &amp; b"), true);
+  assert.equal(result.mathCount, 1);
+});
+
+test("renderMarkdown preserves a multi-line aligned environment", () => {
+  const source = "\\[\n\\begin{aligned}\nx &= 1 \\\\\ny &= 2\n\\end{aligned}\n\\]";
+  const result = renderMarkdown(source);
+  assert.equal(result.html.includes('class="math-tex math-tex--display"'), true);
+  assert.equal(result.html.includes("\\begin{aligned}"), true);
+  assert.equal(result.html.includes("\\end{aligned}"), true);
+  assert.equal(result.mathCount, 1);
+});
+
+// --- Currency must not be mistaken for single-dollar math ---------------------
+
+test("renderMarkdown does not treat currency ranges as math", () => {
+  const result = renderMarkdown("The cost increased from $50 to $100.");
+  assert.equal(result.html.includes("math-tex"), false);
+  assert.equal(result.hasMath, false);
+  assert.equal(result.html.includes("from $50 to $100."), true);
+});
+
+test("renderMarkdown does not treat a single currency amount as math", () => {
+  const result = renderMarkdown("It costs $50 today.");
+  assert.equal(result.html.includes("math-tex"), false);
+  assert.equal(result.hasMath, false);
+});
+
+test("renderMarkdown does not treat spaced dollar amounts as math", () => {
+  // A $ followed by whitespace never opens inline math.
+  const result = renderMarkdown("We paid $ 50 and $ 100 total.");
+  assert.equal(result.html.includes("math-tex"), false);
+  assert.equal(result.hasMath, false);
+});
+
+test("renderMarkdown still recognises genuine single-dollar math", () => {
+  const result = renderMarkdown("The value $x^2 + y^2$ is positive.");
+  assert.equal(result.html.includes('data-math-source="x^2 + y^2"'), true);
+  assert.equal(result.hasMath, true);
+});
+
+// --- Code must never be rendered as mathematics ------------------------------
+
+test("renderMarkdown keeps native math delimiters inside inline code as code", () => {
+  const result = renderMarkdown("Use `\\( E = mc^2 \\)` to create inline math.");
+  assert.equal(result.html.includes("<code>\\( E = mc^2 \\)</code>"), true);
+  assert.equal(result.html.includes("math-tex"), false);
+  assert.equal(result.hasMath, false);
+});
+
+test("renderMarkdown keeps dollar math inside inline code as code", () => {
+  const result = renderMarkdown("Write `$x$` for inline math.");
+  assert.equal(result.html.includes("<code>$x$</code>"), true);
+  assert.equal(result.html.includes("math-tex"), false);
+  assert.equal(result.hasMath, false);
+});
+
+test("renderMarkdown keeps a fenced code block of LaTeX as source, not math", () => {
+  const result = renderMarkdown("```latex\n\\[\nE = mc^2\n\\]\n```");
+  // The block is rendered as code, its LaTeX shown verbatim, and no math node.
+  assert.equal(result.html.includes("<pre>"), true);
+  assert.equal(result.html.includes("<code"), true);
+  assert.equal(result.html.includes("math-tex"), false);
+  assert.equal(result.hasMath, false);
+  assert.equal(result.html.includes("E = mc^2"), true);
+});

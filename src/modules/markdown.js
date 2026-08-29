@@ -110,43 +110,126 @@ function buildMathNodeHtml(source, display) {
   return `<${tag} class="${className}" data-math-source="${escapedSource}">${open}${escapedSource}${close}</${tag}>`;
 }
 
+/** Build a `<code>` node from an inline code span, escaping its content. */
+function buildCodeNodeHtml(source) {
+  return `<code>${escapeHtml(source)}</code>`;
+}
+
 /**
- * Replace inline `$...$` and single-line `$$...$$` math with placeholder tokens,
- * returning the rewritten text and a list of the generated math-node HTML
- * strings (indexed by placeholder number). A `$` preceded by a backslash is an
- * escaped literal dollar sign and is never treated as a delimiter; a lone `$`
- * with no matching closing delimiter on the same segment stays literal too.
+ * Recognise a fenced code block that opens with ```` ``` ```` (optionally
+ * followed by a language) at `startIndex`, closing on a later ```` ``` ```` line.
+ * Returns `{ lang, source, endIndex }` or null. Everything between the fences is
+ * kept verbatim, so LaTeX inside a code block is shown as source, not math.
  */
-function protectInlineMath(text, state, tokens) {
+function collectFencedCodeBlock(lines, startIndex) {
+  const opening = String(lines[startIndex] || "");
+  const openMatch = /^\s*```+\s*([\w-]*)\s*$/.exec(opening);
+  if (!openMatch) return null;
+
+  const lang = openMatch[1] || "";
+  const body = [];
+  for (let index = startIndex + 1; index < lines.length; index += 1) {
+    if (/^\s*```+\s*$/.test(lines[index])) {
+      return { lang, source: body.join("\n"), endIndex: index };
+    }
+    body.push(lines[index]);
+  }
+  // Unterminated fence: consume to end so the opening ``` is not shown as prose.
+  return { lang, source: body.join("\n"), endIndex: lines.length - 1 };
+}
+
+/**
+ * Scan `text` for inline code spans and math, replacing each with a placeholder
+ * token so that neither is touched by later Markdown substitutions. Code is
+ * recognised BEFORE math, so LaTeX inside backticks (`` `\( x \)` ``) stays code.
+ *
+ * Recognised, in priority order at each position:
+ *   - `` `...` `` inline code
+ *   - `\( ... \)` native inline math
+ *   - `\[ ... \]` native (inline) display math
+ *   - `\$`        escaped literal dollar sign
+ *   - `$$ ... $$` display math
+ *   - `$ ... $`   inline math, guarded so ordinary currency is not matched
+ *
+ * Placeholders share one numbering across `tokens`; each entry is ready-to-emit
+ * HTML. Returns the rewritten text.
+ */
+function protectInlineSpans(text, state, tokens) {
   let result = "";
   let index = 0;
+
+  const pushToken = (html) => {
+    const placeholder = `${MATH_PLACEHOLDER_PREFIX}${tokens.length}${MATH_PLACEHOLDER_SUFFIX}`;
+    tokens.push(html);
+    return placeholder;
+  };
+  const pushMath = (source, display) => {
+    if (state) {
+      state.mathCount += 1;
+      state.hasMath = true;
+    }
+    return pushToken(buildMathNodeHtml(source, display));
+  };
+
   while (index < text.length) {
     const char = text[index];
 
-    // Escaped dollar: emit a literal $ and skip the backslash.
-    if (char === "\\" && text[index + 1] === "$") {
-      result += "$";
-      index += 2;
-      continue;
+    // Inline code span: protect first so its contents are opaque to math.
+    if (char === "`") {
+      const close = text.indexOf("`", index + 1);
+      if (close !== -1) {
+        result += pushToken(buildCodeNodeHtml(text.slice(index + 1, close)));
+        index = close + 1;
+        continue;
+      }
+    }
+
+    if (char === "\\") {
+      // Escaped dollar: emit a literal $ and skip the backslash.
+      if (text[index + 1] === "$") {
+        result += "$";
+        index += 2;
+        continue;
+      }
+      // Native inline math \( ... \)
+      if (text[index + 1] === "(") {
+        const close = text.indexOf("\\)", index + 2);
+        if (close !== -1) {
+          const source = text.slice(index + 2, close).trim();
+          if (source) {
+            result += pushMath(source, false);
+            index = close + 2;
+            continue;
+          }
+        }
+      }
+      // Native display math \[ ... \] appearing inline in prose.
+      if (text[index + 1] === "[") {
+        const close = text.indexOf("\\]", index + 2);
+        if (close !== -1) {
+          const source = text.slice(index + 2, close).trim();
+          if (source) {
+            result += pushMath(source, true);
+            index = close + 2;
+            continue;
+          }
+        }
+      }
     }
 
     if (char === "$") {
       const display = text[index + 1] === "$";
       const delimiterLength = display ? 2 : 1;
       const contentStart = index + delimiterLength;
-      const closeIndex = findMathClose(text, contentStart, display);
-      if (closeIndex !== -1) {
-        const source = text.slice(contentStart, closeIndex).trim();
-        if (source) {
-          const placeholder = `${MATH_PLACEHOLDER_PREFIX}${tokens.length}${MATH_PLACEHOLDER_SUFFIX}`;
-          tokens.push(buildMathNodeHtml(source, display));
-          if (state) {
-            state.mathCount += 1;
-            state.hasMath = true;
+      if (display || isInlineDollarOpener(text, index)) {
+        const closeIndex = findDollarClose(text, contentStart, display);
+        if (closeIndex !== -1) {
+          const source = text.slice(contentStart, closeIndex).trim();
+          if (source) {
+            result += pushMath(source, display);
+            index = closeIndex + delimiterLength;
+            continue;
           }
-          result += placeholder;
-          index = closeIndex + delimiterLength;
-          continue;
         }
       }
     }
@@ -158,11 +241,31 @@ function protectInlineMath(text, state, tokens) {
 }
 
 /**
- * Find the closing delimiter for a math span that opened at `from`. Returns the
- * index of the closing `$` (or first `$` of `$$`), or -1 when none is found.
- * Backslash-escaped dollars inside the span are skipped.
+ * Decide whether a single `$` at `index` opens inline math rather than being a
+ * currency sign. Guards, in order:
+ *   - the next character must exist and not be whitespace (`$ 50` is currency),
+ *   - the next character must not be an ASCII digit (`$50`, `$100` are money),
+ *   - there must be a valid closing `$` on the segment whose preceding
+ *     character is not whitespace (checked by the caller via findDollarClose).
+ * These rules keep `$x^2$` as math while leaving prices such as
+ * `$50 to $100` untouched. Math that genuinely starts with a digit can always
+ * be written with the unambiguous `\( ... \)` delimiters.
  */
-function findMathClose(text, from, display) {
+function isInlineDollarOpener(text, index) {
+  const next = text[index + 1];
+  if (next === undefined) return false;
+  if (/\s/.test(next)) return false;
+  if (next >= "0" && next <= "9") return false;
+  return true;
+}
+
+/**
+ * Find the closing delimiter for a `$`/`$$` span that opened at `from`. Returns
+ * the index of the closing `$` (or first `$` of `$$`), or -1 when none is found.
+ * Backslash-escaped dollars are skipped. For inline `$...$`, the character
+ * before the closing `$` must not be whitespace, so `$x $` does not close.
+ */
+function findDollarClose(text, from, display) {
   for (let i = from; i < text.length; i += 1) {
     if (text[i] === "\\") {
       i += 1; // skip the escaped character
@@ -173,6 +276,7 @@ function findMathClose(text, from, display) {
         if (text[i + 1] === "$") return i;
         continue; // a single $ does not close a $$ span
       }
+      if (i > from && /\s/.test(text[i - 1])) continue; // no space before close
       return i;
     }
   }
@@ -180,38 +284,55 @@ function findMathClose(text, from, display) {
 }
 
 /**
- * Recognise a display-math block starting at `startIndex`.
- * Two forms are supported:
- *   - a single line `$$ ... $$`
- *   - a `$$` fence, the LaTeX body on following lines, and a closing `$$`
+ * Recognise a display-math block starting at `startIndex`. Supported forms:
+ *   - a single line `$$ ... $$` or `\[ ... \]`
+ *   - a `$$` fence, LaTeX body on following lines, closing `$$`
+ *   - a `\[` fence, LaTeX body on following lines, closing `\]`
  * Returns `{ source, endIndex }` or null when the line does not open a block.
- * The trimmed line must START with `$$` so that `$$` appearing mid-sentence is
- * left to inline handling.
+ * The trimmed line must START with the opening delimiter so that a delimiter
+ * appearing mid-sentence is left to inline handling.
  */
 function collectDisplayMathBlock(lines, startIndex) {
   const trimmed = String(lines[startIndex] || "").trim();
-  if (!trimmed.startsWith("$$")) return null;
 
-  // Single-line form: opens and closes on the same line.
-  const singleLine = /^\$\$([\s\S]*)\$\$$/.exec(trimmed);
-  if (singleLine && trimmed.length >= 4) {
-    return { source: singleLine[1].trim(), endIndex: startIndex };
+  if (trimmed.startsWith("$$")) {
+    const singleLine = /^\$\$([\s\S]*)\$\$$/.exec(trimmed);
+    if (singleLine && trimmed.length >= 4) {
+      return { source: singleLine[1].trim(), endIndex: startIndex };
+    }
+    if (trimmed !== "$$") return null; // a `$$foo` with no close is not a block
+    return collectFencedMath(lines, startIndex, "$$");
   }
 
-  // Fenced form: `$$` opens, body follows, `$$` closes on a later line.
-  if (trimmed !== "$$") return null; // a `$$foo` with no close is not a block
+  if (trimmed.startsWith("\\[")) {
+    const singleLine = /^\\\[([\s\S]*)\\\]$/.exec(trimmed);
+    if (singleLine) {
+      return { source: singleLine[1].trim(), endIndex: startIndex };
+    }
+    if (trimmed !== "\\[") return null; // `\[foo` with no close is not a block
+    return collectFencedMath(lines, startIndex, "\\]");
+  }
+
+  return null;
+}
+
+/**
+ * Collect the body of a fenced display-math block whose opener is on
+ * `startIndex`, terminating at a line equal to `closeToken`. An unterminated
+ * fence consumes to the end so the raw delimiter is never shown as prose.
+ */
+function collectFencedMath(lines, startIndex, closeToken) {
   const body = [];
   for (let index = startIndex + 1; index < lines.length; index += 1) {
-    if (lines[index].trim() === "$$") {
+    if (lines[index].trim() === closeToken) {
       return { source: body.join("\n").trim(), endIndex: index };
     }
     body.push(lines[index]);
   }
-  // Unterminated fence: consume to end so the raw `$$` is not shown as prose.
   return { source: body.join("\n").trim(), endIndex: lines.length - 1 };
 }
 
-function restoreMathTokens(html, tokens) {
+function restoreProtectedTokens(html, tokens) {
   if (!tokens.length) return html;
   return html.replace(
     /MATH(\d+)/g,
@@ -220,10 +341,10 @@ function restoreMathTokens(html, tokens) {
 }
 
 function renderInline(text, state) {
-  // Protect math source before any HTML-escaping or Markdown substitution so
-  // that its LaTeX characters are not mangled, then restore the math nodes after.
-  const mathTokens = [];
-  const protectedText = protectInlineMath(text, state, mathTokens);
+  // Protect inline code and math before any HTML-escaping or Markdown
+  // substitution so their contents are not mangled, then restore them after.
+  const tokens = [];
+  const protectedText = protectInlineSpans(text, state, tokens);
 
   // Handle inline progressive fragments {>...} before HTML-escaping so that
   // the > character does not get mangled to &gt; before we can match it.
@@ -238,7 +359,7 @@ function renderInline(text, state) {
     lastIndex = match.index + match[0].length;
   }
   result += renderInlineMarkup(escapeHtml(protectedText.slice(lastIndex)));
-  return restoreMathTokens(result, mathTokens);
+  return restoreProtectedTokens(result, tokens);
 }
 
 const DIRECTIVE_OPEN_RE = /^::([a-z0-9%\u00ad\u2010-\u2015\u2212-]+)(?:\s+(.+?))?\s*$/i;
@@ -818,7 +939,22 @@ function renderLines(lines, state) {
       continue;
     }
 
-    // Display math: `$$...$$` on one line, or a `$$`-fenced block across lines.
+    // Fenced code block (```lang ... ```). Recognised before math so that LaTeX
+    // inside a code fence is shown as source rather than typeset.
+    const fencedCode = collectFencedCodeBlock(lines, index);
+    if (fencedCode) {
+      flushList();
+      const langAttr = fencedCode.lang
+        ? ` class="language-${escapeAttribute(fencedCode.lang)}"`
+        : "";
+      htmlParts.push(
+        `<figure class="layout-code"><pre><code${langAttr}>${escapeHtml(fencedCode.source)}</code></pre></figure>`,
+      );
+      index = fencedCode.endIndex + 1;
+      continue;
+    }
+
+    // Display math: `$$...$$` / `\[...\]` on one line, or fenced across lines.
     // Handled as its own block so the math node is not nested inside a <p>.
     const displayMath = collectDisplayMathBlock(lines, index);
     if (displayMath) {

@@ -74,7 +74,7 @@ Current related files:
 
 ## Mathematics
 
-Mathematical notation is authored in LaTeX (`$...$` inline, `$$...$$` display) and typeset by MathJax 4.
+Mathematical notation is authored in LaTeX — native `\(...\)` / `\[...\]` (first-class, for paste compatibility), plus `$$...$$` and guarded single-dollar `$...$` — and typeset by MathJax 4. Code (inline `` `...` `` and fenced ```` ``` ````) is never typeset, so LaTeX shown as an example stays readable source.
 
 Accessibility behaviour:
 
