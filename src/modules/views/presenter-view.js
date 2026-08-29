@@ -33,7 +33,15 @@ import { downloadFile } from "../export.js";
 import { toggleColorMode } from "../color-mode.js";
 import { applyDeckTheme } from "../theme.js";
 import { applyPreviewScale } from "../slide-layout.js";
+import { isMathExplorationActive } from "../math.js";
 import { addColorModeToggle, buildSupplementalHtml, compileSource, createButton, createDeckFrame, mountSlideInto } from "./shared.js";
+
+// Keys MathJax's equation explorer uses; yielded to it when math has focus so
+// exploring an equation does not also navigate slides.
+const MATH_NAV_KEYS = new Set([
+  "ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown",
+  "PageUp", "PageDown", "Home", "End", " ", "Enter", "Escape",
+]);
 
 export function createPresenterView(root, initialSource) {
   let source = initialSource;
@@ -589,6 +597,12 @@ export function createPresenterView(root, initialSource) {
 
   document.addEventListener("keydown", (event) => {
     if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+    // Yield the equation-explorer keys to MathJax when math has keyboard focus,
+    // so exploring an equation does not also navigate slides.
+    if (isMathExplorationActive(event.target) && MATH_NAV_KEYS.has(event.key)) {
+      return;
+    }
 
     if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
       event.preventDefault();

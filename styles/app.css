@@ -1107,6 +1107,82 @@ input:focus-visible {
   margin: 0 auto;
 }
 
+/* Visible focus for the MathJax explorer. MathJax makes mjx-container
+   focusable (tabindex="0") so it can be explored by keyboard; give that focus a
+   clear indicator. In forced-colors (Windows high contrast) use a system colour
+   so the outline is always visible. */
+.math-tex mjx-container:focus,
+.math-tex mjx-container:focus-visible {
+  outline: 3px solid var(--focus-ring, var(--accent, currentColor));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (forced-colors: active) {
+  .math-tex mjx-container:focus,
+  .math-tex mjx-container:focus-visible {
+    outline-color: Highlight;
+  }
+  /* Let math follow the user's forced colours rather than a fixed ink token. */
+  .math-tex,
+  .math-tex mjx-container {
+    color: CanvasText;
+  }
+}
+
+/* Oversized display equations: keep the whole equation reachable. The container
+   scrolls horizontally as a last resort and is itself keyboard-focusable so a
+   keyboard user can scroll it, with a visible focus ring and an accessible name
+   supplied in markup. MathJax's own responsive line-breaking wraps where it can
+   before scrolling is needed. */
+.math-tex--display {
+  scrollbar-width: thin;
+}
+
+.math-tex--display:focus,
+.math-tex--display:focus-visible {
+  outline: 3px solid var(--focus-ring, var(--accent, currentColor));
+  outline-offset: 2px;
+}
+
+/* Semantic emphasis inside equations.
+   Authors mark a part with \class{math-emph}{...} to call it out. Emphasis is
+   NEVER by colour alone: each class pairs an accent colour with a non-colour
+   cue (weight and/or underline) so the call-out survives greyscale, colour
+   blindness, and forced-colors. Use \class{math-emph-2}{...} for a second,
+   distinguishable call-out when stepping through an equation. */
+.math-tex .math-emph {
+  color: var(--accent, currentColor);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.12em;
+}
+
+.math-tex .math-emph-2 {
+  color: var(--accent-soft, var(--accent, currentColor));
+  font-weight: 700;
+  text-decoration: underline dotted;
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.12em;
+}
+
+/* A muted/de-emphasised part, e.g. to fade context while stepping. Uses reduced
+   opacity plus italic so the de-emphasis is not conveyed by lightness alone. */
+.math-tex .math-muted {
+  opacity: 0.55;
+  font-style: italic;
+}
+
+@media (forced-colors: active) {
+  /* Colour is ignored in forced-colors; the weight/underline cues remain, and
+     the accent maps to a system highlight so the call-out is still visible. */
+  .math-tex .math-emph,
+  .math-tex .math-emph-2 {
+    color: Highlight;
+  }
+}
+
 /* Good failure state: when MathJax cannot load, the raw LaTeX source is shown
    as readable monospace rather than a broken render. */
 .math-tex[data-math-fallback] {

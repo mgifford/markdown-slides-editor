@@ -10,7 +10,15 @@ import {
 } from "../presentation-state.js";
 import { toggleColorMode } from "../color-mode.js";
 import { applyDeckTheme } from "../theme.js";
+import { isMathExplorationActive } from "../math.js";
 import { compileSource, mountSlideInto } from "./shared.js";
+
+// Keys MathJax's equation explorer uses; yielded to it when math has focus so
+// exploring an equation does not also navigate slides.
+const MATH_NAV_KEYS = new Set([
+  "ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown",
+  "PageUp", "PageDown", "Home", "End", " ", "Enter", "Escape",
+]);
 
 const AUDIENCE_PRIMARY_KEY = "markdown-slides-editor.audience-primary";
 const HEARTBEAT_INTERVAL_MS = 1000;
@@ -268,6 +276,14 @@ export function createPresentationView(root, initialSource) {
     // the focused "Take over" button without the Space handler below firing
     // event.preventDefault() and swallowing the button activation.
     if (!isPrimary) return;
+
+    // When focus is inside a MathJax equation, the user may be exploring the
+    // maths with the keyboard. Yield the keys MathJax uses (arrows, space,
+    // page keys, Home/End, Enter, Escape) so exploration does not also change
+    // slides. Other shortcuts (o, d) still work.
+    if (isMathExplorationActive(event.target) && MATH_NAV_KEYS.has(event.key)) {
+      return;
+    }
 
     if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
       event.preventDefault();

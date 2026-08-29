@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   hasMath,
+  isMathExplorationActive,
   loadMathJax,
   renderMathBlocks,
   resetMathContext,
@@ -25,6 +26,7 @@ function makeNode({ source = "", rendered = false } = {}) {
     getAttribute: (name) => (attributes.has(name) ? attributes.get(name) : null),
     setAttribute: (name, value) => attributes.set(name, value),
     hasAttribute: (name) => attributes.has(name),
+    removeAttribute: (name) => attributes.delete(name),
     querySelector: () => null,
     querySelectorAll: () => [],
   };
@@ -112,10 +114,23 @@ test("renderMathBlocks typesets nodes and marks them rendered", async () => {
 });
 
 test("renderMathBlocks labels nodes with their source before typesetting", async () => {
-  __setMathJaxLoader(async () => ({ typesetPromise: async () => {} }));
+  // Before MathJax loads, the aria-label is a baseline; a slow/never loader
+  // leaves it in place as the fallback name.
+  __setMathJaxLoader(async () => {
+    throw new Error("still loading");
+  });
   const node = makeNode({ source: "E = mc^2" });
   await renderMathBlocks(makeRoot([node]));
   assert.equal(node.getAttribute("aria-label"), "E = mc^2");
+});
+
+test("renderMathBlocks removes the competing aria-label once MathJax renders", async () => {
+  // After a successful typeset, MathJax owns the accessible name via assistive
+  // MathML, so our raw-LaTeX aria-label must be removed to avoid competing.
+  __setMathJaxLoader(async () => ({ typesetPromise: async () => {} }));
+  const node = makeNode({ source: "E = mc^2" });
+  await renderMathBlocks(makeRoot([node]));
+  assert.equal(node.hasAttribute("aria-label"), false);
 });
 
 // --- resetMathContext ---------------------------------------------------------
@@ -184,4 +199,20 @@ test("loadMathJax returns the same promise on repeated calls", async () => {
   await first;
   await loadMathJax();
   assert.equal(loads, 1);
+});
+
+// --- isMathExplorationActive (keyboard yielding) ------------------------------
+
+test("isMathExplorationActive is true when the target is inside a mjx-container", () => {
+  const target = { closest: (sel) => (sel === "mjx-container" ? {} : null) };
+  assert.equal(isMathExplorationActive(target), true);
+});
+
+test("isMathExplorationActive is false for a target outside math", () => {
+  const target = { closest: () => null };
+  assert.equal(isMathExplorationActive(target), false);
+});
+
+test("isMathExplorationActive is false for a target without closest()", () => {
+  assert.equal(isMathExplorationActive({}), false);
 });
