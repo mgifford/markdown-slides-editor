@@ -16,5 +16,8 @@
   },
   "devDependencies": {
     "@cucumber/cucumber": "^12.8.2"
+  },
+  "overrides": {
+    "brace-expansion": "^5.0.9"
   }
 }
