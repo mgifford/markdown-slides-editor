@@ -18,11 +18,13 @@ test("getCaptionConfig prefers explicit caption source", () => {
   assert.equal(config.provider, "service");
 });
 
-test("getCaptionConfig uses localhost whisper transcript by default", () => {
+test("getCaptionConfig does not auto-enable captions without an explicit source", () => {
+  // With no server-side transcript configured, captions stay off and rely on
+  // live speech-to-text or browser storage instead of a default localhost URL.
   const config = getCaptionConfig({}, { href: "http://localhost:4173/", hostname: "localhost" });
 
-  assert.equal(config.enabled, true);
-  assert.equal(config.source, "http://localhost:4173/whisper-demo/transcript.json");
+  assert.equal(config.enabled, false);
+  assert.equal(config.source, "");
 });
 
 test("parseCaptionPayload understands transcript json state", () => {
