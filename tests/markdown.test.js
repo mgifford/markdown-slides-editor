@@ -171,3 +171,82 @@ test("renderMarkdown renders column without explicit width", () => {
   // No inline style when width is omitted.
   assert.equal(result.html.includes("--column-basis"), false);
 });
+
+// --- Mathematics (LaTeX) recognition -----------------------------------------
+
+test("renderMarkdown recognises inline $...$ math and preserves the source", () => {
+  const result = renderMarkdown("The area is $A = \\pi r^2$ overall.");
+  // A protected inline math node is emitted with the raw LaTeX source retained.
+  assert.equal(result.html.includes('class="math-tex math-tex--inline"'), true);
+  assert.equal(result.html.includes('data-math-source="A = \\pi r^2"'), true);
+  // Surrounding prose is still rendered as a normal paragraph.
+  assert.equal(result.html.includes("<p>The area is "), true);
+  assert.equal(result.html.includes(" overall.</p>"), true);
+  // The deck is flagged as containing math so the renderer can lazy-load MathJax.
+  assert.equal(result.hasMath, true);
+  assert.equal(result.mathCount, 1);
+});
+
+test("renderMarkdown wraps inline math in MathJax inline delimiters", () => {
+  const result = renderMarkdown("Value $x^2$ here.");
+  assert.equal(result.html.includes("\\(x^2\\)"), true);
+});
+
+test("renderMarkdown recognises $$...$$ display math on a single line", () => {
+  const result = renderMarkdown("$$E = mc^2$$");
+  assert.equal(result.html.includes('class="math-tex math-tex--display"'), true);
+  assert.equal(result.html.includes('data-math-source="E = mc^2"'), true);
+  assert.equal(result.html.includes("\\[E = mc^2\\]"), true);
+  assert.equal(result.mathCount, 1);
+});
+
+test("renderMarkdown recognises multi-line $$...$$ display math", () => {
+  const result = renderMarkdown("$$\n\\int_0^1 x\\,dx = \\frac{1}{2}\n$$");
+  assert.equal(result.html.includes('class="math-tex math-tex--display"'), true);
+  assert.equal(result.html.includes("\\int_0^1"), true);
+  assert.equal(result.html.includes("\\frac{1}{2}"), true);
+  assert.equal(result.mathCount, 1);
+});
+
+test("renderMarkdown protects math from inline markdown substitutions", () => {
+  // Underscores and asterisks inside math must NOT become <em>/<strong>.
+  const result = renderMarkdown("Indices $a_1 * b_2$ stay intact.");
+  assert.equal(result.html.includes("<em>"), false);
+  assert.equal(result.html.includes("<strong>"), false);
+  assert.equal(result.html.includes('data-math-source="a_1 * b_2"'), true);
+});
+
+test("renderMarkdown escapes HTML-special characters inside math source", () => {
+  const result = renderMarkdown("Compare $a < b$ now.");
+  // The rendered LaTeX and the stored source both escape the angle bracket.
+  assert.equal(result.html.includes('data-math-source="a &lt; b"'), true);
+  assert.equal(result.html.includes("\\(a &lt; b\\)"), true);
+});
+
+test("renderMarkdown does not treat a lone dollar sign as math", () => {
+  const result = renderMarkdown("It costs $5 today.");
+  assert.equal(result.html.includes("math-tex"), false);
+  assert.equal(result.hasMath, false);
+  assert.equal(result.html.includes("It costs $5 today."), true);
+});
+
+test("renderMarkdown does not treat an escaped dollar sign as a delimiter", () => {
+  const result = renderMarkdown("Price is \\$5 and \\$9.");
+  assert.equal(result.html.includes("math-tex"), false);
+  assert.equal(result.hasMath, false);
+  // The escaped dollars render as literal dollar signs.
+  assert.equal(result.html.includes("$5"), true);
+  assert.equal(result.html.includes("$9"), true);
+});
+
+test("renderMarkdown counts multiple math expressions across a slide", () => {
+  const result = renderMarkdown("Inline $a$ and $b$.\n\n$$c$$");
+  assert.equal(result.mathCount, 3);
+  assert.equal(result.hasMath, true);
+});
+
+test("renderMarkdown reports hasMath false when there is no math", () => {
+  const result = renderMarkdown("# Plain slide\n\nJust text.");
+  assert.equal(result.hasMath, false);
+  assert.equal(result.mathCount, 0);
+});

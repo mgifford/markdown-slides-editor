@@ -82,21 +82,163 @@ function renderInlineMarkup(escapedHtml) {
   return html;
 }
 
+// --- Mathematics (LaTeX) recognition -----------------------------------------
+//
+// Math source is recognised BEFORE ordinary Markdown substitutions run and is
+// replaced by an inert placeholder token so that characters that are meaningful
+// to both LaTeX and Markdown (*, _, `, <, >, [, ]) survive intact. The raw
+// LaTeX is escaped and preserved on the emitted node so it can serve as the
+// accessible fallback when MathJax is unavailable, and so exports can recover
+// the original meaning. Actual typesetting is deferred to math.js / MathJax,
+// mirroring the Mermaid philosophy: recognise, protect, render later.
+
+// Placeholders are wrapped in U+E000 (a Unicode Private Use Area character):
+// it cannot appear in authored content, is left untouched by escapeHtml() and
+// the inline-markup substitutions, and keeps the source file plain text (unlike
+// a NUL byte, which would make git treat the file as binary).
+const MATH_PLACEHOLDER_PREFIX = "MATH";
+const MATH_PLACEHOLDER_SUFFIX = "";
+
+function buildMathNodeHtml(source, display) {
+  const escapedSource = escapeHtml(source);
+  const className = display ? "math-tex math-tex--display" : "math-tex math-tex--inline";
+  const tag = display ? "div" : "span";
+  const open = display ? "\\[" : "\\(";
+  const close = display ? "\\]" : "\\)";
+  // The delimited, escaped LaTeX is the visible text content (typeset by
+  // MathJax); data-math-source keeps the raw source for the accessible fallback.
+  return `<${tag} class="${className}" data-math-source="${escapedSource}">${open}${escapedSource}${close}</${tag}>`;
+}
+
+/**
+ * Replace inline `$...$` and single-line `$$...$$` math with placeholder tokens,
+ * returning the rewritten text and a list of the generated math-node HTML
+ * strings (indexed by placeholder number). A `$` preceded by a backslash is an
+ * escaped literal dollar sign and is never treated as a delimiter; a lone `$`
+ * with no matching closing delimiter on the same segment stays literal too.
+ */
+function protectInlineMath(text, state, tokens) {
+  let result = "";
+  let index = 0;
+  while (index < text.length) {
+    const char = text[index];
+
+    // Escaped dollar: emit a literal $ and skip the backslash.
+    if (char === "\\" && text[index + 1] === "$") {
+      result += "$";
+      index += 2;
+      continue;
+    }
+
+    if (char === "$") {
+      const display = text[index + 1] === "$";
+      const delimiterLength = display ? 2 : 1;
+      const contentStart = index + delimiterLength;
+      const closeIndex = findMathClose(text, contentStart, display);
+      if (closeIndex !== -1) {
+        const source = text.slice(contentStart, closeIndex).trim();
+        if (source) {
+          const placeholder = `${MATH_PLACEHOLDER_PREFIX}${tokens.length}${MATH_PLACEHOLDER_SUFFIX}`;
+          tokens.push(buildMathNodeHtml(source, display));
+          if (state) {
+            state.mathCount += 1;
+            state.hasMath = true;
+          }
+          result += placeholder;
+          index = closeIndex + delimiterLength;
+          continue;
+        }
+      }
+    }
+
+    result += char;
+    index += 1;
+  }
+  return result;
+}
+
+/**
+ * Find the closing delimiter for a math span that opened at `from`. Returns the
+ * index of the closing `$` (or first `$` of `$$`), or -1 when none is found.
+ * Backslash-escaped dollars inside the span are skipped.
+ */
+function findMathClose(text, from, display) {
+  for (let i = from; i < text.length; i += 1) {
+    if (text[i] === "\\") {
+      i += 1; // skip the escaped character
+      continue;
+    }
+    if (text[i] === "$") {
+      if (display) {
+        if (text[i + 1] === "$") return i;
+        continue; // a single $ does not close a $$ span
+      }
+      return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Recognise a display-math block starting at `startIndex`.
+ * Two forms are supported:
+ *   - a single line `$$ ... $$`
+ *   - a `$$` fence, the LaTeX body on following lines, and a closing `$$`
+ * Returns `{ source, endIndex }` or null when the line does not open a block.
+ * The trimmed line must START with `$$` so that `$$` appearing mid-sentence is
+ * left to inline handling.
+ */
+function collectDisplayMathBlock(lines, startIndex) {
+  const trimmed = String(lines[startIndex] || "").trim();
+  if (!trimmed.startsWith("$$")) return null;
+
+  // Single-line form: opens and closes on the same line.
+  const singleLine = /^\$\$([\s\S]*)\$\$$/.exec(trimmed);
+  if (singleLine && trimmed.length >= 4) {
+    return { source: singleLine[1].trim(), endIndex: startIndex };
+  }
+
+  // Fenced form: `$$` opens, body follows, `$$` closes on a later line.
+  if (trimmed !== "$$") return null; // a `$$foo` with no close is not a block
+  const body = [];
+  for (let index = startIndex + 1; index < lines.length; index += 1) {
+    if (lines[index].trim() === "$$") {
+      return { source: body.join("\n").trim(), endIndex: index };
+    }
+    body.push(lines[index]);
+  }
+  // Unterminated fence: consume to end so the raw `$$` is not shown as prose.
+  return { source: body.join("\n").trim(), endIndex: lines.length - 1 };
+}
+
+function restoreMathTokens(html, tokens) {
+  if (!tokens.length) return html;
+  return html.replace(
+    /MATH(\d+)/g,
+    (whole, number) => tokens[Number(number)] ?? whole,
+  );
+}
+
 function renderInline(text, state) {
+  // Protect math source before any HTML-escaping or Markdown substitution so
+  // that its LaTeX characters are not mangled, then restore the math nodes after.
+  const mathTokens = [];
+  const protectedText = protectInlineMath(text, state, mathTokens);
+
   // Handle inline progressive fragments {>...} before HTML-escaping so that
   // the > character does not get mangled to &gt; before we can match it.
   const FRAGMENT_RE = /\{>([^}]*)\}/g;
   let result = "";
   let lastIndex = 0;
   let match;
-  while ((match = FRAGMENT_RE.exec(text)) !== null) {
-    result += renderInlineMarkup(escapeHtml(text.slice(lastIndex, match.index)));
+  while ((match = FRAGMENT_RE.exec(protectedText)) !== null) {
+    result += renderInlineMarkup(escapeHtml(protectedText.slice(lastIndex, match.index)));
     result += `<span class="next">${renderInlineMarkup(escapeHtml(match[1]))}</span>`;
     if (state) state.stepCount += 1;
     lastIndex = match.index + match[0].length;
   }
-  result += renderInlineMarkup(escapeHtml(text.slice(lastIndex)));
-  return result;
+  result += renderInlineMarkup(escapeHtml(protectedText.slice(lastIndex)));
+  return restoreMathTokens(result, mathTokens);
 }
 
 const DIRECTIVE_OPEN_RE = /^::([a-z0-9%\u00ad\u2010-\u2015\u2212-]+)(?:\s+(.+?))?\s*$/i;
@@ -676,6 +818,20 @@ function renderLines(lines, state) {
       continue;
     }
 
+    // Display math: `$$...$$` on one line, or a `$$`-fenced block across lines.
+    // Handled as its own block so the math node is not nested inside a <p>.
+    const displayMath = collectDisplayMathBlock(lines, index);
+    if (displayMath) {
+      flushList();
+      if (displayMath.source) {
+        state.mathCount += 1;
+        state.hasMath = true;
+        htmlParts.push(buildMathNodeHtml(displayMath.source, true));
+      }
+      index = displayMath.endIndex + 1;
+      continue;
+    }
+
     if (/^::column-(left|right)(?:-[0-9.]+(?:px|%|rem|vw)?)?(?:\s+[\w.-]+)*\s*$/i.test(trimmed)) {
       flushList();
       const renderedColumns = renderColumns(lines, index, state);
@@ -766,6 +922,8 @@ export function renderMarkdown(markdown) {
     headings: [],
     stepCount: 0,
     mermaidCount: 0,
+    mathCount: 0,
+    hasMath: false,
     hasImageHero: false,
     imageHeroShowAll: false,
     imageHeroShowTitle: false,
@@ -778,6 +936,8 @@ export function renderMarkdown(markdown) {
     html: renderLines(String(markdown || "").split("\n"), state),
     headings: state.headings,
     stepCount: state.stepCount,
+    mathCount: state.mathCount,
+    hasMath: state.hasMath,
     hasImageHero: state.hasImageHero,
     imageHeroShowAll: state.imageHeroShowAll,
     imageHeroShowTitle: state.imageHeroShowTitle,

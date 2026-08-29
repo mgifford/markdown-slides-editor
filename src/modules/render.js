@@ -167,6 +167,9 @@ export function renderDeck(deck) {
       notesHtml: noteRender?.html || "",
       resourcesHtml: resourcesRender?.html || "",
       scriptHtml: scriptRender?.html || "",
+      hasMath: Boolean(
+        rendered.hasMath || noteRender?.hasMath || resourcesRender?.hasMath || scriptRender?.hasMath,
+      ),
       isImageHero: rendered.hasImageHero || false,
       imageHeroShowAll: rendered.imageHeroShowAll || false,
       imageHeroShowTitle: rendered.imageHeroShowTitle || false,

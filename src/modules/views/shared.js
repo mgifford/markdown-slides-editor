@@ -3,6 +3,7 @@ import { renderDeck } from "../render.js";
 import { lintDeck } from "../a11y.js";
 import { attachColorModeToggle } from "../color-mode.js";
 import { renderMermaidBlocks } from "../mermaid.js";
+import { renderMathBlocks } from "../math.js";
 import { createRevealState } from "../presentation-state.js";
 import { fitSlideBodyText, applyPreviewScale } from "../slide-layout.js";
 
@@ -128,5 +129,13 @@ export function mountSlideInto(container, renderedSlide, options = {}) {
       fitSlideBodyText(container, renderedSlide);
     }
   });
+  // Typeset math only when the slide contains it, so MathJax loads lazily.
+  if (renderedSlide.hasMath) {
+    renderMathBlocks(container).then(() => {
+      if (container._mountGeneration === generation) {
+        fitSlideBodyText(container, renderedSlide);
+      }
+    });
+  }
   return fitResult;
 }

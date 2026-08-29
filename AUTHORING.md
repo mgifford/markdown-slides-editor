@@ -352,6 +352,29 @@ Body text sits on top of the background.
 
 **Accessibility note:** The background layer is `aria-hidden="true"`, so it is invisible to screen readers. Do not put meaningful content (such as text) inside it.
 
+## Mathematics (LaTeX)
+
+Write mathematical notation with LaTeX delimiters and paste expressions straight from an existing LaTeX document — in most cases no rewriting is needed.
+
+- **Inline math** — wrap LaTeX in single dollar signs: `$E = mc^2$`. It renders in the flow of the sentence.
+- **Display math** — wrap LaTeX in double dollar signs, on one line or across several:
+
+  ```md
+  $$
+  \int_0^1 x^2 \, dx = \frac{1}{3}
+  $$
+  ```
+
+Characters that are meaningful to both LaTeX and Markdown (`*`, `_`, `` ` ``, `<`, `>`) are protected inside math, so `$a_1 * b_2$` stays intact instead of turning into italics.
+
+**Literal dollar signs:** A lone `$` (for example `$5`) is left as-is. To write a dollar sign next to other math-like text without starting math, escape it: `\$5`.
+
+**Rendering:** Math is typeset by [MathJax 4](https://www.mathjax.org/). MathJax loads only for decks that actually contain math, and only when a slide with math is shown — so decks without math carry no extra cost.
+
+**Accessibility:** Each expression is given an `aria-label` from its LaTeX source, and MathJax attaches assistive MathML so screen readers announce the mathematics rather than the raw source. Math inherits the current text colour, so it adapts to light and dark modes automatically.
+
+**If MathJax cannot load** (for example, offline with no cached copy), the readable LaTeX source is shown in its place rather than a broken render, so the meaning is never lost.
+
 ## Theming
 
 Select a theme from the editor UI or set `theme` in front matter.
