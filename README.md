@@ -16,6 +16,7 @@ This is intended for real production presentations. It is not a training product
 - Audience view and presenter view with same-origin sync
 - Slide outline and presenter timing support
 - Progressive disclosure for lists
+- Accessible LaTeX math (inline `\( \)` / `$ $`, display `\[ \]` / `$$ $$`) typeset with MathJax 4 — see [`docs/latex-math-formulas.md`](docs/latex-math-formulas.md)
 - Fixed slide geometry with auto-fit body text and compact density warnings
 - Better small-screen support for editor and audience view
 - IndexedDB-backed local storage

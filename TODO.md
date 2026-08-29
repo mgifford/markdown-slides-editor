@@ -2,6 +2,34 @@
 
 Future ideas and follow-up work for the final project.
 
+## Recently completed
+
+These items from the roadmap below are now implemented. They are listed here so
+the roadmap reflects current state; the sections below keep the remaining and
+longer-term ideas.
+
+- Accessible LaTeX math authoring with MathJax 4 — inline and display
+  delimiters, currency-safe single-dollar handling, semantic equation emphasis,
+  keyboard-explorable output, and a good offline failure state
+  (see [`docs/latex-math-formulas.md`](docs/latex-math-formulas.md)).
+- Rendered-output validation for semantic HTML instead of container-heavy
+  markup (`scripts/check-semantic-output.js`, run in `npm test`).
+- In-code accessibility checks for heading structure, generic link text, image
+  alt text, and note presence (`src/modules/a11y.js`).
+- Sa11y wired into the manual accessibility review workflow
+  (`src/modules/sa11y.js`, `docs/manual-a11y-testing.md`).
+- Reduced-motion defaults respected in the app and runtime
+  (`prefers-reduced-motion` handling in `styles/app.css`).
+- Presenter view with elapsed/remaining countdown timer and a next-slide panel
+  (`src/modules/presenter-timer.js`, presenter view).
+- Capability detection for captioning so caption controls appear only when a
+  local `whisper.cpp` or configured transcript service is available
+  (`src/modules/captions.js`).
+- Explicit GitHub Pages vs. local AI mode, with the in-editor AI prompt
+  generator for briefing a local LLM such as Ollama.
+- Cloudflare sync and technology-decision reasoning captured as plans
+  (`docs/cloudflare-sync-plan.md`, `docs/technology-decisions.md`).
+
 ## Product direction
 
 - Build for production use, not training or demo-only scenarios.
