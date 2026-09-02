@@ -219,3 +219,27 @@ test("lintDeck includes editorial hints in its results", () => {
   const issues = lintDeck(deck, renderedSlides);
   assert.equal(issues.some((i) => i.category === "editorial"), true);
 });
+
+test("lintDeck warns when slide has iframe without title", () => {
+  const deck = { slides: [{ body: "# Slide", notes: "Notes" }] };
+  const renderedSlides = [
+    {
+      headings: [{ level: 1, text: "Slide" }],
+      html: '<h1>Slide</h1><iframe src="https://example.com"></iframe>',
+    },
+  ];
+  const issues = lintDeck(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.level === "warning" && i.message.includes("iframe without a title")), true);
+});
+
+test("lintDeck does not warn when iframe has a title", () => {
+  const deck = { slides: [{ body: "# Slide", notes: "Notes" }] };
+  const renderedSlides = [
+    {
+      headings: [{ level: 1, text: "Slide" }],
+      html: '<h1>Slide</h1><iframe src="https://example.com" title="Embedded content: example.com"></iframe>',
+    },
+  ];
+  const issues = lintDeck(deck, renderedSlides);
+  assert.equal(issues.some((i) => i.level === "warning" && i.message.includes("iframe without a title")), false);
+});

@@ -1377,6 +1377,50 @@ input:focus-visible {
   text-align: center;
 }
 
+/* iframe directive: embedded external content with graceful fallback */
+.layout-iframe {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 0;
+  flex: 1 1 0;
+}
+
+.layout-iframe__frame {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-strong);
+  max-width: 100%;
+}
+
+/* Fallback: hidden by default, shown when iframe fails to load */
+.layout-iframe__fallback {
+  display: none;
+  text-align: center;
+  padding: 1.5rem 1rem;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel-strong) 92%, transparent);
+  max-width: 40ch;
+}
+
+.layout-iframe__fallback--visible {
+  display: block;
+}
+
+.layout-iframe__fallback-message {
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+}
+
+.layout-iframe__fallback a {
+  color: var(--accent);
+  word-break: break-all;
+}
+
 /* Image-hero: full-bleed background image with overlay text and optional corner logo */
 .slide-card--image-hero {
   padding: 0;
@@ -3024,6 +3068,23 @@ input:focus-visible {
   .slide-card--image-hero {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+  }
+
+  /* iframe: show fallback link in print, hide the iframe itself */
+  .layout-iframe__frame {
+    display: none !important;
+  }
+
+  .layout-iframe__fallback {
+    display: block !important;
+    border-style: solid;
+    border-color: #999;
+    background: white !important;
+  }
+
+  .layout-iframe__fallback a {
+    color: black !important;
+    text-decoration: underline;
   }
 
   /* On-click reveals: show all items in print */

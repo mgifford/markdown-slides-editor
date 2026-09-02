@@ -1918,3 +1918,95 @@ title: Test
   const result = renderDeck(deck);
   assert.equal(result.renderedSlides[0].hasSlideBg, true, "hasSlideBg propagated by renderDeck");
 });
+
+test("renderMarkdown iframe directive renders an iframe with the given URL", () => {
+  const rendered = renderMarkdown(`
+::iframe https://example.com
+::`);
+  assert.ok(rendered.html.includes('<iframe'), "iframe element present");
+  assert.ok(rendered.html.includes('src="https://example.com"'), "iframe src is the URL");
+  assert.ok(rendered.html.includes('layout-iframe'), "layout-iframe class present");
+  assert.equal(rendered.hasIframe, true, "hasIframe flag set");
+});
+
+test("renderMarkdown iframe directive includes fallback content when URL fails", () => {
+  const rendered = renderMarkdown(`
+::iframe https://example.com
+Alternative: [Open demo](https://example.com)
+::`);
+  assert.ok(rendered.html.includes('layout-iframe__fallback'), "fallback div present");
+  assert.ok(rendered.html.includes('Open demo'), "fallback markdown rendered");
+  assert.ok(rendered.html.includes('https://example.com'), "fallback link present");
+});
+
+test("renderMarkdown iframe directive supports width and height modifiers", () => {
+  const rendered = renderMarkdown(`
+::iframe width:80% height:60vh
+https://example.com
+::`);
+  assert.ok(rendered.html.includes('width:80%'), "width modifier applied");
+  assert.ok(rendered.html.includes('height:60vh'), "height modifier applied");
+});
+
+test("renderMarkdown iframe directive adds sandbox attribute for security", () => {
+  const rendered = renderMarkdown(`
+::iframe https://example.com
+::`);
+  assert.ok(rendered.html.includes('sandbox='), "sandbox attribute present");
+  assert.ok(rendered.html.includes('allow-scripts'), "allow-scripts in sandbox");
+  assert.ok(rendered.html.includes('allow-same-origin'), "allow-same-origin in sandbox");
+});
+
+test("renderMarkdown iframe on-click adds progressive class", () => {
+  const rendered = renderMarkdown(`
+::iframe on-click
+https://example.com
+::`);
+  assert.ok(rendered.html.includes('layout-iframe next'), "progressive class added");
+  assert.equal(rendered.stepCount, 1, "stepCount incremented");
+});
+
+test("renderMarkdown iframe without URL shows fallback with message", () => {
+  const rendered = renderMarkdown(`
+::iframe
+No URL provided.
+::`);
+  assert.ok(rendered.html.includes('layout-iframe__fallback'), "fallback present");
+  assert.ok(rendered.html.includes('could not be embedded'), "fallback message shown");
+});
+
+test("renderDeck propagates hasIframe to rendered slide", () => {
+  const source = `---
+title: Test
+---
+
+# Slide
+
+::iframe https://example.com
+::`;
+  const deck = parseSource(source);
+  const result = renderDeck(deck);
+  assert.equal(result.renderedSlides[0].hasIframe, true, "hasIframe propagated by renderDeck");
+});
+
+test("renderMarkdown iframe directive includes title attribute from URL", () => {
+  const rendered = renderMarkdown(`
+::iframe https://example.com
+::`);
+  assert.ok(rendered.html.includes('title="Embedded content: example.com"'), "title generated from hostname");
+});
+
+test("renderMarkdown iframe directive includes custom title from modifier", () => {
+  const rendered = renderMarkdown(`
+::iframe title:MyDemo https://example.com
+::`);
+  assert.ok(rendered.html.includes('title="MyDemo"'), "custom title from modifier");
+});
+
+test("renderMarkdown iframe directive with empty URL has no title", () => {
+  const rendered = renderMarkdown(`
+::iframe
+No URL provided.
+::`);
+  assert.ok(!rendered.html.includes('title="Embedded content'), "no title without URL");
+});

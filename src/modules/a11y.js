@@ -188,6 +188,18 @@ export function lintDeck(deck, renderedSlides) {
       }
     }
 
+    const iframeMatches = [...slide.html.matchAll(/<iframe [^>]*>/g)];
+    for (const match of iframeMatches) {
+      const tag = match[0];
+      if (!/title="[^"]+"/.test(tag)) {
+        issues.push({
+          level: "warning",
+          slide: slideNumber,
+          message: `Slide ${slideNumber} includes an iframe without a title attribute.`,
+        });
+      }
+    }
+
     const heroOverlayMatches = [
       ...slide.html.matchAll(/<div class="layout-image-hero__overlay"[^>]*data-overlay-text-length="(\d+)"[^>]*>/g),
     ];

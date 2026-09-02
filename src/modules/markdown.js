@@ -405,6 +405,7 @@ function collectDirectiveBlock(lines, startIndex) {
         return {
           directive: opening.directive,
           modifiers: opening.modifiers,
+          rawOpening: lines[startIndex],
           content,
           endIndex: index,
         };
@@ -419,6 +420,7 @@ function collectDirectiveBlock(lines, startIndex) {
   return {
     directive: opening.directive,
     modifiers: opening.modifiers,
+    rawOpening: lines[startIndex],
     content,
     endIndex: lines.length - 1,
   };
@@ -885,6 +887,108 @@ function renderSpecialDirective(block, state) {
     return `<figure class="${classNames}"${figureStyle}>${imageHtml}${overlayHtml}${logoHtml}</figure>`;
   }
 
+  if (block.directive === "iframe") {
+    if (isProgressive) state.stepCount += 1;
+    state.hasIframe = true;
+
+    const content = block.content;
+    let url = "";
+    let fallbackLines = [];
+    let width = "100%";
+    let height = "100%";
+    let title = "";
+
+    // Extract case-sensitive title from raw opening line before modifiers are lowercased
+    if (block.rawOpening) {
+      const rawTitleMatch = /\btitle:([^\s]+)/i.exec(block.rawOpening);
+      if (rawTitleMatch) {
+        title = rawTitleMatch[1];
+      }
+    }
+
+    // Check modifiers for URL (when on same line as ::iframe) and size options
+    for (const mod of block.modifiers) {
+      if (mod === "on-click") continue;
+      const widthMatch = /^width:(.+)$/.exec(mod);
+      if (widthMatch) {
+        width = widthMatch[1];
+        continue;
+      }
+      const heightMatch = /^height:(.+)$/.exec(mod);
+      if (heightMatch) {
+        height = heightMatch[1];
+        continue;
+      }
+      const titleMatch = /^title:(.+)$/.exec(mod);
+      if (titleMatch && !title) {
+        title = titleMatch[1];
+        continue;
+      }
+      // Treat remaining modifier as a URL
+      if (!url && /^https?:\/\//i.test(mod)) {
+        url = mod;
+      }
+    }
+
+    // If URL not found in modifiers, check first non-empty content line
+    if (!url) {
+      for (let i = 0; i < content.length; i++) {
+        const line = content[i].trim();
+        if (line && !url && /^https?:\/\//i.test(line)) {
+          url = line;
+        } else if (url) {
+          fallbackLines.push(content[i]);
+        }
+      }
+    } else {
+      fallbackLines = [...content];
+    }
+
+    // Generate default title from URL hostname if not provided
+    if (!title && url) {
+      try {
+        const parsed = new URL(url);
+        title = `Embedded content: ${parsed.hostname}`;
+      } catch {
+        title = "Embedded content";
+      }
+    }
+
+    const safeUrl = url ? escapeAttribute(url) : "";
+    const safeTitle = title ? escapeAttribute(title) : "";
+    const fallbackHtml = fallbackLines.length > 0 ? renderLines(fallbackLines, state) : "";
+
+    // Build fallback content shown when iframe fails to load
+    const fallbackId = `iframe-fallback-${state.mermaidCount + state.mathCount + 1}`;
+    const fallbackBlock = safeUrl
+      ? `<div class="layout-iframe__fallback" id="${fallbackId}">
+           <p class="layout-iframe__fallback-message">This content could not be embedded.</p>
+           <p><a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeUrl}</a></p>
+           ${fallbackHtml}
+         </div>`
+      : `<div class="layout-iframe__fallback layout-iframe__fallback--visible" id="${fallbackId}">
+           <p class="layout-iframe__fallback-message">This content could not be embedded.</p>
+           ${fallbackHtml}
+         </div>`;
+
+    return `
+      <div class="layout-iframe${progressiveClass}" data-url="${safeUrl}">
+        <iframe
+          src="${safeUrl}"
+          class="layout-iframe__frame"
+          title="${safeTitle}"
+          style="width:${escapeAttribute(width)};height:${escapeAttribute(height)}"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+          loading="lazy"
+          referrerpolicy="no-referrer"
+          allowfullscreen
+          data-fallback-id="${fallbackId}"
+        ></iframe>
+        ${fallbackBlock}
+      </div>
+    `;
+  }
+
   return null;
 }
 
@@ -1066,6 +1170,7 @@ export function renderMarkdown(markdown) {
     imageHeroShowSubtitle: false,
     imageHeroTextPos: "bottom-left",
     hasSlideBg: false,
+    hasIframe: false,
   };
 
   return {
@@ -1080,5 +1185,6 @@ export function renderMarkdown(markdown) {
     imageHeroShowSubtitle: state.imageHeroShowSubtitle,
     imageHeroTextPos: state.imageHeroTextPos,
     hasSlideBg: state.hasSlideBg,
+    hasIframe: state.hasIframe,
   };
 }
