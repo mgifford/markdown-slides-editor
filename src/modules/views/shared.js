@@ -137,39 +137,5 @@ export function mountSlideInto(container, renderedSlide, options = {}) {
       }
     });
   }
-  // Attach iframe fallback handlers: if an iframe fails to load (e.g. blocked
-  // by X-Frame-Options or CSP), hide it and show the fallback link.
-  if (renderedSlide.hasIframe) {
-    const iframes = container.querySelectorAll("iframe.layout-iframe__frame");
-    iframes.forEach((iframe) => {
-      const fallbackId = iframe.getAttribute("data-fallback-id");
-      const fallbackEl = fallbackId ? document.getElementById(fallbackId) : null;
-      if (!fallbackEl) return;
-      // Check if iframe is already broken (e.g. about:blank from blocked load)
-      const checkBlocked = () => {
-        try {
-          // If we can access contentWindow.location and it's about:blank, it's blocked
-          if (iframe.contentWindow && iframe.contentWindow.location.href === "about:blank") {
-            iframe.style.display = "none";
-            fallbackEl.classList.add("layout-iframe__fallback--visible");
-          }
-        } catch (e) {
-          // Cross-origin = likely loaded fine (can't access contentWindow)
-          // This is actually the good case for most embeds
-        }
-      };
-      iframe.addEventListener("error", () => {
-        iframe.style.display = "none";
-        fallbackEl.classList.add("layout-iframe__fallback--visible");
-      });
-      // Delayed check for cases where the browser shows about:blank instead of firing error
-      iframe.addEventListener("load", checkBlocked);
-      // Timeout fallback: if iframe hasn't loaded after 8 seconds, check state
-      setTimeout(() => {
-        if (container._mountGeneration !== generation) return;
-        checkBlocked();
-      }, 8000);
-    });
-  }
   return fitResult;
 }

@@ -25,7 +25,7 @@ function toCacheKey(requestOrUrl) {
   return requestOrUrl?.url;
 }
 
-async function loadServiceWorker({ fetchImpl, cachedResponses = {} }) {
+async function loadServiceWorker({ fetchImpl, cachedResponses = {}, scope = "https://slides.example/" }) {
   const listeners = {};
   const store = new Map(Object.entries(cachedResponses));
 
@@ -48,6 +48,7 @@ async function loadServiceWorker({ fetchImpl, cachedResponses = {} }) {
     fetch: fetchImpl,
     self: {
       location: { origin: "https://slides.example" },
+      registration: { scope },
       skipWaiting() {},
       clients: { claim() {} },
       addEventListener(type, handler) {
@@ -111,6 +112,29 @@ test("service worker falls back to cached app shell assets when network fails", 
 
   const response = await runFetch(listeners, request);
   assert.equal(await response.text(), "cached-main");
+  assert.equal(fetchCalls.length, 1);
+});
+
+test("service worker uses network-first for app shell assets under a GitHub Pages subdirectory", async () => {
+  const fetchCalls = [];
+  const request = {
+    method: "GET",
+    mode: "cors",
+    url: "https://slides.example/markdown-slides-editor/src/modules/markdown.js",
+  };
+  const { listeners } = await loadServiceWorker({
+    scope: "https://slides.example/markdown-slides-editor/",
+    cachedResponses: {
+      [request.url]: new Response("stale-renderer", { status: 200 }),
+    },
+    fetchImpl: async (incomingRequest) => {
+      fetchCalls.push(incomingRequest.url);
+      return new Response("fresh-renderer", { status: 200 });
+    },
+  });
+
+  const response = await runFetch(listeners, request);
+  assert.equal(await response.text(), "fresh-renderer");
   assert.equal(fetchCalls.length, 1);
 });
 

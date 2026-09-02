@@ -2,6 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
+test("iframe alternative link is visible without JavaScript failure detection", () => {
+  const css = readFileSync(new URL("../styles/app.css", import.meta.url), "utf8");
+  const fallbackRule = css.match(/\.layout-iframe__fallback\s*\{([\s\S]*?)\}/);
+
+  assert.ok(fallbackRule, "CSS should include an iframe fallback rule");
+  assert.match(fallbackRule[1], /display\s*:\s*block/);
+  assert.doesNotMatch(fallbackRule[1], /display\s*:\s*none/);
+});
+
 test("responsive column layout keeps .layout-columns side-by-side at the 1100px breakpoint", () => {
   const css = readFileSync(new URL("../styles/app.css", import.meta.url), "utf8");
   const desktopToTabletBlock = css

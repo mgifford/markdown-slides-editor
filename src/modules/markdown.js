@@ -889,7 +889,6 @@ function renderSpecialDirective(block, state) {
 
   if (block.directive === "iframe") {
     if (isProgressive) state.stepCount += 1;
-    state.hasIframe = true;
 
     const content = block.content;
     let url = "";
@@ -957,23 +956,29 @@ function renderSpecialDirective(block, state) {
     const safeUrl = url ? escapeAttribute(url) : "";
     const safeTitle = title ? escapeAttribute(title) : "";
     const fallbackHtml = fallbackLines.length > 0 ? renderLines(fallbackLines, state) : "";
+    let destinationName = "embedded content";
+    if (url) {
+      try {
+        destinationName = new URL(url).hostname;
+      } catch {
+        // URL validation above already limits iframe sources to HTTP(S).
+      }
+    }
 
-    // Build fallback content shown when iframe fails to load
-    const fallbackId = `iframe-fallback-${state.mermaidCount + state.mathCount + 1}`;
+    // Browsers do not expose reliable cross-origin iframe failure events.
+    // Keep an ordinary link available whether or not the embed succeeds.
     const fallbackBlock = safeUrl
-      ? `<div class="layout-iframe__fallback" id="${fallbackId}">
-           <p class="layout-iframe__fallback-message">This content could not be embedded.</p>
-           <p><a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeUrl}</a></p>
+      ? `<div class="layout-iframe__fallback">
+           <p><a href="${safeUrl}" target="_blank" rel="noopener noreferrer">Open ${escapeHtml(destinationName)} in a new tab</a></p>
            ${fallbackHtml}
          </div>`
-      : `<div class="layout-iframe__fallback layout-iframe__fallback--visible" id="${fallbackId}">
-           <p class="layout-iframe__fallback-message">This content could not be embedded.</p>
+      : `<div class="layout-iframe__fallback layout-iframe__fallback--missing">
+           <p class="layout-iframe__fallback-message">No HTTP or HTTPS URL was provided.</p>
            ${fallbackHtml}
          </div>`;
 
-    return `
-      <div class="layout-iframe${progressiveClass}" data-url="${safeUrl}">
-        <iframe
+    const iframeBlock = safeUrl
+      ? `<iframe
           src="${safeUrl}"
           class="layout-iframe__frame"
           title="${safeTitle}"
@@ -982,8 +987,12 @@ function renderSpecialDirective(block, state) {
           loading="lazy"
           referrerpolicy="no-referrer"
           allowfullscreen
-          data-fallback-id="${fallbackId}"
-        ></iframe>
+        ></iframe>`
+      : "";
+
+    return `
+      <div class="layout-iframe${progressiveClass}" data-url="${safeUrl}">
+        ${iframeBlock}
         ${fallbackBlock}
       </div>
     `;
@@ -1170,7 +1179,6 @@ export function renderMarkdown(markdown) {
     imageHeroShowSubtitle: false,
     imageHeroTextPos: "bottom-left",
     hasSlideBg: false,
-    hasIframe: false,
   };
 
   return {
@@ -1185,6 +1193,5 @@ export function renderMarkdown(markdown) {
     imageHeroShowSubtitle: state.imageHeroShowSubtitle,
     imageHeroTextPos: state.imageHeroTextPos,
     hasSlideBg: state.hasSlideBg,
-    hasIframe: state.hasIframe,
   };
 }

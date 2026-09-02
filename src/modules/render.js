@@ -176,7 +176,6 @@ export function renderDeck(deck) {
       imageHeroShowSubtitle: rendered.imageHeroShowSubtitle || false,
       imageHeroTextPos: rendered.imageHeroTextPos || "bottom-left",
       hasSlideBg: rendered.hasSlideBg || false,
-      hasIframe: rendered.hasIframe || false,
     };
   });
 

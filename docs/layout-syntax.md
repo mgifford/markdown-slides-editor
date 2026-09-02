@@ -262,6 +262,33 @@ Revealed when the presenter advances.
 ::
 ```
 
+## Embedded web content
+
+Use `::iframe` with an HTTP or HTTPS URL. Close the directive with `::`, not
+another `::iframe` line.
+
+```md
+::iframe title:Example-site
+https://example.com/demo
+
+[Open the example directly](https://example.com/demo)
+::
+```
+
+The generated slide always includes a direct link below the frame. Browsers do
+not report cross-origin iframe failures reliably, and many sites prevent
+embedding with `X-Frame-Options` or Content Security Policy. Authors should
+therefore treat the link as a required alternative, not as an error message.
+
+Use `width:` and `height:` modifiers when the default dimensions are not
+appropriate:
+
+```md
+::iframe width:80% height:60vh title:Example-site
+https://example.com/demo
+::
+```
+
 ## The `on-click` modifier
 
 Any layout directive that renders a block element supports the `on-click` modifier:
@@ -273,6 +300,7 @@ Any layout directive that renders a block element supports the `on-click` modifi
 - `::center on-click`
 - `::media-left on-click`
 - `::media-right on-click`
+- `::iframe on-click`
 
 Blocks marked with `on-click` are hidden when the slide first appears. Each click (or arrow-key advance) reveals the next `on-click` block in source order. `on-click` blocks and `[>]` progressive list items are interleaved by DOM order: the reveal sequence follows the source top-to-bottom, so a `[>]` list item that appears before an `on-click` block in the source will be revealed first.
 
@@ -287,6 +315,8 @@ In the one-page handout export all `on-click` elements are always visible.
 - Do not overload columns with dense text.
 - Make sure centered or callout text remains meaningful out of context.
 - Use media layouts to support understanding, not just decoration.
+- Give each iframe a concise title and a descriptive direct link.
+- Confirm that the source permits embedding; do not assume an ordinary webpage URL will work.
 - If a layout starts to feel crowded, split it into more slides.
 
 ## HTML

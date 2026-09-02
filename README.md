@@ -77,7 +77,7 @@ Disclosure of AI use is important to this project.
 ### AI used to build this repository
 
 - OpenAI Codex, a GPT-5-based coding agent in the Codex desktop environment, was used during repository setup and early development.
-  It was used to scaffold the initial static application, write and revise project documentation, add tests, and update planning and guidance files.
+  It was used to scaffold the initial static application, write and revise project documentation, add tests, update planning and guidance files, and diagnose and revise iframe fallback and offline-cache behavior.
 
 ### AI used when running the program
 

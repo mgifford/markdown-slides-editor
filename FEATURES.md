@@ -104,6 +104,7 @@ Supported layout directives include:
 - `::quote`
 - `::mermaid`
 - `::svg`
+- `::iframe`, with a titled frame and an always-available direct link
 
 These directives are intended to give authors layout control without opening the door to arbitrary, harder-to-maintain HTML.
 

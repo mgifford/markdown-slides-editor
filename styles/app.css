@@ -1389,25 +1389,33 @@ input:focus-visible {
 }
 
 .layout-iframe__frame {
+  flex: 1 1 auto;
+  min-height: 0;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--panel-strong);
   max-width: 100%;
 }
 
-/* Fallback: hidden by default, shown when iframe fails to load */
+/* Keep a direct alternative available because cross-origin iframe failures
+   cannot be detected reliably in the parent page. */
 .layout-iframe__fallback {
-  display: none;
+  display: block;
   text-align: center;
+  padding: 0.25rem 1rem 0;
+  max-width: 100%;
+}
+
+.layout-iframe__fallback p {
+  margin: 0.25rem 0;
+}
+
+.layout-iframe__fallback--missing {
   padding: 1.5rem 1rem;
   border: 1px dashed var(--border);
   border-radius: 12px;
   background: color-mix(in srgb, var(--panel-strong) 92%, transparent);
   max-width: 40ch;
-}
-
-.layout-iframe__fallback--visible {
-  display: block;
 }
 
 .layout-iframe__fallback-message {

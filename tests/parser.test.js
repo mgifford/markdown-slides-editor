@@ -1926,15 +1926,15 @@ test("renderMarkdown iframe directive renders an iframe with the given URL", () 
   assert.ok(rendered.html.includes('<iframe'), "iframe element present");
   assert.ok(rendered.html.includes('src="https://example.com"'), "iframe src is the URL");
   assert.ok(rendered.html.includes('layout-iframe'), "layout-iframe class present");
-  assert.equal(rendered.hasIframe, true, "hasIframe flag set");
 });
 
-test("renderMarkdown iframe directive includes fallback content when URL fails", () => {
+test("renderMarkdown iframe directive always includes an alternative link", () => {
   const rendered = renderMarkdown(`
 ::iframe https://example.com
 Alternative: [Open demo](https://example.com)
 ::`);
   assert.ok(rendered.html.includes('layout-iframe__fallback'), "fallback div present");
+  assert.ok(rendered.html.includes('Open example.com in a new tab'), "descriptive alternative link present");
   assert.ok(rendered.html.includes('Open demo'), "fallback markdown rendered");
   assert.ok(rendered.html.includes('https://example.com'), "fallback link present");
 });
@@ -1972,21 +1972,8 @@ test("renderMarkdown iframe without URL shows fallback with message", () => {
 No URL provided.
 ::`);
   assert.ok(rendered.html.includes('layout-iframe__fallback'), "fallback present");
-  assert.ok(rendered.html.includes('could not be embedded'), "fallback message shown");
-});
-
-test("renderDeck propagates hasIframe to rendered slide", () => {
-  const source = `---
-title: Test
----
-
-# Slide
-
-::iframe https://example.com
-::`;
-  const deck = parseSource(source);
-  const result = renderDeck(deck);
-  assert.equal(result.renderedSlides[0].hasIframe, true, "hasIframe propagated by renderDeck");
+  assert.ok(rendered.html.includes('No HTTP or HTTPS URL was provided'), "fallback message shown");
+  assert.ok(!rendered.html.includes('<iframe'), "empty iframe is not rendered");
 });
 
 test("renderMarkdown iframe directive includes title attribute from URL", () => {
