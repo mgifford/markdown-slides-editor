@@ -16,6 +16,18 @@ export function createRevealState(renderedSlide, revealStep = 0) {
   };
 }
 
+/**
+ * Visibility rule for a single progressive element. `domIndex` is the
+ * element's position among ALL progressive elements (`.next` and
+ * `.next-reverse`) in DOM order. Forward items appear when the step reaches
+ * them; reverse items are visible until the step reaches them. Each advance
+ * toggles exactly one element, so backwards navigation reverses the order
+ * exactly.
+ */
+export function isProgressiveItemVisible(domIndex, revealStep, isReverse) {
+  return isReverse ? domIndex >= revealStep : domIndex < revealStep;
+}
+
 export function normalizePresentationPosition(deck, activeSlideIndex = 0, revealStep = 0) {
   const slideCount = deck?.renderedSlides?.length || 0;
   if (!slideCount) {

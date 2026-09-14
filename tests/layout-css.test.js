@@ -11,6 +11,27 @@ test("iframe alternative link is visible without JavaScript failure detection", 
   assert.doesNotMatch(openRule[1], /display\s*:\s*none/);
 });
 
+test("hidden progressive blocks stay hidden even when the layout sets its own display", () => {
+  const css = readFileSync(new URL("../styles/app.css", import.meta.url), "utf8");
+  // Layout directives such as .layout-iframe set display:flex, which beats the
+  // UA [hidden] rule — so a generic author rule must restore display:none.
+  const genericMatch = css.match(
+    /\.slide-card\s+\.next\[hidden\][\s\S]*?\.slide-card\s+\.next-reverse\[hidden\][\s\S]*?\{([\s\S]*?)\}/,
+  );
+  const reverseFirstMatch = css.match(
+    /\.slide-card\s+\.next-reverse\[hidden\][\s\S]*?\{([\s\S]*?)\}/,
+  );
+  const ruleBody = genericMatch?.[1] ?? reverseFirstMatch?.[1] ?? "";
+  assert.ok(
+    ruleBody,
+    "CSS should include a generic .slide-card .next[hidden] / .next-reverse[hidden] rule",
+  );
+  assert.ok(
+    /display\s*:\s*none/.test(ruleBody),
+    "generic hidden progressive rule should set display:none",
+  );
+});
+
 test("responsive column layout keeps .layout-columns side-by-side at the 1100px breakpoint", () => {
   const css = readFileSync(new URL("../styles/app.css", import.meta.url), "utf8");
   const desktopToTabletBlock = css

@@ -4,7 +4,7 @@ import { lintDeck } from "../a11y.js";
 import { attachColorModeToggle } from "../color-mode.js";
 import { renderMermaidBlocks } from "../mermaid.js";
 import { renderMathBlocks } from "../math.js";
-import { createRevealState } from "../presentation-state.js";
+import { createRevealState, isProgressiveItemVisible } from "../presentation-state.js";
 import { fitSlideBodyText, applyPreviewScale } from "../slide-layout.js";
 
 export function compileSource(source) {
@@ -71,24 +71,17 @@ function escapeAttribute(value) {
 }
 
 function applyRevealState(container, revealStep) {
-  // Forward items: hidden until revealStep passes their index
-  const forwardItems = [...container.querySelectorAll(".next")];
-  forwardItems.forEach((item, index) => {
-    const isVisible = index < revealStep;
-    const isCurrent = index === revealStep - 1;
+  // Single shared sequence in DOM order: each step toggles exactly one
+  // element, so backwards navigation reverses the order exactly.
+  const items = [...container.querySelectorAll(".next, .next-reverse")];
+  items.forEach((item, index) => {
+    const isReverse = item.classList.contains("next-reverse");
+    const isVisible = isProgressiveItemVisible(index, revealStep, isReverse);
     item.hidden = !isVisible;
-    item.classList.toggle("visited", index < revealStep - 1);
-    item.classList.toggle("active", isCurrent);
-  });
-
-  // Reverse items: visible initially, hidden one per step in reverse DOM order
-  const reverseItems = [...container.querySelectorAll(".next-reverse")];
-  const totalReverse = reverseItems.length;
-  reverseItems.forEach((item, index) => {
-    // Reverse order: last DOM item hides first
-    const reverseIndex = totalReverse - 1 - index;
-    const isVisible = reverseIndex >= totalReverse - revealStep;
-    item.hidden = !isVisible;
+    if (!isReverse) {
+      item.classList.toggle("visited", index < revealStep - 1);
+      item.classList.toggle("active", index === revealStep - 1);
+    }
   });
 }
 

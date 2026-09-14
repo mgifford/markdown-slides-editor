@@ -1126,23 +1126,17 @@ export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, rendered
       }
 
       function applyRevealState(slide) {
-        // Forward items: hidden until revealStep passes their index
-        const items = [...slide.querySelectorAll(".next")];
+        // Single shared sequence in DOM order: each step toggles exactly one
+        // element, so backwards navigation reverses the order exactly.
+        const items = [...slide.querySelectorAll(".next, .next-reverse")];
         items.forEach((item, index) => {
-          const isVisible = index < revealStep;
-          const isCurrent = index === revealStep - 1;
+          const isReverse = item.classList.contains("next-reverse");
+          const isVisible = isReverse ? index >= revealStep : index < revealStep;
           item.hidden = !isVisible;
-          item.classList.toggle("visited", index < revealStep - 1);
-          item.classList.toggle("active", isCurrent);
-        });
-
-        // Reverse items: visible initially, hidden one per step in reverse DOM order
-        const reverseItems = [...slide.querySelectorAll(".next-reverse")];
-        const totalReverse = reverseItems.length;
-        reverseItems.forEach((item, index) => {
-          const reverseIndex = totalReverse - 1 - index;
-          const isVisible = reverseIndex >= totalReverse - revealStep;
-          item.hidden = !isVisible;
+          if (!isReverse) {
+            item.classList.toggle("visited", index < revealStep - 1);
+            item.classList.toggle("active", index === revealStep - 1);
+          }
         });
       }
 

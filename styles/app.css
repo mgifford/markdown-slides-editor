@@ -1220,6 +1220,16 @@ input:focus-visible {
   max-width: 50%;
 }
 
+/* Generic progressive rule: several layout directives set their own display
+   value (e.g. .layout-iframe uses display:flex), and author stylesheets take
+   precedence over the UA [hidden] rule — so without this, hidden progressive
+   blocks would stay visible. The column rules below win for columns via
+   higher specificity, preserving flex space instead. */
+.slide-card .next[hidden],
+.slide-card .next-reverse[hidden] {
+  display: none;
+}
+
 /* Prevent text reflow in the visible column when a sibling column is
    hidden by an on-click reveal. Keeping the hidden column as visibility:hidden
    rather than display:none preserves its space in the flex layout so

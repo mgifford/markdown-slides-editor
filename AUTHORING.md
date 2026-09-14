@@ -143,7 +143,7 @@ Use `- [<]` for the reverse — content that is visible immediately and hidden o
 - [>] Revealed on the advance after those
 ```
 
-Reverse steps consume steps in DOM order (last `[<]` item hides first when there are several, so navigating backwards restores them in the order you saw them). `[<]` and `[>]` can be mixed on the same slide; advancing walks through every step, and going backwards reverses the order.
+Reverse steps consume steps in DOM order: each advance toggles exactly one element top-to-bottom, so navigating backwards restores each element in the reverse of the order you saw it change. `[<]` and `[>]` can be mixed on the same slide; advancing walks through every step, and going backwards reverses the order.
 
 Inline fragments work the same way: `{>text}` starts hidden and is revealed on advance, while `{<text}` starts visible and is hidden on advance.
 

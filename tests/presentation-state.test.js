@@ -7,6 +7,7 @@ import {
   getPresentationDurationMinutes,
   getPreviousPosition,
   getSlideTitle,
+  isProgressiveItemVisible,
   normalizePresentationPosition,
   parsePresentationHash,
 } from "../src/modules/presentation-state.js";
@@ -73,4 +74,27 @@ test("parsePresentationHash supports slide-only and slide-plus-reveal URLs", () 
 test("buildPresentationHash serializes slide and reveal state as one-based fragments", () => {
   assert.equal(buildPresentationHash(0, 0), "#1");
   assert.equal(buildPresentationHash(3, 1), "#4.1");
+});
+
+test("isProgressiveItemVisible keeps a lone reverse item visible at step 0", () => {
+  assert.equal(isProgressiveItemVisible(0, 0, true), true);
+  assert.equal(isProgressiveItemVisible(0, 1, true), false);
+});
+
+test("isProgressiveItemVisible hides forward items until their step", () => {
+  assert.equal(isProgressiveItemVisible(0, 0, false), false);
+  assert.equal(isProgressiveItemVisible(0, 1, false), true);
+  assert.equal(isProgressiveItemVisible(1, 1, false), false);
+  assert.equal(isProgressiveItemVisible(1, 2, false), true);
+});
+
+test("isProgressiveItemVisible toggles exactly one mixed-sequence item per step", () => {
+  // Sequence: reverse, forward, reverse (DOM indices 0, 1, 2).
+  const at = (step) => [0, 1, 2].map((index) =>
+    isProgressiveItemVisible(index, step, index !== 1),
+  );
+  assert.deepEqual(at(0), [true, false, true]);
+  assert.deepEqual(at(1), [false, false, true]);
+  assert.deepEqual(at(2), [false, true, true]);
+  assert.deepEqual(at(3), [false, true, false]);
 });
