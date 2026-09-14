@@ -135,6 +135,30 @@ Use `- [>]` inside a list item to mark content for step-by-step reveal in audien
 - [>] Revealed on the advance after that
 ```
 
+Use `- [<]` for the reverse — content that is visible immediately and hidden one step at a time as you advance:
+
+```md
+- [<] Visible on load, hidden on first advance
+- [<] Visible on load, hidden on second advance
+- [>] Revealed on the advance after those
+```
+
+Reverse steps consume steps in DOM order (last `[<]` item hides first when there are several, so navigating backwards restores them in the order you saw them). `[<]` and `[>]` can be mixed on the same slide; advancing walks through every step, and going backwards reverses the order.
+
+Inline fragments work the same way: `{>text}` starts hidden and is revealed on advance, while `{<text}` starts visible and is hidden on advance.
+
+For layout directives, add the `on-click` modifier to reveal a block on advance, or the `off-click` mirror modifier to hide a block that starts visible:
+
+```md
+::callout on-click
+Revealed on advance.
+::
+
+::iframe off-click title:LiveDemo
+https://example.com/demo
+::
+```
+
 ## Layout directives
 
 The editor supports layout directives for more complex slide arrangements. See [`docs/layout-syntax.md`](docs/layout-syntax.md) for the full reference with examples.

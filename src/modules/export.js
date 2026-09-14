@@ -1112,7 +1112,7 @@ export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, rendered
         }
         // Temporarily reveal all progressive items so the scale is sized for the
         // fully-revealed slide, preventing overflow on the last reveal step.
-        const hiddenNextItems = [...content.querySelectorAll(".next")].filter((el) => el.hidden);
+        const hiddenNextItems = [...content.querySelectorAll(".next, .next-reverse")].filter((el) => el.hidden);
         hiddenNextItems.forEach((el) => { el.hidden = false; });
         const scale = calculateBodyScale((nextScale) => {
           body.style.setProperty("--slide-body-scale", nextScale);
@@ -1126,6 +1126,7 @@ export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, rendered
       }
 
       function applyRevealState(slide) {
+        // Forward items: hidden until revealStep passes their index
         const items = [...slide.querySelectorAll(".next")];
         items.forEach((item, index) => {
           const isVisible = index < revealStep;
@@ -1133,6 +1134,15 @@ export function buildSnapshotHtml({ title, cssText, themeStylesheetCss, rendered
           item.hidden = !isVisible;
           item.classList.toggle("visited", index < revealStep - 1);
           item.classList.toggle("active", isCurrent);
+        });
+
+        // Reverse items: visible initially, hidden one per step in reverse DOM order
+        const reverseItems = [...slide.querySelectorAll(".next-reverse")];
+        const totalReverse = reverseItems.length;
+        reverseItems.forEach((item, index) => {
+          const reverseIndex = totalReverse - 1 - index;
+          const isVisible = reverseIndex >= totalReverse - revealStep;
+          item.hidden = !isVisible;
         });
       }
 

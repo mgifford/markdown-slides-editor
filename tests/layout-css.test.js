@@ -4,11 +4,11 @@ import { readFileSync } from "node:fs";
 
 test("iframe alternative link is visible without JavaScript failure detection", () => {
   const css = readFileSync(new URL("../styles/app.css", import.meta.url), "utf8");
-  const fallbackRule = css.match(/\.layout-iframe__fallback\s*\{([\s\S]*?)\}/);
+  const openRule = css.match(/\.layout-iframe__open\s*\{([\s\S]*?)\}/);
 
-  assert.ok(fallbackRule, "CSS should include an iframe fallback rule");
-  assert.match(fallbackRule[1], /display\s*:\s*block/);
-  assert.doesNotMatch(fallbackRule[1], /display\s*:\s*none/);
+  assert.ok(openRule, "CSS should include an iframe open-in-new-tab rule");
+  assert.match(openRule[1], /display\s*:\s*flex/);
+  assert.doesNotMatch(openRule[1], /display\s*:\s*none/);
 });
 
 test("responsive column layout keeps .layout-columns side-by-side at the 1100px breakpoint", () => {
@@ -99,6 +99,19 @@ test("on-click hidden column uses visibility:hidden not display:none to prevent 
   assert.ok(
     /visibility\s*:\s*hidden/.test(ruleBody),
     "hidden on-click column should use visibility:hidden so the column still occupies flex space and the sibling column does not reflow",
+  );
+
+  // The off-click (reverse) column must behave identically to prevent layout shift.
+  const reverseMatch = css.match(
+    /\.slide-card\s+\.layout-columns\s+\.layout-columns__column\.next-reverse\[hidden\][\s\S]*?\{([\s\S]*?)\}/,
+  );
+  assert.ok(
+    reverseMatch,
+    "CSS should include a rule for .slide-card .layout-columns .layout-columns__column.next-reverse[hidden]",
+  );
+  assert.ok(
+    /visibility\s*:\s*hidden/.test(reverseMatch[1]),
+    "hidden off-click column should also use visibility:hidden so the sibling column does not reflow",
   );
 
   // One-page view must restore full visibility for those same elements

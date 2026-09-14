@@ -88,7 +88,8 @@ Supported content patterns include:
 - links
 - images
 - blockquotes
-- progressive disclosure list items using `- [>]`
+- progressive disclosure list items using `- [>]` (reveal on advance) and `- [<]` (hide on advance)
+- inline progressive fragments using `{>text}` (reveal on advance) and `{<text}` (hide on advance)
 - mathematics via LaTeX delimiters: native `\(...\)` / `\[...\]`, plus `$$...$$` and guarded single-dollar `$...$`
 - fenced code blocks (```` ``` ````) with an optional language, shown as source
 
@@ -104,7 +105,8 @@ Supported layout directives include:
 - `::quote`
 - `::mermaid`
 - `::svg`
-- `::iframe`, with a titled frame and an always-available direct link
+- `::iframe`, with a titled frame and a compact open-in-new-tab icon link
+- the `on-click` directive modifier (reveal a block on advance) and its `off-click` mirror (hide a block that starts visible)
 
 These directives are intended to give authors layout control without opening the door to arbitrary, harder-to-maintain HTML.
 

@@ -346,15 +346,17 @@ function renderInline(text, state) {
   const tokens = [];
   const protectedText = protectInlineSpans(text, state, tokens);
 
-  // Handle inline progressive fragments {>...} before HTML-escaping so that
-  // the > character does not get mangled to &gt; before we can match it.
-  const FRAGMENT_RE = /\{>([^}]*)\}/g;
+  // Handle inline progressive fragments {>...} and reverse fragments {<...}
+  // before HTML-escaping so that the > and < characters do not get mangled.
+  const FRAGMENT_RE = /\{([<>])([^}]*)\}/g;
   let result = "";
   let lastIndex = 0;
   let match;
   while ((match = FRAGMENT_RE.exec(protectedText)) !== null) {
     result += renderInlineMarkup(escapeHtml(protectedText.slice(lastIndex, match.index)));
-    result += `<span class="next">${renderInlineMarkup(escapeHtml(match[1]))}</span>`;
+    const isReverse = match[1] === "<";
+    const className = isReverse ? "next-reverse" : "next";
+    result += `<span class="${className}">${renderInlineMarkup(escapeHtml(match[2]))}</span>`;
     if (state) state.stepCount += 1;
     lastIndex = match.index + match[0].length;
   }
@@ -446,13 +448,14 @@ function renderColumns(lines, startIndex, state) {
     if (!column) break;
 
     const isProgressive = block.modifiers && block.modifiers.includes("on-click");
+    const isReverse = !isProgressive && block.modifiers && block.modifiers.includes("off-click");
     const innerHtml = renderLines(block.content, state);
     const style = column.width ? ` style="--column-basis:${escapeAttribute(column.width)}"` : "";
-    const progressiveClass = isProgressive ? " next" : "";
+    const progressiveClass = isProgressive ? " next" : isReverse ? " next-reverse" : "";
     columns.push(
       `<section class="layout-columns__column layout-columns__column--${column.side}${progressiveClass}"${style}>${innerHtml}</section>`,
     );
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
 
     index = block.endIndex + 1;
     while (index < lines.length && !lines[index].trim()) {
@@ -570,15 +573,16 @@ function isTableSeparatorRow(cells) {
 
 function renderSpecialDirective(block, state) {
   const isProgressive = block.modifiers && block.modifiers.includes("on-click");
-  const progressiveClass = isProgressive ? " next" : "";
+  const isReverse = !isProgressive && block.modifiers && block.modifiers.includes("off-click");
+  const progressiveClass = isProgressive ? " next" : isReverse ? " next-reverse" : "";
 
   if (block.directive === "center") {
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
     return `<div class="layout-center${progressiveClass}">${renderLines(block.content, state)}</div>`;
   }
 
   if (block.directive === "svg") {
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
     const rawSvg = collectInlineSvgBlock(block.content, 0);
     if (rawSvg) {
       return `<figure class="layout-svg${progressiveClass}">${sanitizeSvgMarkup(rawSvg.markup)}</figure>`;
@@ -592,7 +596,7 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "mermaid") {
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
     const source = block.content.join("\n").trim();
     if (!source) {
       return `<figure class="layout-mermaid${progressiveClass}"><p>Mermaid diagram source is empty.</p></figure>`;
@@ -614,17 +618,17 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "callout") {
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
     return `<aside class="layout-callout${progressiveClass}">${renderLines(block.content, state)}</aside>`;
   }
 
   if (block.directive === "quote") {
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
     return `<blockquote class="layout-quote${progressiveClass}">${renderLines(block.content, state)}</blockquote>`;
   }
 
   if (block.directive === "big-stat") {
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
     const sections = splitOnDividers(block.content);
     if (sections.length >= 3) {
       // 3+ sections: visual / stat-number / body
@@ -655,7 +659,7 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "media-left" || block.directive === "media-right") {
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
     const { first, second } = splitOnDivider(block.content);
     const mediaHtml = renderLines(first, state);
     const bodyHtml = renderLines(second, state);
@@ -668,7 +672,7 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "split-left" || block.directive === "split-right") {
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
     const { first, second } = splitOnDivider(block.content);
     const imageHtml = renderLines(first, state);
     const textHtml = renderLines(second, state);
@@ -682,7 +686,7 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "code") {
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
     const lang = block.modifiers.find((m) => m !== "on-click") || "";
     const langAttr = lang ? ` class="language-${escapeAttribute(lang)}"` : "";
     const source = block.content.join("\n");
@@ -690,7 +694,7 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "table") {
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
     const rows = block.content.map(parseTableRow).filter(Boolean);
     if (rows.length === 0) {
       return `<figure class="layout-table${progressiveClass}"></figure>`;
@@ -705,11 +709,14 @@ function renderSpecialDirective(block, state) {
     const tbodyRows = dataRows.map((cells, rowIndex) => {
       const rawLine = rawDataLines[rowIndex] || "";
       const isRowProgressive = rawLine.trim().startsWith("| [>] ");
+      const isRowReverse = !isRowProgressive && rawLine.trim().startsWith("| [<] ");
       const rowCells = isRowProgressive
         ? [cells[0].replace(/^\[>\]\s*/, ""), ...cells.slice(1)]
+        : isRowReverse
+        ? [cells[0].replace(/^\[<]\s*/, ""), ...cells.slice(1)]
         : cells;
-      if (isRowProgressive) state.stepCount += 1;
-      const rowClass = isRowProgressive ? ' class="next"' : "";
+      if (isRowProgressive || isRowReverse) state.stepCount += 1;
+      const rowClass = isRowProgressive ? ' class="next"' : isRowReverse ? ' class="next-reverse"' : "";
       return `<tr${rowClass}>${rowCells.map((c) => `<td>${renderInline(c, state)}</td>`).join("")}</tr>`;
     });
     const tbodyHtml = `<tbody>${tbodyRows.join("")}</tbody>`;
@@ -717,7 +724,7 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "figure") {
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
     const { first, second } = splitOnDivider(block.content);
     const mediaHtml = renderLines(first, state);
     const captionText = second.join("\n").trim();
@@ -728,12 +735,12 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "step") {
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
     return `<div class="layout-step${progressiveClass}">${renderLines(block.content, state)}</div>`;
   }
 
   if (block.directive === "slide-bg") {
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
     state.hasSlideBg = true;
 
     let opacity = 0.12;
@@ -753,7 +760,7 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "image-hero") {
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
     state.hasImageHero = true;
     if (block.modifiers.includes("show-all")) state.imageHeroShowAll = true;
     if (state.imageHeroShowAll) {
@@ -888,7 +895,7 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "iframe") {
-    if (isProgressive) state.stepCount += 1;
+    if (isProgressive || isReverse) state.stepCount += 1;
 
     const content = block.content;
     let url = "";
@@ -907,7 +914,7 @@ function renderSpecialDirective(block, state) {
 
     // Check modifiers for URL (when on same line as ::iframe) and size options
     for (const mod of block.modifiers) {
-      if (mod === "on-click") continue;
+      if (mod === "on-click" || mod === "off-click") continue;
       const widthMatch = /^width:(.+)$/.exec(mod);
       if (widthMatch) {
         width = widthMatch[1];
@@ -966,12 +973,12 @@ function renderSpecialDirective(block, state) {
     }
 
     // Browsers do not expose reliable cross-origin iframe failure events.
-    // Keep an ordinary link available whether or not the embed succeeds.
+    // Keep a compact open-in-new-tab icon available whether or not the embed
+    // succeeds, plus any author-supplied fallback content below the frame.
     const fallbackBlock = safeUrl
-      ? `<div class="layout-iframe__fallback">
-           <p><a href="${safeUrl}" target="_blank" rel="noopener noreferrer">Open ${escapeHtml(destinationName)} in a new tab</a></p>
-           ${fallbackHtml}
-         </div>`
+      ? `<a class="layout-iframe__open" href="${safeUrl}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeHtml(destinationName)} in a new tab" title="Open ${escapeHtml(destinationName)} in a new tab">
+           <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h3"/><path d="M7 9V3h6v6"/><line x1="7" y1="9" x2="15" y2="1"/></svg>
+         </a>${fallbackHtml ? `<div class="layout-iframe__extra">${fallbackHtml}</div>` : ""}`
       : `<div class="layout-iframe__fallback layout-iframe__fallback--missing">
            <p class="layout-iframe__fallback-message">No HTTP or HTTPS URL was provided.</p>
            ${fallbackHtml}
@@ -1013,7 +1020,9 @@ function buildNestedListHtml(items, type, currentDepth, state) {
       j += 1;
     }
     const children = items.slice(i + 1, j);
-    const classes = item.isProgressive ? ' class="next"' : "";
+    const classes = item.isProgressive ? ' class="next"'
+      : item.isReverse ? ' class="next-reverse"'
+      : "";
     if (children.length > 0) {
       parts.push(
         `<li${classes}>${renderInline(item.text, state)}${buildNestedListHtml(children, type, currentDepth + 1, state)}</li>`,
@@ -1126,15 +1135,20 @@ function renderLines(lines, state) {
       const depth = Math.min(Math.floor(unorderedListMatch[1].length / 2), 2);
       const text = unorderedListMatch[2].trim();
       const isProgressive = text.startsWith("[>] ");
+      const isReverse = !isProgressive && text.startsWith("[<] ");
+      const cleanText = isProgressive ? text.slice(4).trim()
+        : isReverse ? text.slice(4).trim()
+        : text;
       if (!listType) listType = "ul";
       if (listType !== "ul") flushList();
       listType = "ul";
       listItems.push({
-        text: isProgressive ? text.slice(4).trim() : text,
+        text: cleanText,
         isProgressive,
+        isReverse,
         depth,
       });
-      if (isProgressive) state.stepCount += 1;
+      if (isProgressive || isReverse) state.stepCount += 1;
       index += 1;
       continue;
     }
@@ -1144,15 +1158,20 @@ function renderLines(lines, state) {
       const depth = Math.min(Math.floor(orderedListMatch[1].length / 2), 2);
       const text = orderedListMatch[3].trim();
       const isProgressive = text.startsWith("[>] ");
+      const isReverse = !isProgressive && text.startsWith("[<] ");
+      const cleanText = isProgressive ? text.slice(4).trim()
+        : isReverse ? text.slice(4).trim()
+        : text;
       if (!listType) listType = "ol";
       if (listType !== "ol") flushList();
       listType = "ol";
       listItems.push({
-        text: isProgressive ? text.slice(4).trim() : text,
+        text: cleanText,
         isProgressive,
+        isReverse,
         depth,
       });
-      if (isProgressive) state.stepCount += 1;
+      if (isProgressive || isReverse) state.stepCount += 1;
       index += 1;
       continue;
     }

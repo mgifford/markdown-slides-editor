@@ -269,6 +269,129 @@ test("renderMarkdown supports ordered lists and progressive disclosure markers",
   assert.equal(rendered.stepCount, 1);
 });
 
+test("renderMarkdown supports [<] reverse progressive disclosure in unordered lists", () => {
+  const rendered = renderMarkdown(`# Slide
+
+- Visible initially
+- [<] Hidden on advance`);
+
+  assert.equal(rendered.html.includes('class="next-reverse"'), true);
+  assert.equal(rendered.html.includes("[&lt;]"), false);
+  assert.equal(rendered.html.includes("Hidden on advance"), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown supports [<] reverse progressive disclosure in ordered lists", () => {
+  const rendered = renderMarkdown(`# Slide
+
+1. First item
+2. [<] Reverse item`);
+
+  assert.equal(rendered.html.includes("<ol>"), true);
+  assert.equal(rendered.html.includes('class="next-reverse"'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown supports {<text} inline reverse fragments", () => {
+  const rendered = renderMarkdown(`A paragraph with {<a hidden part} revealed initially.`);
+
+  assert.equal(rendered.html.includes('<span class="next-reverse">a hidden part</span>'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown counts multiple inline reverse fragments in stepCount", () => {
+  const rendered = renderMarkdown(`First {<one} then {<two} then {<three}.`);
+
+  assert.equal(rendered.html.includes('<span class="next-reverse">one</span>'), true);
+  assert.equal(rendered.html.includes('<span class="next-reverse">two</span>'), true);
+  assert.equal(rendered.html.includes('<span class="next-reverse">three</span>'), true);
+  assert.equal(rendered.stepCount, 3);
+});
+
+test("renderMarkdown off-click callout adds next-reverse class", () => {
+  const rendered = renderMarkdown(`# Slide
+
+::callout off-click
+Visible initially, hidden on advance.
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-callout next-reverse"'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown off-click quote adds next-reverse class", () => {
+  const rendered = renderMarkdown(`# Slide
+
+::quote off-click
+Visible initially.
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-quote next-reverse"'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown off-click center adds next-reverse class", () => {
+  const rendered = renderMarkdown(`# Slide
+
+::center off-click
+Centered content.
+::`);
+
+  assert.equal(rendered.html.includes('class="layout-center next-reverse"'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown off-click iframe adds next-reverse class", () => {
+  const rendered = renderMarkdown(`
+::iframe off-click
+https://example.com
+::`);
+  assert.ok(rendered.html.includes('layout-iframe next-reverse'), "progressive class added");
+  assert.equal(rendered.stepCount, 1, "stepCount incremented");
+});
+
+test("renderMarkdown combines [<] and [>] items in stepCount", () => {
+  const rendered = renderMarkdown(`# Slide
+
+- [>] Forward item
+- [<] Reverse item
+- [>] Another forward`);
+
+  assert.equal(rendered.html.includes('class="next"'), true);
+  assert.equal(rendered.html.includes('class="next-reverse"'), true);
+  assert.equal(rendered.stepCount, 3);
+});
+
+test("renderMarkdown renders ::table with reverse progressive rows using [<] prefix", () => {
+  const rendered = renderMarkdown(`::table
+| Feature | Status |
+| --- | --- |
+| Ready | Done |
+| [<] Hidden row | Planned |
+::`);
+
+  assert.equal(rendered.html.includes('class="next-reverse"'), true);
+  assert.equal(rendered.html.includes("[&lt;]"), false);
+  assert.equal(rendered.html.includes("<td>Hidden row</td>"), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown off-click columns add next-reverse class", () => {
+  const rendered = renderMarkdown(`# Slide
+
+::column-left off-click
+Left content.
+::
+
+::column-right
+Right content.
+::`);
+
+  assert.equal(rendered.html.includes('layout-columns__column--left next-reverse'), true);
+  assert.equal(rendered.html.includes('layout-columns__column--right"'), true);
+  assert.equal(rendered.stepCount, 1);
+});
+
 test("renderMarkdown renders nested unordered lists up to three levels deep", () => {
   const rendered = renderMarkdown(`# Slide
 
@@ -1928,15 +2051,16 @@ test("renderMarkdown iframe directive renders an iframe with the given URL", () 
   assert.ok(rendered.html.includes('layout-iframe'), "layout-iframe class present");
 });
 
-test("renderMarkdown iframe directive always includes an alternative link", () => {
+test("renderMarkdown iframe directive always includes an alternative open-in-new-tab link", () => {
   const rendered = renderMarkdown(`
 ::iframe https://example.com
 Alternative: [Open demo](https://example.com)
 ::`);
-  assert.ok(rendered.html.includes('layout-iframe__fallback'), "fallback div present");
-  assert.ok(rendered.html.includes('Open example.com in a new tab'), "descriptive alternative link present");
-  assert.ok(rendered.html.includes('Open demo'), "fallback markdown rendered");
-  assert.ok(rendered.html.includes('https://example.com'), "fallback link present");
+  assert.ok(rendered.html.includes('layout-iframe__open'), "open-in-new-tab link present");
+  assert.ok(rendered.html.includes('href="https://example.com"'), "link points to iframe URL");
+  assert.ok(rendered.html.includes('target="_blank"'), "opens in new tab");
+  assert.ok(rendered.html.includes('aria-label="Open example.com in a new tab"'), "accessible label present");
+  assert.ok(rendered.html.includes('Open demo'), "author-supplied fallback content still rendered");
 });
 
 test("renderMarkdown iframe directive supports width and height modifiers", () => {

@@ -275,10 +275,11 @@ https://example.com/demo
 ::
 ```
 
-The generated slide always includes a direct link below the frame. Browsers do
+The generated slide always includes a compact open-in-new-tab icon in the top-right corner of the frame. Browsers do
 not report cross-origin iframe failures reliably, and many sites prevent
 embedding with `X-Frame-Options` or Content Security Policy. Authors should
-therefore treat the link as a required alternative, not as an error message.
+therefore treat the icon link as a required alternative, not as an error message.
+Any extra Markdown inside the directive is rendered as compact supporting text below the frame.
 
 Use `width:` and `height:` modifiers when the default dimensions are not
 appropriate:
@@ -291,7 +292,7 @@ https://example.com/demo
 
 ## The `on-click` modifier
 
-Any layout directive that renders a block element supports the `on-click` modifier:
+Any layout directive that renders a block element supports the `on-click` modifier, and the same directives support the `off-click` mirror modifier:
 
 - `::column-left on-click`
 - `::column-right on-click`
@@ -304,6 +305,18 @@ Any layout directive that renders a block element supports the `on-click` modifi
 
 Blocks marked with `on-click` are hidden when the slide first appears. Each click (or arrow-key advance) reveals the next `on-click` block in source order. `on-click` blocks and `[>]` progressive list items are interleaved by DOM order: the reveal sequence follows the source top-to-bottom, so a `[>]` list item that appears before an `on-click` block in the source will be revealed first.
 
+## The `off-click` modifier
+
+`off-click` is the mirror of `on-click`. Blocks marked with `off-click` are visible when the slide first appears and are hidden one at a time as the presenter advances:
+
+```md
+::quote off-click
+Visible on load, hidden on first advance.
+::
+```
+
+`off-click` blocks and `[<]` reverse list items are interleaved by DOM order with `on-click` blocks and `[>]` items in a single shared step sequence, so advancing walks through every step and going backwards reverses the order. In the one-page handout export all `off-click` elements are always visible.
+
 In the one-page handout export all `on-click` elements are always visible.
 
 ## Accessibility guidance
@@ -315,7 +328,7 @@ In the one-page handout export all `on-click` elements are always visible.
 - Do not overload columns with dense text.
 - Make sure centered or callout text remains meaningful out of context.
 - Use media layouts to support understanding, not just decoration.
-- Give each iframe a concise title and a descriptive direct link.
+- Give each iframe a concise title; the open-in-new-tab icon carries an accessible name derived from the URL, and any extra Markdown inside the directive stays available as supporting text.
 - Confirm that the source permits embedding; do not assume an ordinary webpage URL will work.
 - If a layout starts to feel crowded, split it into more slides.
 

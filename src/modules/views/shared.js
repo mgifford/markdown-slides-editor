@@ -71,13 +71,24 @@ function escapeAttribute(value) {
 }
 
 function applyRevealState(container, revealStep) {
-  const progressiveItems = [...container.querySelectorAll(".next")];
-  progressiveItems.forEach((item, index) => {
+  // Forward items: hidden until revealStep passes their index
+  const forwardItems = [...container.querySelectorAll(".next")];
+  forwardItems.forEach((item, index) => {
     const isVisible = index < revealStep;
     const isCurrent = index === revealStep - 1;
     item.hidden = !isVisible;
     item.classList.toggle("visited", index < revealStep - 1);
     item.classList.toggle("active", isCurrent);
+  });
+
+  // Reverse items: visible initially, hidden one per step in reverse DOM order
+  const reverseItems = [...container.querySelectorAll(".next-reverse")];
+  const totalReverse = reverseItems.length;
+  reverseItems.forEach((item, index) => {
+    // Reverse order: last DOM item hides first
+    const reverseIndex = totalReverse - 1 - index;
+    const isVisible = reverseIndex >= totalReverse - revealStep;
+    item.hidden = !isVisible;
   });
 }
 

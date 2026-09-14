@@ -54,6 +54,10 @@
   - `docs/resources.md`: project reference position on Intopia, Inklusiv, WCAG, and APG usage
 - App entry:
   - `src/main.js`: loads stored source, resolves route, and mounts editor, audience, or presenter views
+- Routes (three distinct surfaces sharing the `compileSource` pipeline in `src/modules/views/shared.js`):
+  - `/` editor (`src/modules/views/editor-view.js`): split-pane authoring surface; broadcasts `deck-updated` / `slide-changed` over the sync channel
+  - `/present/` audience view (`src/modules/views/presentation-view.js`): clean presentation shell; keeps navigation state as `(activeSlideIndex, revealStep)`, renders `class="next"` (reveal on advance) and `class="next-reverse"` (hide on advance) via `applyRevealState`, and deep-links positions as `#4` / `#4.1`
+  - `/presenter/` presenter view (`src/modules/views/presenter-view.js`): current/next slide, notes, timer, captions, and shared text-zoom controls; owns `publishState()` so presenter navigation drives the audience window
 - Core modules:
   - `src/modules/parser.js`: front matter parsing, slide splitting on `---`, speaker note extraction using `Note:`, and source-offset mapping so the editor preview can follow the cursor position in Markdown source
   - `src/modules/markdown.js`: lightweight Markdown-to-HTML renderer
@@ -83,10 +87,13 @@
   - `tests/slide-layout.test.js`: slide-dimension and fitting coverage
   - `tests/presenter-layout.test.js`: presenter panel sizing, collapse, and order coverage
   - `tests/presenter-timer.test.js`: presenter countdown and warning-state coverage
+  - `tests/layout-css.test.js`: structural CSS assertions (iframe fallback visibility, hidden-column layout preservation)
+  - `features/*.feature` + `features/step_definitions/`: Cucumber.js BDD scenarios covering module-level behavior in Node.js (parsing, rendering, export, storage, timer, accessibility)
 
 ## Architecture Notes
 
 - There is no build step, no transpiler, no linter, and no GitHub Actions workflow yet.
+- There is no lint command and no `stylelint` (or other CSS) config, so CSS changes in `styles/app.css` have no automated checks. Verify visually in all three routes plus the one-page/print views when touching styles.
 - There is no external Markdown library yet; the current Markdown renderer is intentionally small and only supports the syntax implemented in `src/modules/markdown.js`.
 - The current runtime is an in-repo placeholder. Planned `whisper-slides` alignment is tracked in `TODO.md`.
 - Whisper or other AI features must remain optional and should only surface in the UI when an actual AI capability is available.
