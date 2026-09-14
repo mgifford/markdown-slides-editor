@@ -344,6 +344,74 @@ test("renderMarkdown indented lines without an open list stay paragraphs", () =>
   assert.ok(!rendered.html.includes("<li>"));
 });
 
+test("renderMarkdown supports [>] progressive disclosure on headings", () => {
+  const rendered = renderMarkdown(`# [>] Revealed heading`);
+
+  assert.ok(rendered.html.includes('<h1 class="next">Revealed heading</h1>'), "h1 gets next class");
+  assert.deepEqual(rendered.headings, [{ level: 1, text: "Revealed heading" }], "outline keeps clean text");
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown supports [<] reverse disclosure on headings", () => {
+  const rendered = renderMarkdown(`## [<] Visible subheading`);
+
+  assert.ok(rendered.html.includes('<h2 class="next-reverse">Visible subheading</h2>'), "h2 gets next-reverse class");
+  assert.deepEqual(rendered.headings, [{ level: 2, text: "Visible subheading" }], "outline keeps clean text");
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown heading markers require a trailing space", () => {
+  const rendered = renderMarkdown(`# [>]Title stays literal`);
+
+  assert.ok(rendered.html.includes("[&gt;]Title stays literal"), "marker without space is literal text");
+  assert.equal(rendered.stepCount, 0);
+});
+
+test("renderMarkdown supports [>] progressive disclosure on plain paragraphs", () => {
+  const rendered = renderMarkdown(`# Slide
+
+Visible intro.
+
+[>] Revealed paragraph.`);
+
+  assert.ok(rendered.html.includes('<p class="next">Revealed paragraph.</p>'), "paragraph gets next class");
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown supports [<] reverse disclosure on plain paragraphs", () => {
+  const rendered = renderMarkdown(`# Slide
+
+[<] Visible paragraph.`);
+
+  assert.ok(rendered.html.includes('<p class="next-reverse">Visible paragraph.</p>'), "paragraph gets next-reverse class");
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown supports [>] progressive disclosure on bare image lines", () => {
+  const rendered = renderMarkdown(`# Slide
+
+[>] ![Descriptive alt text](https://example.com/photo.jpg)`);
+
+  assert.ok(rendered.html.includes('<p class="next"><img src="https://example.com/photo.jpg"'), "image paragraph gets next class");
+  assert.ok(rendered.html.includes('alt="Descriptive alt text"'), "alt text preserved");
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown interleaves progressive headings, paragraphs, and list items in DOM order", () => {
+  const rendered = renderMarkdown(`# Slide
+
+[>] First reveal (paragraph)
+
+- [>] Second reveal (list item)
+
+## [>] Third reveal (heading)`);
+
+  assert.equal(rendered.stepCount, 3);
+  const nextPositions = [...rendered.html.matchAll(/class="next"/g)].map((m) => m.index);
+  assert.equal(nextPositions.length, 3, "three progressive elements in DOM order");
+  assert.ok(nextPositions[0] < nextPositions[1] && nextPositions[1] < nextPositions[2]);
+});
+
 test("renderMarkdown supports [<] reverse progressive disclosure in unordered lists", () => {  const rendered = renderMarkdown(`# Slide
 
 - Visible initially

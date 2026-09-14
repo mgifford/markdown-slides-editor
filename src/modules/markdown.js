@@ -1130,9 +1130,17 @@ function renderLines(lines, state) {
     if (headingMatch) {
       flushList();
       const level = headingMatch[1].length;
-      const text = headingMatch[2].trim();
+      const rawText = headingMatch[2].trim();
+      const isProgressive = rawText.startsWith("[>] ");
+      const isReverse = !isProgressive && rawText.startsWith("[<] ");
+      // Strip the marker before recording: outline, nav, and lint see clean text.
+      const text = isProgressive || isReverse ? rawText.slice(4).trim() : rawText;
       state.headings.push({ level, text });
-      htmlParts.push(`<h${level}>${renderInline(text, state)}</h${level}>`);
+      const headingClass = isProgressive ? ' class="next"'
+        : isReverse ? ' class="next-reverse"'
+        : "";
+      if (isProgressive || isReverse) state.stepCount += 1;
+      htmlParts.push(`<h${level}${headingClass}>${renderInline(text, state)}</h${level}>`);
       index += 1;
       continue;
     }
@@ -1196,7 +1204,16 @@ function renderLines(lines, state) {
     }
 
     flushList();
-    htmlParts.push(`<p>${renderInline(line, state)}</p>`);
+    // Block-level progressive markers on plain paragraphs (and bare image
+    // lines, which render through here): hidden/shown as a whole block.
+    const isParaProgressive = trimmed.startsWith("[>] ");
+    const isParaReverse = !isParaProgressive && trimmed.startsWith("[<] ");
+    const paraText = isParaProgressive || isParaReverse ? trimmed.slice(4).trim() : line;
+    const paraClass = isParaProgressive ? ' class="next"'
+      : isParaReverse ? ' class="next-reverse"'
+      : "";
+    if (isParaProgressive || isParaReverse) state.stepCount += 1;
+    htmlParts.push(`<p${paraClass}>${renderInline(paraText, state)}</p>`);
     index += 1;
   }
 

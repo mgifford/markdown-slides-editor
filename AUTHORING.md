@@ -158,6 +158,20 @@ Reverse steps consume steps in DOM order: each advance toggles exactly one eleme
 
 Inline fragments work the same way: `{>text}` starts hidden and is revealed on advance, while `{<text}` starts visible and is hidden on advance.
 
+The same markers work on headings, plain paragraphs, and bare image lines — each toggles as a whole block in the shared step sequence:
+
+```md
+# [>] Revealed heading
+
+[>] This paragraph appears on advance.
+
+[<] This paragraph is visible on load and hides on advance.
+
+[>] ![Descriptive alt text](https://example.com/photo.jpg)
+```
+
+Markers require a trailing space (`[>] Title`, not `[>]Title`). Heading text is recorded without the marker, so the outline, navigation labels, and accessibility checks see clean text.
+
 For layout directives, add the `on-click` modifier to reveal a block on advance, or the `off-click` mirror modifier to hide a block that starts visible:
 
 ```md

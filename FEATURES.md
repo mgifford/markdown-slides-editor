@@ -88,8 +88,7 @@ Supported content patterns include:
 - links
 - images
 - blockquotes
-- progressive disclosure list items using `- [>]` (reveal on advance) and `- [<]` (hide on advance)
-- inline progressive fragments using `{>text}` (reveal on advance) and `{<text}` (hide on advance)
+- progressive disclosure using `- [>]` / `- [<]` (list items), `{>}` / `{<}` (inline fragments), and `[>]` / `[<]` prefixes on headings, paragraphs, and bare image lines (reveal on advance / hide on advance)
 - mathematics via LaTeX delimiters: native `\(...\)` / `\[...\]`, plus `$$...$$` and guarded single-dollar `$...$`
 - fenced code blocks (```` ``` ````) with an optional language, shown as source
 
