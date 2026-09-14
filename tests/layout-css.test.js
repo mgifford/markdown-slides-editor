@@ -32,6 +32,14 @@ test("hidden progressive blocks stay hidden even when the layout sets its own di
   );
 });
 
+test("list continuation blocks are inset under the bullet", () => {
+  const css = readFileSync(new URL("../styles/app.css", import.meta.url), "utf8");
+  const ruleMatch = css.match(/\.slide-card\s+li\s+\.li-continuation\s*\{([\s\S]*?)\}/);
+  assert.ok(ruleMatch, "CSS should include a .slide-card li .li-continuation rule");
+  assert.ok(/display\s*:\s*block/.test(ruleMatch[1]), "continuation should be its own block line");
+  assert.ok(/margin-inline-start/.test(ruleMatch[1]), "continuation should be indented under the bullet");
+});
+
 test("responsive column layout keeps .layout-columns side-by-side at the 1100px breakpoint", () => {
   const css = readFileSync(new URL("../styles/app.css", import.meta.url), "utf8");
   const desktopToTabletBlock = css

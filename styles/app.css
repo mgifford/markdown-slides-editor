@@ -1890,6 +1890,12 @@ input:focus-visible {
   font-size: inherit;
 }
 
+/* Indented continuation lines stay on their own line, inset under the bullet. */
+.slide-card li .li-continuation {
+  display: block;
+  margin-inline-start: 1.5em;
+}
+
 .slide-card ul,
 .slide-card ol {
   padding-left: 1.5em;

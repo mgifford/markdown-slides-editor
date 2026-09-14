@@ -127,7 +127,7 @@ The closing `::` is optional. Labels are case-insensitive (`::Notes`, `::NOTE`, 
 
 ### List continuation lines
 
-An indented line directly under a list item stays inside that bullet instead of breaking the list into a separate paragraph:
+An indented line directly under a list item stays inside that bullet — rendered on its own line, inset under the bullet — instead of breaking the list into a separate paragraph:
 
 ```md
 - **The Operational Shift:**

@@ -278,9 +278,24 @@ test("renderMarkdown keeps indented continuation lines inside the list item", ()
 
   assert.equal(
     rendered.html,
-    "<h1>Slide</h1><ul><li><strong>Bold lead:</strong> Continuation text stays with the bullet.</li><li>Second item</li></ul>",
+    '<h1>Slide</h1><ul><li><strong>Bold lead:</strong><span class="li-continuation">Continuation text stays with the bullet.</span></li><li>Second item</li></ul>',
   );
   assert.equal(rendered.stepCount, 0);
+});
+
+test("renderMarkdown renders each continuation on its own indented line", () => {
+  const rendered = renderMarkdown(`# Slide
+
+- Lead
+    First continuation.
+    Second continuation.`);
+
+  assert.ok(
+    rendered.html.includes(
+      '<li>Lead<span class="li-continuation">First continuation.</span><span class="li-continuation">Second continuation.</span></li>',
+    ),
+    "each continuation gets its own block",
+  );
 });
 
 test("renderMarkdown keeps indented continuations in ordered list items", () => {
@@ -291,7 +306,7 @@ test("renderMarkdown keeps indented continuations in ordered list items", () => 
 2. Second step`);
 
   assert.ok(
-    rendered.html.includes("<li>First step with more detail.</li>"),
+    rendered.html.includes('<li>First step<span class="li-continuation">with more detail.</span></li>'),
     "continuation joins the ordered item",
   );
   assert.ok(!rendered.html.includes("</ul><p>"), "list is not split by the continuation");
@@ -305,7 +320,7 @@ test("renderMarkdown continuation lines work with progressive markers", () => {
 - Visible item`);
 
   assert.ok(
-    rendered.html.includes('<li class="next">Revealed item with continuation.</li>'),
+    rendered.html.includes('<li class="next">Revealed item<span class="li-continuation">with continuation.</span></li>'),
     "continuation stays inside the progressive item",
   );
   assert.equal(rendered.stepCount, 1);

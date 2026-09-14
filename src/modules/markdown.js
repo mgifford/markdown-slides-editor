@@ -1008,6 +1008,12 @@ function renderSpecialDirective(block, state) {
   return null;
 }
 
+function buildContinuationHtml(item, state) {
+  return (item.continuations || [])
+    .map((continuation) => `<span class="li-continuation">${renderInline(continuation, state)}</span>`)
+    .join("");
+}
+
 function buildNestedListHtml(items, type, currentDepth, state) {
   const parts = [];
   parts.push(`<${type}>`);
@@ -1023,12 +1029,13 @@ function buildNestedListHtml(items, type, currentDepth, state) {
     const classes = item.isProgressive ? ' class="next"'
       : item.isReverse ? ' class="next-reverse"'
       : "";
+    const continuations = buildContinuationHtml(item, state);
     if (children.length > 0) {
       parts.push(
-        `<li${classes}>${renderInline(item.text, state)}${buildNestedListHtml(children, type, currentDepth + 1, state)}</li>`,
+        `<li${classes}>${renderInline(item.text, state)}${continuations}${buildNestedListHtml(children, type, currentDepth + 1, state)}</li>`,
       );
     } else {
-      parts.push(`<li${classes}>${renderInline(item.text, state)}</li>`);
+      parts.push(`<li${classes}>${renderInline(item.text, state)}${continuations}</li>`);
     }
     i = j;
   }
@@ -1144,6 +1151,7 @@ function renderLines(lines, state) {
       listType = "ul";
       listItems.push({
         text: cleanText,
+        continuations: [],
         isProgressive,
         isReverse,
         depth,
@@ -1167,6 +1175,7 @@ function renderLines(lines, state) {
       listType = "ol";
       listItems.push({
         text: cleanText,
+        continuations: [],
         isProgressive,
         isReverse,
         depth,
@@ -1176,11 +1185,12 @@ function renderLines(lines, state) {
       continue;
     }
 
-    // Indented continuation line: stays inside the open list item instead of
-    // breaking the list into a separate paragraph. Runs after all other block
-    // constructs (lists, headings, directives, fences) so those keep precedence.
+    // Indented continuation line: rendered as its own indented block inside
+    // the open list item instead of breaking the list into a separate
+    // paragraph. Runs after all other block constructs (lists, headings,
+    // directives, fences) so those keep precedence.
     if (listItems.length > 0 && /^\s+\S/.test(line)) {
-      listItems[listItems.length - 1].text += ` ${trimmed}`;
+      listItems[listItems.length - 1].continuations.push(trimmed);
       index += 1;
       continue;
     }
