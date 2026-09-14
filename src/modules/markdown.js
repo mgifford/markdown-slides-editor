@@ -346,18 +346,27 @@ function renderInline(text, state) {
   const tokens = [];
   const protectedText = protectInlineSpans(text, state, tokens);
 
-  // Handle inline progressive fragments {>...} and reverse fragments {<...}
-  // before HTML-escaping so that the > and < characters do not get mangled.
-  const FRAGMENT_RE = /\{([<>])([^}]*)\}/g;
+  // Handle inline progressive fragments {>...}/{>>...} and reverse
+  // fragments {<...}/{<<...} before HTML-escaping so that the > and <
+  // characters do not get mangled. Double markers join the open step.
+  const FRAGMENT_RE = /\{([<>]{1,2})([^}]*)\}/g;
   let result = "";
   let lastIndex = 0;
   let match;
   while ((match = FRAGMENT_RE.exec(protectedText)) !== null) {
+    const marker = match[1];
+    const isFollow = marker === ">>" || marker === "<<";
+    const isReverse = marker === "<" || marker === "<<";
+    if (marker !== ">" && !isFollow && marker !== "<" && !isReverse) {
+      // Not a real marker (e.g. {><}): emit literally, claim nothing.
+      result += renderInlineMarkup(escapeHtml(protectedText.slice(lastIndex, match.index + match[0].length)));
+      lastIndex = match.index + match[0].length;
+      continue;
+    }
     result += renderInlineMarkup(escapeHtml(protectedText.slice(lastIndex, match.index)));
-    const isReverse = match[1] === "<";
     const className = isReverse ? "next-reverse" : "next";
-    result += `<span class="${className}">${renderInlineMarkup(escapeHtml(match[2]))}</span>`;
-    if (state) state.stepCount += 1;
+    const step = claimProgressiveStep(state, isFollow);
+    result += `<span class="${className}" data-step="${step}">${renderInlineMarkup(escapeHtml(match[2]))}</span>`;
     lastIndex = match.index + match[0].length;
   }
   result += renderInlineMarkup(escapeHtml(protectedText.slice(lastIndex)));
@@ -449,13 +458,15 @@ function renderColumns(lines, startIndex, state) {
 
     const isProgressive = block.modifiers && block.modifiers.includes("on-click");
     const isReverse = !isProgressive && block.modifiers && block.modifiers.includes("off-click");
+    // Claim before rendering inner content so the column's step precedes
+    // any steps nested inside it.
+    const stepAttr = claimStepAttr(state, isProgressive, isReverse);
     const innerHtml = renderLines(block.content, state);
     const style = column.width ? ` style="--column-basis:${escapeAttribute(column.width)}"` : "";
     const progressiveClass = isProgressive ? " next" : isReverse ? " next-reverse" : "";
     columns.push(
-      `<section class="layout-columns__column layout-columns__column--${column.side}${progressiveClass}"${style}>${innerHtml}</section>`,
+      `<section class="layout-columns__column layout-columns__column--${column.side}${progressiveClass}"${stepAttr}${style}>${innerHtml}</section>`,
     );
-    if (isProgressive || isReverse) state.stepCount += 1;
 
     index = block.endIndex + 1;
     while (index < lines.length && !lines[index].trim()) {
@@ -577,33 +588,33 @@ function renderSpecialDirective(block, state) {
   const progressiveClass = isProgressive ? " next" : isReverse ? " next-reverse" : "";
 
   if (block.directive === "center") {
-    if (isProgressive || isReverse) state.stepCount += 1;
-    return `<div class="layout-center${progressiveClass}">${renderLines(block.content, state)}</div>`;
+    const stepAttr = claimStepAttr(state, isProgressive, isReverse);
+    return `<div class="layout-center${progressiveClass}"${stepAttr}>${renderLines(block.content, state)}</div>`;
   }
 
   if (block.directive === "svg") {
-    if (isProgressive || isReverse) state.stepCount += 1;
+    const stepAttr = claimStepAttr(state, isProgressive, isReverse);
     const rawSvg = collectInlineSvgBlock(block.content, 0);
     if (rawSvg) {
-      return `<figure class="layout-svg${progressiveClass}">${sanitizeSvgMarkup(rawSvg.markup)}</figure>`;
+      return `<figure class="layout-svg${progressiveClass}"${stepAttr}>${sanitizeSvgMarkup(rawSvg.markup)}</figure>`;
     }
     // Support a bare <img> tag referencing an external SVG file.
     const firstNonEmpty = block.content.find((l) => l.trim());
     if (firstNonEmpty && /^<img\b/i.test(firstNonEmpty.trim())) {
-      return `<figure class="layout-svg${progressiveClass}">${sanitizeImgMarkup(firstNonEmpty.trim())}</figure>`;
+      return `<figure class="layout-svg${progressiveClass}"${stepAttr}>${sanitizeImgMarkup(firstNonEmpty.trim())}</figure>`;
     }
-    return `<figure class="layout-svg${progressiveClass}">${renderLines(block.content, state)}</figure>`;
+    return `<figure class="layout-svg${progressiveClass}"${stepAttr}>${renderLines(block.content, state)}</figure>`;
   }
 
   if (block.directive === "mermaid") {
-    if (isProgressive || isReverse) state.stepCount += 1;
+    const stepAttr = claimStepAttr(state, isProgressive, isReverse);
     const source = block.content.join("\n").trim();
     if (!source) {
-      return `<figure class="layout-mermaid${progressiveClass}"><p>Mermaid diagram source is empty.</p></figure>`;
+      return `<figure class="layout-mermaid${progressiveClass}"${stepAttr}><p>Mermaid diagram source is empty.</p></figure>`;
     }
     state.mermaidCount += 1;
     return `
-      <figure class="layout-mermaid${progressiveClass}">
+      <figure class="layout-mermaid${progressiveClass}"${stepAttr}>
         <div class="mermaid" data-mermaid-id="mermaid-${state.mermaidCount}">${escapeHtml(source)}</div>
       </figure>
     `;
@@ -618,17 +629,17 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "callout") {
-    if (isProgressive || isReverse) state.stepCount += 1;
-    return `<aside class="layout-callout${progressiveClass}">${renderLines(block.content, state)}</aside>`;
+    const stepAttr = claimStepAttr(state, isProgressive, isReverse);
+    return `<aside class="layout-callout${progressiveClass}"${stepAttr}>${renderLines(block.content, state)}</aside>`;
   }
 
   if (block.directive === "quote") {
-    if (isProgressive || isReverse) state.stepCount += 1;
-    return `<blockquote class="layout-quote${progressiveClass}">${renderLines(block.content, state)}</blockquote>`;
+    const stepAttr = claimStepAttr(state, isProgressive, isReverse);
+    return `<blockquote class="layout-quote${progressiveClass}"${stepAttr}>${renderLines(block.content, state)}</blockquote>`;
   }
 
   if (block.directive === "big-stat") {
-    if (isProgressive || isReverse) state.stepCount += 1;
+    const stepAttr = claimStepAttr(state, isProgressive, isReverse);
     const sections = splitOnDividers(block.content);
     if (sections.length >= 3) {
       // 3+ sections: visual / stat-number / body
@@ -636,7 +647,7 @@ function renderSpecialDirective(block, state) {
       const statHtml = renderLines(sections[1], state);
       const bodyHtml = renderLines(sections[2], state);
       return `
-        <div class="layout-big-stat${progressiveClass}">
+        <div class="layout-big-stat${progressiveClass}"${stepAttr}>
           <div class="big-stat__visual">${visualHtml}</div>
           <div class="big-stat__number">${statHtml}</div>
           <div class="big-stat__body">${bodyHtml}</div>
@@ -648,23 +659,23 @@ function renderSpecialDirective(block, state) {
       const statHtml = renderLines(sections[0], state);
       const bodyHtml = renderLines(sections[1], state);
       return `
-        <div class="layout-big-stat${progressiveClass}">
+        <div class="layout-big-stat${progressiveClass}"${stepAttr}>
           <div class="big-stat__number">${statHtml}</div>
           <div class="big-stat__body">${bodyHtml}</div>
         </div>
       `;
     }
     // Fallback: single section, render all content centred
-    return `<div class="layout-big-stat${progressiveClass}">${renderLines(block.content, state)}</div>`;
+    return `<div class="layout-big-stat${progressiveClass}"${stepAttr}>${renderLines(block.content, state)}</div>`;
   }
 
   if (block.directive === "media-left" || block.directive === "media-right") {
-    if (isProgressive || isReverse) state.stepCount += 1;
+    const stepAttr = claimStepAttr(state, isProgressive, isReverse);
     const { first, second } = splitOnDivider(block.content);
     const mediaHtml = renderLines(first, state);
     const bodyHtml = renderLines(second, state);
     return `
-      <div class="layout-media layout-media--${block.directive === "media-left" ? "left" : "right"}${progressiveClass}">
+      <div class="layout-media layout-media--${block.directive === "media-left" ? "left" : "right"}${progressiveClass}"${stepAttr}>
         <div class="layout-media__visual">${mediaHtml}</div>
         <div class="layout-media__body">${bodyHtml}</div>
       </div>
@@ -672,13 +683,13 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "split-left" || block.directive === "split-right") {
-    if (isProgressive || isReverse) state.stepCount += 1;
+    const stepAttr = claimStepAttr(state, isProgressive, isReverse);
     const { first, second } = splitOnDivider(block.content);
     const imageHtml = renderLines(first, state);
     const textHtml = renderLines(second, state);
     const side = block.directive === "split-left" ? "left" : "right";
     return `
-      <div class="layout-split layout-split--${side}${progressiveClass}">
+      <div class="layout-split layout-split--${side}${progressiveClass}"${stepAttr}>
         <div class="layout-split__image">${imageHtml}</div>
         <div class="layout-split__text">${textHtml}</div>
       </div>
@@ -686,18 +697,18 @@ function renderSpecialDirective(block, state) {
   }
 
   if (block.directive === "code") {
-    if (isProgressive || isReverse) state.stepCount += 1;
-    const lang = block.modifiers.find((m) => m !== "on-click") || "";
+    const stepAttr = claimStepAttr(state, isProgressive, isReverse);
+    const lang = block.modifiers.find((m) => m !== "on-click" && m !== "off-click") || "";
     const langAttr = lang ? ` class="language-${escapeAttribute(lang)}"` : "";
     const source = block.content.join("\n");
-    return `<figure class="layout-code${progressiveClass}"><pre><code${langAttr}>${escapeHtml(source)}</code></pre></figure>`;
+    return `<figure class="layout-code${progressiveClass}"${stepAttr}><pre><code${langAttr}>${escapeHtml(source)}</code></pre></figure>`;
   }
 
   if (block.directive === "table") {
-    if (isProgressive || isReverse) state.stepCount += 1;
+    const tableStepAttr = claimStepAttr(state, isProgressive, isReverse);
     const rows = block.content.map(parseTableRow).filter(Boolean);
     if (rows.length === 0) {
-      return `<figure class="layout-table${progressiveClass}"></figure>`;
+      return `<figure class="layout-table${progressiveClass}"${tableStepAttr}></figure>`;
     }
     const headerCells = rows[0];
     const hasSeparator = rows.length > 1 && isTableSeparatorRow(rows[1]);
@@ -708,39 +719,37 @@ function renderSpecialDirective(block, state) {
     const theadHtml = `<thead><tr>${headerCells.map((c) => `<th>${renderInline(c, state)}</th>`).join("")}</tr></thead>`;
     const tbodyRows = dataRows.map((cells, rowIndex) => {
       const rawLine = rawDataLines[rowIndex] || "";
-      const isRowProgressive = rawLine.trim().startsWith("| [>] ");
-      const isRowReverse = !isRowProgressive && rawLine.trim().startsWith("| [<] ");
-      const rowCells = isRowProgressive
-        ? [cells[0].replace(/^\[>\]\s*/, ""), ...cells.slice(1)]
-        : isRowReverse
-        ? [cells[0].replace(/^\[<]\s*/, ""), ...cells.slice(1)]
+      const rowMarker = parseTableRowMarker(rawLine.trim());
+      const rowCells = rowMarker
+        ? [cells[0].replace(rowMarker.stripPattern, ""), ...cells.slice(1)]
         : cells;
-      if (isRowProgressive || isRowReverse) state.stepCount += 1;
-      const rowClass = isRowProgressive ? ' class="next"' : isRowReverse ? ' class="next-reverse"' : "";
-      return `<tr${rowClass}>${rowCells.map((c) => `<td>${renderInline(c, state)}</td>`).join("")}</tr>`;
+      const rowClass = rowMarker && !rowMarker.reverse ? ' class="next"'
+        : rowMarker ? ' class="next-reverse"'
+        : "";
+      const rowStep = rowMarker ? ` data-step="${claimProgressiveStep(state, rowMarker.follow)}"` : "";
+      return `<tr${rowClass}${rowStep}>${rowCells.map((c) => `<td>${renderInline(c, state)}</td>`).join("")}</tr>`;
     });
     const tbodyHtml = `<tbody>${tbodyRows.join("")}</tbody>`;
-    return `<figure class="layout-table${progressiveClass}"><table>${theadHtml}${tbodyHtml}</table></figure>`;
+    return `<figure class="layout-table${progressiveClass}"${tableStepAttr}><table>${theadHtml}${tbodyHtml}</table></figure>`;
   }
 
   if (block.directive === "figure") {
-    if (isProgressive || isReverse) state.stepCount += 1;
+    const stepAttr = claimStepAttr(state, isProgressive, isReverse);
     const { first, second } = splitOnDivider(block.content);
     const mediaHtml = renderLines(first, state);
     const captionText = second.join("\n").trim();
     const captionHtml = captionText
       ? `<figcaption>${renderInline(captionText, state)}</figcaption>`
       : "";
-    return `<figure class="layout-figure${progressiveClass}">${mediaHtml}${captionHtml}</figure>`;
+    return `<figure class="layout-figure${progressiveClass}"${stepAttr}>${mediaHtml}${captionHtml}</figure>`;
   }
 
   if (block.directive === "step") {
-    if (isProgressive || isReverse) state.stepCount += 1;
-    return `<div class="layout-step${progressiveClass}">${renderLines(block.content, state)}</div>`;
+    const stepAttr = claimStepAttr(state, isProgressive, isReverse);
+    return `<div class="layout-step${progressiveClass}"${stepAttr}>${renderLines(block.content, state)}</div>`;
   }
 
   if (block.directive === "slide-bg") {
-    if (isProgressive || isReverse) state.stepCount += 1;
     state.hasSlideBg = true;
 
     let opacity = 0.12;
@@ -755,12 +764,13 @@ function renderSpecialDirective(block, state) {
     const rawSvg = svgLines.length > 0 ? collectInlineSvgBlock(svgLines, 0) : null;
     if (!rawSvg) return null;
 
+    const stepAttr = claimStepAttr(state, isProgressive, isReverse);
     const safeSvg = sanitizeSvgMarkup(rawSvg.markup);
-    return `<div class="slide-bg-svg${progressiveClass}" aria-hidden="true" style="--slide-bg-opacity:${opacity}">${safeSvg}</div>`;
+    return `<div class="slide-bg-svg${progressiveClass}"${stepAttr} aria-hidden="true" style="--slide-bg-opacity:${opacity}">${safeSvg}</div>`;
   }
 
   if (block.directive === "image-hero") {
-    if (isProgressive || isReverse) state.stepCount += 1;
+    const stepAttr = claimStepAttr(state, isProgressive, isReverse);
     state.hasImageHero = true;
     if (block.modifiers.includes("show-all")) state.imageHeroShowAll = true;
     if (state.imageHeroShowAll) {
@@ -891,11 +901,11 @@ function renderSpecialDirective(block, state) {
     const figureStyle =
       ` style="--hero-stay:${effectiveStay}s;--hero-transition:${effectiveTrans}s;--hero-opacity:${effectiveFinal};--hero-final:${effectiveFinal};--hero-pan:${panDirection};--hero-pan-x:${panX};--hero-pan-y:${panY};--hero-blur:${blurAmount};--hero-saturation:${saturationLevel}"`;
 
-    return `<figure class="${classNames}"${figureStyle}>${imageHtml}${overlayHtml}${logoHtml}</figure>`;
+    return `<figure class="${classNames}"${stepAttr}${figureStyle}>${imageHtml}${overlayHtml}${logoHtml}</figure>`;
   }
 
   if (block.directive === "iframe") {
-    if (isProgressive || isReverse) state.stepCount += 1;
+    const stepAttr = claimStepAttr(state, isProgressive, isReverse);
 
     const content = block.content;
     let url = "";
@@ -998,7 +1008,7 @@ function renderSpecialDirective(block, state) {
       : "";
 
     return `
-      <div class="layout-iframe${progressiveClass}" data-url="${safeUrl}">
+      <div class="layout-iframe${progressiveClass}"${stepAttr} data-url="${safeUrl}">
         ${iframeBlock}
         ${fallbackBlock}
       </div>
@@ -1008,8 +1018,61 @@ function renderSpecialDirective(block, state) {
   return null;
 }
 
-function buildContinuationHtml(item, state) {
-  return (item.continuations || [])
+/**
+ * Claim a step number for a progressive element. `followPrevious` (the
+ * `[>>]` / `[<<]` / `{>>}` / `{<<}` markers) joins the currently open step
+ * instead of starting a new one; with no open step it starts one. Returns
+ * the 0-based step index, stored as data-step on the element so reveal
+ * state can toggle grouped elements together.
+ */
+function claimProgressiveStep(state, followPrevious) {
+  if (!followPrevious || !(state.stepCount > 0)) {
+    state.stepCount += 1;
+  }
+  return state.stepCount - 1;
+}
+
+/**
+ * Parse a block-level progressive marker (`[>]`, `[>>]`, `[<]`, `[<<]`
+ * followed by a space). Returns `{ follow, reverse, clean }` or null when
+ * the text carries no marker. Double markers join the currently open step
+ * instead of starting a new one.
+ */
+function parseProgressivePrefix(text) {
+  if (text.startsWith("[>>] ")) return { follow: true, reverse: false, clean: text.slice(5).trim() };
+  if (text.startsWith("[<<] ")) return { follow: true, reverse: true, clean: text.slice(5).trim() };
+  if (text.startsWith("[>] ")) return { follow: false, reverse: false, clean: text.slice(4).trim() };
+  if (text.startsWith("[<] ")) return { follow: false, reverse: true, clean: text.slice(4).trim() };
+  return null;
+}
+
+/**
+ * Parse a progressive marker on a table row, which carries a leading "| "
+ * before the marker. Returns `{ follow, reverse, stripPattern }` (the
+ * pattern removes the marker from the already-split cell text) or null.
+ */
+function parseTableRowMarker(trimmedLine) {
+  if (!trimmedLine.startsWith("| ")) return null;
+  const marker = parseProgressivePrefix(trimmedLine.slice(2));
+  if (!marker) return null;
+  const stripPattern = marker.follow
+    ? (marker.reverse ? /^\[<<\]\s*/ : /^\[>>\]\s*/)
+    : (marker.reverse ? /^\[<]\s*/ : /^\[>\]\s*/);
+  return { follow: marker.follow, reverse: marker.reverse, stripPattern };
+}
+
+/**
+ * Claim a step for a directive-level block (always a new step — directives
+ * have no follow-previous modifier) and return it as a data-step attribute,
+ * or "" when the block is not progressive. Call before rendering nested
+ * content so the block's step precedes any steps inside it.
+ */
+function claimStepAttr(state, isProgressive, isReverse) {
+  if (!isProgressive && !isReverse) return "";
+  return ` data-step="${claimProgressiveStep(state, false)}"`;
+}
+
+function buildContinuationHtml(item, state) {  return (item.continuations || [])
     .map((continuation) => `<span class="li-continuation">${renderInline(continuation, state)}</span>`)
     .join("");
 }
@@ -1029,13 +1092,18 @@ function buildNestedListHtml(items, type, currentDepth, state) {
     const classes = item.isProgressive ? ' class="next"'
       : item.isReverse ? ' class="next-reverse"'
       : "";
+    // Claim here (not at push time) so nested inline fragments rendered below
+    // keep document order.
+    const stepAttr = item.isProgressive || item.isReverse
+      ? ` data-step="${claimProgressiveStep(state, item.followPrevious)}"`
+      : "";
     const continuations = buildContinuationHtml(item, state);
     if (children.length > 0) {
       parts.push(
-        `<li${classes}>${renderInline(item.text, state)}${continuations}${buildNestedListHtml(children, type, currentDepth + 1, state)}</li>`,
+        `<li${classes}${stepAttr}>${renderInline(item.text, state)}${continuations}${buildNestedListHtml(children, type, currentDepth + 1, state)}</li>`,
       );
     } else {
-      parts.push(`<li${classes}>${renderInline(item.text, state)}${continuations}</li>`);
+      parts.push(`<li${classes}${stepAttr}>${renderInline(item.text, state)}${continuations}</li>`);
     }
     i = j;
   }
@@ -1131,16 +1199,15 @@ function renderLines(lines, state) {
       flushList();
       const level = headingMatch[1].length;
       const rawText = headingMatch[2].trim();
-      const isProgressive = rawText.startsWith("[>] ");
-      const isReverse = !isProgressive && rawText.startsWith("[<] ");
+      const marker = parseProgressivePrefix(rawText);
       // Strip the marker before recording: outline, nav, and lint see clean text.
-      const text = isProgressive || isReverse ? rawText.slice(4).trim() : rawText;
+      const text = marker ? marker.clean : rawText;
       state.headings.push({ level, text });
-      const headingClass = isProgressive ? ' class="next"'
-        : isReverse ? ' class="next-reverse"'
+      const headingClass = marker && !marker.reverse ? ' class="next"'
+        : marker ? ' class="next-reverse"'
         : "";
-      if (isProgressive || isReverse) state.stepCount += 1;
-      htmlParts.push(`<h${level}${headingClass}>${renderInline(text, state)}</h${level}>`);
+      const headingStep = marker ? ` data-step="${claimProgressiveStep(state, marker.follow)}"` : "";
+      htmlParts.push(`<h${level}${headingClass}${headingStep}>${renderInline(text, state)}</h${level}>`);
       index += 1;
       continue;
     }
@@ -1149,22 +1216,20 @@ function renderLines(lines, state) {
     if (unorderedListMatch) {
       const depth = Math.min(Math.floor(unorderedListMatch[1].length / 2), 2);
       const text = unorderedListMatch[2].trim();
-      const isProgressive = text.startsWith("[>] ");
-      const isReverse = !isProgressive && text.startsWith("[<] ");
-      const cleanText = isProgressive ? text.slice(4).trim()
-        : isReverse ? text.slice(4).trim()
-        : text;
+      const marker = parseProgressivePrefix(text);
       if (!listType) listType = "ul";
       if (listType !== "ul") flushList();
       listType = "ul";
       listItems.push({
-        text: cleanText,
+        text: marker ? marker.clean : text,
         continuations: [],
-        isProgressive,
-        isReverse,
+        // Step is claimed at render time (buildNestedListHtml) in traversal
+        // order so nested inline fragments keep document order.
+        followPrevious: marker ? marker.follow : false,
+        isProgressive: Boolean(marker) && !marker.reverse,
+        isReverse: Boolean(marker) && marker.reverse,
         depth,
       });
-      if (isProgressive || isReverse) state.stepCount += 1;
       index += 1;
       continue;
     }
@@ -1173,22 +1238,18 @@ function renderLines(lines, state) {
     if (orderedListMatch) {
       const depth = Math.min(Math.floor(orderedListMatch[1].length / 2), 2);
       const text = orderedListMatch[3].trim();
-      const isProgressive = text.startsWith("[>] ");
-      const isReverse = !isProgressive && text.startsWith("[<] ");
-      const cleanText = isProgressive ? text.slice(4).trim()
-        : isReverse ? text.slice(4).trim()
-        : text;
+      const marker = parseProgressivePrefix(text);
       if (!listType) listType = "ol";
       if (listType !== "ol") flushList();
       listType = "ol";
       listItems.push({
-        text: cleanText,
+        text: marker ? marker.clean : text,
         continuations: [],
-        isProgressive,
-        isReverse,
+        followPrevious: marker ? marker.follow : false,
+        isProgressive: Boolean(marker) && !marker.reverse,
+        isReverse: Boolean(marker) && marker.reverse,
         depth,
       });
-      if (isProgressive || isReverse) state.stepCount += 1;
       index += 1;
       continue;
     }
@@ -1206,14 +1267,13 @@ function renderLines(lines, state) {
     flushList();
     // Block-level progressive markers on plain paragraphs (and bare image
     // lines, which render through here): hidden/shown as a whole block.
-    const isParaProgressive = trimmed.startsWith("[>] ");
-    const isParaReverse = !isParaProgressive && trimmed.startsWith("[<] ");
-    const paraText = isParaProgressive || isParaReverse ? trimmed.slice(4).trim() : line;
-    const paraClass = isParaProgressive ? ' class="next"'
-      : isParaReverse ? ' class="next-reverse"'
+    const paraMarker = parseProgressivePrefix(trimmed);
+    const paraText = paraMarker ? paraMarker.clean : line;
+    const paraClass = paraMarker && !paraMarker.reverse ? ' class="next"'
+      : paraMarker ? ' class="next-reverse"'
       : "";
-    if (isParaProgressive || isParaReverse) state.stepCount += 1;
-    htmlParts.push(`<p${paraClass}>${renderInline(paraText, state)}</p>`);
+    const paraStep = paraMarker ? ` data-step="${claimProgressiveStep(state, paraMarker.follow)}"` : "";
+    htmlParts.push(`<p${paraClass}${paraStep}>${renderInline(paraText, state)}</p>`);
     index += 1;
   }
 

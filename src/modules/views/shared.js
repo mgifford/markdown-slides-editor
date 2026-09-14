@@ -71,16 +71,19 @@ function escapeAttribute(value) {
 }
 
 function applyRevealState(container, revealStep) {
-  // Single shared sequence in DOM order: each step toggles exactly one
-  // element, so backwards navigation reverses the order exactly.
+  // Single shared step sequence in DOM order: elements sharing a data-step
+  // (via [>>]/[<<]) toggle together, so each advance changes exactly one
+  // step and backwards navigation reverses the order exactly.
   const items = [...container.querySelectorAll(".next, .next-reverse")];
-  items.forEach((item, index) => {
+  items.forEach((item) => {
     const isReverse = item.classList.contains("next-reverse");
-    const isVisible = isProgressiveItemVisible(index, revealStep, isReverse);
+    const step = Number.parseInt(item.dataset.step || "0", 10);
+    const safeStep = Number.isFinite(step) ? step : 0;
+    const isVisible = isProgressiveItemVisible(safeStep, revealStep, isReverse);
     item.hidden = !isVisible;
     if (!isReverse) {
-      item.classList.toggle("visited", index < revealStep - 1);
-      item.classList.toggle("active", index === revealStep - 1);
+      item.classList.toggle("visited", safeStep < revealStep - 1);
+      item.classList.toggle("active", safeStep === revealStep - 1);
     }
   });
 }

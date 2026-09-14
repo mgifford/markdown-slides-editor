@@ -156,6 +156,18 @@ Use `- [<]` for the reverse — content that is visible immediately and hidden o
 
 Reverse steps consume steps in DOM order: each advance toggles exactly one element top-to-bottom, so navigating backwards restores each element in the reverse of the order you saw it change. `[<]` and `[>]` can be mixed on the same slide; advancing walks through every step, and going backwards reverses the order.
 
+### Grouped reveals with `[>>]` and `[<<]`
+
+By default every marker opens its own step. Use the double markers to join the currently open step so a group changes on a single advance:
+
+```md
+- [>] Show me
+- [>>] And me too
+- [>>] And also me
+```
+
+All three bullets appear on the first advance. `[<<]` is the hiding mirror: it hides with the open step. If no step is open yet, a double marker starts one. A double marker follows whatever step is open even if that step was opened by the opposite direction, so `[<]` followed by `[>>]` hides one item and reveals another at the same moment. The same grouping works for `{>>}` / `{<<}` inline fragments, headings, paragraphs, images, and table rows.
+
 Inline fragments work the same way: `{>text}` starts hidden and is revealed on advance, while `{<text}` starts visible and is hidden on advance.
 
 The same markers work on headings, plain paragraphs, and bare image lines — each toggles as a whole block in the shared step sequence:

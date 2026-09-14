@@ -99,9 +99,9 @@ export function fitSlideBodyText(container, renderedSlide) {
   const bodyNode = wrapSlideBody(contentNode);
   if (!bodyNode) return { scale: 1, overflow: false };
 
-  // Temporarily reveal all progressive (.next) items so the scale is sized
+  // Temporarily reveal all progressive items so the scale is sized
   // for the fully-revealed slide, preventing overflow on the last reveal step.
-  const hiddenNextItems = [...contentNode.querySelectorAll(".next")].filter((el) => el.hidden);
+  const hiddenNextItems = [...contentNode.querySelectorAll(".next, .next-reverse")].filter((el) => el.hidden);
   hiddenNextItems.forEach((el) => { el.hidden = false; });
 
   const result = calculateSlideBodyScale((scale) => {

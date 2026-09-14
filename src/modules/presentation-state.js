@@ -17,15 +17,15 @@ export function createRevealState(renderedSlide, revealStep = 0) {
 }
 
 /**
- * Visibility rule for a single progressive element. `domIndex` is the
- * element's position among ALL progressive elements (`.next` and
- * `.next-reverse`) in DOM order. Forward items appear when the step reaches
- * them; reverse items are visible until the step reaches them. Each advance
- * toggles exactly one element, so backwards navigation reverses the order
+ * Visibility rule for a single progressive element. `stepIndex` is the
+ * element's 0-based step (its data-step); elements sharing a step via
+ * `[>>]` / `[<<]` toggle together. Forward items appear when the reveal
+ * step passes them; reverse items are visible until it does. Each advance
+ * changes exactly one step, so backwards navigation reverses the order
  * exactly.
  */
-export function isProgressiveItemVisible(domIndex, revealStep, isReverse) {
-  return isReverse ? domIndex >= revealStep : domIndex < revealStep;
+export function isProgressiveItemVisible(stepIndex, revealStep, isReverse) {
+  return isReverse ? stepIndex >= revealStep : stepIndex < revealStep;
 }
 
 export function normalizePresentationPosition(deck, activeSlideIndex = 0, revealStep = 0) {

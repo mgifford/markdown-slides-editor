@@ -320,7 +320,7 @@ test("renderMarkdown continuation lines work with progressive markers", () => {
 - Visible item`);
 
   assert.ok(
-    rendered.html.includes('<li class="next">Revealed item<span class="li-continuation">with continuation.</span></li>'),
+    rendered.html.includes('<li class="next" data-step="0">Revealed item<span class="li-continuation">with continuation.</span></li>'),
     "continuation stays inside the progressive item",
   );
   assert.equal(rendered.stepCount, 1);
@@ -347,7 +347,7 @@ test("renderMarkdown indented lines without an open list stay paragraphs", () =>
 test("renderMarkdown supports [>] progressive disclosure on headings", () => {
   const rendered = renderMarkdown(`# [>] Revealed heading`);
 
-  assert.ok(rendered.html.includes('<h1 class="next">Revealed heading</h1>'), "h1 gets next class");
+  assert.ok(rendered.html.includes('<h1 class="next" data-step="0">Revealed heading</h1>'), "h1 gets next class");
   assert.deepEqual(rendered.headings, [{ level: 1, text: "Revealed heading" }], "outline keeps clean text");
   assert.equal(rendered.stepCount, 1);
 });
@@ -355,7 +355,7 @@ test("renderMarkdown supports [>] progressive disclosure on headings", () => {
 test("renderMarkdown supports [<] reverse disclosure on headings", () => {
   const rendered = renderMarkdown(`## [<] Visible subheading`);
 
-  assert.ok(rendered.html.includes('<h2 class="next-reverse">Visible subheading</h2>'), "h2 gets next-reverse class");
+  assert.ok(rendered.html.includes('<h2 class="next-reverse" data-step="0">Visible subheading</h2>'), "h2 gets next-reverse class");
   assert.deepEqual(rendered.headings, [{ level: 2, text: "Visible subheading" }], "outline keeps clean text");
   assert.equal(rendered.stepCount, 1);
 });
@@ -374,7 +374,7 @@ Visible intro.
 
 [>] Revealed paragraph.`);
 
-  assert.ok(rendered.html.includes('<p class="next">Revealed paragraph.</p>'), "paragraph gets next class");
+  assert.ok(rendered.html.includes('<p class="next" data-step="0">Revealed paragraph.</p>'), "paragraph gets next class");
   assert.equal(rendered.stepCount, 1);
 });
 
@@ -383,7 +383,7 @@ test("renderMarkdown supports [<] reverse disclosure on plain paragraphs", () =>
 
 [<] Visible paragraph.`);
 
-  assert.ok(rendered.html.includes('<p class="next-reverse">Visible paragraph.</p>'), "paragraph gets next-reverse class");
+  assert.ok(rendered.html.includes('<p class="next-reverse" data-step="0">Visible paragraph.</p>'), "paragraph gets next-reverse class");
   assert.equal(rendered.stepCount, 1);
 });
 
@@ -392,7 +392,7 @@ test("renderMarkdown supports [>] progressive disclosure on bare image lines", (
 
 [>] ![Descriptive alt text](https://example.com/photo.jpg)`);
 
-  assert.ok(rendered.html.includes('<p class="next"><img src="https://example.com/photo.jpg"'), "image paragraph gets next class");
+  assert.ok(rendered.html.includes('<p class="next" data-step="0"><img src="https://example.com/photo.jpg"'), "image paragraph gets next class");
   assert.ok(rendered.html.includes('alt="Descriptive alt text"'), "alt text preserved");
   assert.equal(rendered.stepCount, 1);
 });
@@ -410,6 +410,95 @@ test("renderMarkdown interleaves progressive headings, paragraphs, and list item
   const nextPositions = [...rendered.html.matchAll(/class="next"/g)].map((m) => m.index);
   assert.equal(nextPositions.length, 3, "three progressive elements in DOM order");
   assert.ok(nextPositions[0] < nextPositions[1] && nextPositions[1] < nextPositions[2]);
+});
+
+test("renderMarkdown [>>] items join the open step and reveal together", () => {
+  const rendered = renderMarkdown(`- [>] Show me
+- [>>] And me too
+- [>>] And also me`);
+
+  assert.equal(rendered.stepCount, 1);
+  assert.ok(rendered.html.includes('<li class="next" data-step="0">Show me</li>'));
+  assert.ok(rendered.html.includes('<li class="next" data-step="0">And me too</li>'));
+  assert.ok(rendered.html.includes('<li class="next" data-step="0">And also me</li>'));
+});
+
+test("renderMarkdown [<<] items join the open step and hide together", () => {
+  const rendered = renderMarkdown(`- [<] Hide me
+- [<<] And me too`);
+
+  assert.equal(rendered.stepCount, 1);
+  assert.ok(rendered.html.includes('<li class="next-reverse" data-step="0">Hide me</li>'));
+  assert.ok(rendered.html.includes('<li class="next-reverse" data-step="0">And me too</li>'));
+});
+
+test("renderMarkdown [>>] with no open step starts its own step", () => {
+  const rendered = renderMarkdown(`- [>>] First thing`);
+
+  assert.equal(rendered.stepCount, 1);
+  assert.ok(rendered.html.includes('<li class="next" data-step="0">First thing</li>'));
+});
+
+test("renderMarkdown mixes grouped and stepped items in DOM order", () => {
+  const rendered = renderMarkdown(`- [>] A
+- [>>] B
+- [>] C`);
+
+  assert.equal(rendered.stepCount, 2);
+  assert.ok(rendered.html.includes('<li class="next" data-step="0">A</li>'));
+  assert.ok(rendered.html.includes('<li class="next" data-step="0">B</li>'));
+  assert.ok(rendered.html.includes('<li class="next" data-step="1">C</li>'));
+});
+
+test("renderMarkdown [>>] after [<] shares the step (reveal and hide at once)", () => {
+  const rendered = renderMarkdown(`- [<] Going away
+- [>>] Coming in`);
+
+  assert.equal(rendered.stepCount, 1);
+  assert.ok(rendered.html.includes('<li class="next-reverse" data-step="0">Going away</li>'));
+  assert.ok(rendered.html.includes('<li class="next" data-step="0">Coming in</li>'));
+});
+
+test("renderMarkdown {>>} inline fragments join the open step", () => {
+  const rendered = renderMarkdown(`First {>one} then {>>two}.`);
+
+  assert.equal(rendered.stepCount, 1);
+  assert.ok(rendered.html.includes('<span class="next" data-step="0">one</span>'));
+  assert.ok(rendered.html.includes('<span class="next" data-step="0">two</span>'));
+});
+
+test("renderMarkdown table rows support [>>] grouping", () => {
+  const rendered = renderMarkdown(`::table
+| Feature | Status |
+| --- | --- |
+| [>] Ready | Done |
+| [>>] Upcoming | Planned |
+::`);
+
+  assert.equal(rendered.stepCount, 1);
+  assert.ok(rendered.html.includes('<tr class="next" data-step="0">'));
+  assert.equal(rendered.html.match(/<tr class="next" data-step="0">/g).length, 2);
+});
+
+test("renderMarkdown headings and paragraphs support [>>] grouping", () => {
+  const rendered = renderMarkdown(`# [>] Title
+
+[>>] Standfirst joins the title step.`);
+
+  assert.equal(rendered.stepCount, 1);
+  assert.ok(rendered.html.includes('<h1 class="next" data-step="0">Title</h1>'));
+  assert.ok(rendered.html.includes('<p class="next" data-step="0">Standfirst joins the title step.</p>'));
+});
+
+test("renderMarkdown on-click directives open their own step with data-step", () => {
+  const rendered = renderMarkdown(`# Slide
+
+::callout on-click
+Takeaway.
+::`);
+
+  assert.equal(rendered.stepCount, 1);
+  assert.ok(rendered.html.includes('class="layout-callout next" data-step="0"'));
 });
 
 test("renderMarkdown supports [<] reverse progressive disclosure in unordered lists", () => {  const rendered = renderMarkdown(`# Slide
@@ -437,16 +526,16 @@ test("renderMarkdown supports [<] reverse progressive disclosure in ordered list
 test("renderMarkdown supports {<text} inline reverse fragments", () => {
   const rendered = renderMarkdown(`A paragraph with {<a hidden part} revealed initially.`);
 
-  assert.equal(rendered.html.includes('<span class="next-reverse">a hidden part</span>'), true);
+  assert.equal(rendered.html.includes('<span class="next-reverse" data-step="0">a hidden part</span>'), true);
   assert.equal(rendered.stepCount, 1);
 });
 
 test("renderMarkdown counts multiple inline reverse fragments in stepCount", () => {
   const rendered = renderMarkdown(`First {<one} then {<two} then {<three}.`);
 
-  assert.equal(rendered.html.includes('<span class="next-reverse">one</span>'), true);
-  assert.equal(rendered.html.includes('<span class="next-reverse">two</span>'), true);
-  assert.equal(rendered.html.includes('<span class="next-reverse">three</span>'), true);
+  assert.equal(rendered.html.includes('<span class="next-reverse" data-step="0">one</span>'), true);
+  assert.equal(rendered.html.includes('<span class="next-reverse" data-step="1">two</span>'), true);
+  assert.equal(rendered.html.includes('<span class="next-reverse" data-step="2">three</span>'), true);
   assert.equal(rendered.stepCount, 3);
 });
 
@@ -1563,29 +1652,29 @@ Reveal this block.
 test("renderMarkdown renders inline {>text} fragment as progressive span", () => {
   const rendered = renderMarkdown(`A paragraph with {>a hidden part} revealed later.`);
 
-  assert.equal(rendered.html.includes('<span class="next">a hidden part</span>'), true);
+  assert.equal(rendered.html.includes('<span class="next" data-step="0">a hidden part</span>'), true);
   assert.equal(rendered.stepCount, 1);
 });
 
 test("renderMarkdown counts multiple inline fragments in stepCount", () => {
   const rendered = renderMarkdown(`First {>one} then {>two} then {>three}.`);
 
-  assert.equal(rendered.html.includes('<span class="next">one</span>'), true);
-  assert.equal(rendered.html.includes('<span class="next">two</span>'), true);
-  assert.equal(rendered.html.includes('<span class="next">three</span>'), true);
+  assert.equal(rendered.html.includes('<span class="next" data-step="0">one</span>'), true);
+  assert.equal(rendered.html.includes('<span class="next" data-step="1">two</span>'), true);
+  assert.equal(rendered.html.includes('<span class="next" data-step="2">three</span>'), true);
   assert.equal(rendered.stepCount, 3);
 });
 
 test("renderMarkdown inline fragment supports inline markup inside the fragment", () => {
   const rendered = renderMarkdown(`See {>**bold fragment**} here.`);
 
-  assert.equal(rendered.html.includes('<span class="next"><strong>bold fragment</strong></span>'), true);
+  assert.equal(rendered.html.includes('<span class="next" data-step="0"><strong>bold fragment</strong></span>'), true);
 });
 
 test("renderMarkdown inline fragments in list items count toward stepCount", () => {
   const rendered = renderMarkdown(`- Item with {>a fragment} inside`);
 
-  assert.equal(rendered.html.includes('<span class="next">a fragment</span>'), true);
+  assert.equal(rendered.html.includes('<span class="next" data-step="0">a fragment</span>'), true);
   assert.equal(rendered.stepCount, 1);
 });
 
