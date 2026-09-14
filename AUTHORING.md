@@ -125,6 +125,17 @@ Optional full script text.
 
 The closing `::` is optional. Labels are case-insensitive (`::Notes`, `::NOTE`, etc.), and singular/plural forms are all accepted (`::note`/`::notes`, `::resource`/`::resources`, `::reference`/`::references`, `::script`/`::scripts`).
 
+### List continuation lines
+
+An indented line directly under a list item stays inside that bullet instead of breaking the list into a separate paragraph:
+
+```md
+- **The Operational Shift:**
+    Moving from reactive post-launch fixes to continuous pipeline-level governance.
+```
+
+Only indented lines continue the item — a non-indented line still ends the list — and other block constructs (headings, directives, fenced code, nested list markers) keep precedence, so indentation never swallows them.
+
 ## Progressive disclosure
 
 Use `- [>]` inside a list item to mark content for step-by-step reveal in audience and snapshot presentation modes:

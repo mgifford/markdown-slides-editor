@@ -269,8 +269,67 @@ test("renderMarkdown supports ordered lists and progressive disclosure markers",
   assert.equal(rendered.stepCount, 1);
 });
 
-test("renderMarkdown supports [<] reverse progressive disclosure in unordered lists", () => {
+test("renderMarkdown keeps indented continuation lines inside the list item", () => {
   const rendered = renderMarkdown(`# Slide
+
+- **Bold lead:**
+    Continuation text stays with the bullet.
+- Second item`);
+
+  assert.equal(
+    rendered.html,
+    "<h1>Slide</h1><ul><li><strong>Bold lead:</strong> Continuation text stays with the bullet.</li><li>Second item</li></ul>",
+  );
+  assert.equal(rendered.stepCount, 0);
+});
+
+test("renderMarkdown keeps indented continuations in ordered list items", () => {
+  const rendered = renderMarkdown(`# Slide
+
+1. First step
+    with more detail.
+2. Second step`);
+
+  assert.ok(
+    rendered.html.includes("<li>First step with more detail.</li>"),
+    "continuation joins the ordered item",
+  );
+  assert.ok(!rendered.html.includes("</ul><p>"), "list is not split by the continuation");
+});
+
+test("renderMarkdown continuation lines work with progressive markers", () => {
+  const rendered = renderMarkdown(`# Slide
+
+- [>] Revealed item
+    with continuation.
+- Visible item`);
+
+  assert.ok(
+    rendered.html.includes('<li class="next">Revealed item with continuation.</li>'),
+    "continuation stays inside the progressive item",
+  );
+  assert.equal(rendered.stepCount, 1);
+});
+
+test("renderMarkdown non-indented lines still break out of a list", () => {
+  const rendered = renderMarkdown(`# Slide
+
+- Item one
+A new paragraph.`);
+
+  assert.ok(rendered.html.includes("</ul><p>A new paragraph.</p>"));
+});
+
+test("renderMarkdown indented lines without an open list stay paragraphs", () => {
+  const rendered = renderMarkdown(`# Slide
+
+    Just indented text.`);
+
+  assert.ok(rendered.html.includes("<p>    Just indented text.</p>"));
+  assert.ok(!rendered.html.includes("<li>"));
+});
+
+test("renderMarkdown supports [<] reverse progressive disclosure in unordered lists", () => {  const rendered = renderMarkdown(`# Slide
 
 - Visible initially
 - [<] Hidden on advance`);

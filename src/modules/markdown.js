@@ -1176,6 +1176,15 @@ function renderLines(lines, state) {
       continue;
     }
 
+    // Indented continuation line: stays inside the open list item instead of
+    // breaking the list into a separate paragraph. Runs after all other block
+    // constructs (lists, headings, directives, fences) so those keep precedence.
+    if (listItems.length > 0 && /^\s+\S/.test(line)) {
+      listItems[listItems.length - 1].text += ` ${trimmed}`;
+      index += 1;
+      continue;
+    }
+
     flushList();
     htmlParts.push(`<p>${renderInline(line, state)}</p>`);
     index += 1;
