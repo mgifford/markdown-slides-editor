@@ -64,7 +64,6 @@ When("I build the export bundle", function () {
     snapshotHtml: "<!doctype html><html><body>Deck</body></html>",
     odpBytes: new Uint8Array([0x50, 0x4b, 0x03, 0x04]),
     onePageHtml: "<!doctype html><html><body>One page</body></html>",
-    offlineHtml: "<!doctype html><html><body>Offline</body></html>",
   });
 });
 
