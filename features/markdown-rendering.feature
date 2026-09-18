@@ -71,7 +71,7 @@ Feature: Markdown rendering
     Given Markdown text "$$E = mc^2$$"
     When I render the Markdown
     Then the output contains "math-tex math-tex--display"
-    And the output contains "\\[E = mc^2\\]"
+    And the output contains "\[E = mc^2\]"
 
   Scenario: A lone dollar sign is not treated as math
     Given Markdown text "It costs $5 today."

@@ -78,6 +78,7 @@ Disclosure of AI use is important to this project.
 
 - OpenAI Codex, a GPT-5-based coding agent in the Codex desktop environment, was used during repository setup and early development.
   It was used to scaffold the initial static application, write and revise project documentation, add tests, update planning and guidance files, and diagnose and revise iframe fallback and offline-cache behavior.
+- opencode (assistant mode) was used for a 2026 code and accessibility review pass. It fixed stale BDD export and math expectations, corrected the editor first-slide control state, added keyboard guards so presentation shortcuts no longer hijack focused buttons, selects, or checkboxes, and scoped presenter timer/caption redraws to their own UI nodes instead of rebuilding slides every second.
 
 ### AI used when running the program
 

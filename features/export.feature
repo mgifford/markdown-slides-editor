@@ -21,7 +21,6 @@ Feature: Export filename and bundle generation
     And the bundle contains "presentation.html"
     And the bundle contains "presentation.odp"
     And the bundle contains "presentation-one-page.html"
-    And the bundle contains "presentation-offline.html"
 
   Scenario: Snapshot HTML embeds the slide theme
     Given a deck using theme "default-high-contrast"

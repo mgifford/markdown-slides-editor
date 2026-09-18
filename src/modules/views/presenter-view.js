@@ -75,7 +75,7 @@ export function createPresenterView(root, initialSource) {
   const sttSource = createSpeechRecognitionSource((update) => {
     sttState = { active: update.active, text: update.text, error: update.error || "" };
     sync.postMessage({ type: "caption-update", text: sttState.text, timestamp: Date.now() });
-    render();
+    updateCaptionsUI();
   });
 
   frame.innerHTML += `
@@ -367,26 +367,7 @@ export function createPresenterView(root, initialSource) {
     });
   }
 
-  function render() {
-    compiled = compileSource(source);
-    applyDeckTheme(compiled.metadata);
-    const nextCaptionConfig = getCaptionConfig(compiled.metadata);
-    captionMonitor.update(nextCaptionConfig);
-    captionConfig = nextCaptionConfig;
-    const currentSlide = compiled.renderedSlides[activeSlideIndex] || compiled.renderedSlides[0];
-    const nextSlide = compiled.renderedSlides[activeSlideIndex + 1];
-    const metadataDuration = getPresentationDurationMinutes(compiled.metadata);
-    if (!timerState || timerState.durationMinutes <= 0) {
-      timerState = createPresenterTimerState(metadataDuration);
-    }
-    mountSlideInto(currentFrame, currentSlide, { revealStep });
-    currentFrame.style.setProperty("--presentation-text-zoom", String(textZoom));
-    nextFrame.innerHTML = nextSlide
-      ? `<article class="slide-card slide-card--next"><div class="slide-card__content">${nextSlide.html}</div></article>`
-      : `<article class="slide-card slide-card--next empty-state"><p>No next slide.</p></article>`;
-    nextFrame.style.setProperty("--presentation-text-zoom", String(textZoom));
-    applyPreviewScale(nextFrame);
-    notesNode.innerHTML = buildSupplementalHtml(currentSlide);
+  function updateCaptionsUI() {
     if (sttSupported) {
       captionsPanel.hidden = false;
       if (sttState.error === "not-allowed" || sttState.error === "service-not-allowed") {
@@ -417,12 +398,9 @@ export function createPresenterView(root, initialSource) {
         : "";
       captionsNode.textContent = captionsState.text || "Caption source is connected and waiting for speech.";
     }
-    outlineNode.innerHTML = compiled.renderedSlides
-      .map((renderedSlide, index) => {
-        const currentClass = index === activeSlideIndex ? ' class="is-current"' : "";
-        return `<li${currentClass}><button type="button" data-slide-index="${index}">${getSlideTitle(renderedSlide, index)}</button></li>`;
-      })
-      .join("");
+  }
+
+  function updateTimerNodes() {
     const timerTone = getPresenterTimerTone(timerState);
     timerNode.textContent = formatPresenterTimerMinutes(timerState.remainingMs);
     timerNode.dataset.tone = timerTone;
@@ -455,6 +433,36 @@ export function createPresenterView(root, initialSource) {
       panelLayout.find((panel) => panel.id === "timer")?.mode === "collapsed"
         ? "Restore the timer panel"
         : "Timer panel is open";
+  }
+
+  function render() {
+    compiled = compileSource(source);
+    applyDeckTheme(compiled.metadata);
+    const nextCaptionConfig = getCaptionConfig(compiled.metadata);
+    captionMonitor.update(nextCaptionConfig);
+    captionConfig = nextCaptionConfig;
+    const currentSlide = compiled.renderedSlides[activeSlideIndex] || compiled.renderedSlides[0];
+    const nextSlide = compiled.renderedSlides[activeSlideIndex + 1];
+    const metadataDuration = getPresentationDurationMinutes(compiled.metadata);
+    if (!timerState || timerState.durationMinutes <= 0) {
+      timerState = createPresenterTimerState(metadataDuration);
+    }
+    mountSlideInto(currentFrame, currentSlide, { revealStep });
+    currentFrame.style.setProperty("--presentation-text-zoom", String(textZoom));
+    nextFrame.innerHTML = nextSlide
+      ? `<article class="slide-card slide-card--next"><div class="slide-card__content">${nextSlide.html}</div></article>`
+      : `<article class="slide-card slide-card--next empty-state"><p>No next slide.</p></article>`;
+    nextFrame.style.setProperty("--presentation-text-zoom", String(textZoom));
+    applyPreviewScale(nextFrame);
+    notesNode.innerHTML = buildSupplementalHtml(currentSlide);
+    updateCaptionsUI();
+    outlineNode.innerHTML = compiled.renderedSlides
+      .map((renderedSlide, index) => {
+        const currentClass = index === activeSlideIndex ? ' class="is-current"' : "";
+        return `<li${currentClass}><button type="button" data-slide-index="${index}">${getSlideTitle(renderedSlide, index)}</button></li>`;
+      })
+      .join("");
+    updateTimerNodes();
     timerAutoStartInput.checked = timerAutoStart;
     applyLayout();
   }
@@ -604,6 +612,17 @@ export function createPresenterView(root, initialSource) {
       return;
     }
 
+    // Let interactive controls handle their own keyboard input instead of
+    // hijacking it for slide navigation: Space must activate a focused button
+    // or checkbox and arrows must operate the caption-language select
+    // (WCAG 2.1.1 Keyboard).
+    if (
+      event.target instanceof HTMLElement &&
+      (event.target.matches("button, input, select, textarea") || event.target.isContentEditable)
+    ) {
+      return;
+    }
+
     if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
       event.preventDefault();
       move(1);
@@ -639,7 +658,7 @@ export function createPresenterView(root, initialSource) {
 
   window.setInterval(() => {
     timerState = tickPresenterTimer(timerState, Date.now());
-    render();
+    updateTimerNodes();
   }, 1000);
 
   minusMinuteButton.addEventListener("click", () => {

@@ -745,7 +745,7 @@ export function createAppView(root, { initialSource, onSourceChange, onClearDeck
       ? `${shortTitle} · Slide ${activeSlideIndex + 1} of ${compiled.renderedSlides.length}`
       : `${shortTitle} · No slides`;
     const slideCount = compiled.renderedSlides.length;
-    firstSlideButton.disabled = slideCount <= 1 || activeSlideIndex !== slideCount - 1;
+    firstSlideButton.disabled = slideCount <= 1 || activeSlideIndex <= 0;
     prevSlideButton.disabled = activeSlideIndex <= 0;
     nextSlideButton.disabled = activeSlideIndex >= slideCount - 1;
     const stylesheetValue = compiled.metadata.themeStylesheet || "";

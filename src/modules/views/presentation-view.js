@@ -285,6 +285,16 @@ export function createPresentationView(root, initialSource) {
       return;
     }
 
+    // Let interactive controls handle their own keyboard input instead of
+    // hijacking it for slide navigation: Space must activate a focused button
+    // or checkbox and arrows must operate a select (WCAG 2.1.1 Keyboard).
+    if (
+      event.target instanceof HTMLElement &&
+      (event.target.matches("button, input, select, textarea") || event.target.isContentEditable)
+    ) {
+      return;
+    }
+
     if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
       event.preventDefault();
       move(1);
