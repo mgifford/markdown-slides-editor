@@ -49,6 +49,7 @@ Then open:
 ## Project docs
 
 - `AUTHORING.md`: guide for slide authors — source format, front matter, theming, export, presenter controls, and optional captions
+- `AI_AUTHORING.md`: compact authoring contract for external AI systems generating decks — strict syntax rules, the complete directive reference, and validating decks; see `examples/` for canonical, validator-clean decks
 - `ACCESSIBILITY.md`: accessibility posture, validation expectations, and contributor guidance
 - `AGENTS.md`: repository instructions for coding agents and automation tools
 - `FEATURES.md`: technical inventory of the implemented and maintained feature set

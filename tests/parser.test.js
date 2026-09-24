@@ -1305,6 +1305,41 @@ More note text.
   );
 });
 
+test("parseSource ends an unclosed ::notes section at the next slide boundary", () => {
+  const source = `# One
+
+Body one.
+
+::notes
+Speaker note one.
+
+---
+
+# Two
+
+Body two.`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.slides.length, 2);
+  assert.equal(deck.slides[0].notes, "Speaker note one.");
+  assert.equal(deck.slides[1].body.trim(), "# Two\n\nBody two.");
+});
+
+test("parseSource recognises directive modifiers that contain colons (iframe width/height/title)", () => {
+  const source = `# One
+
+::iframe title:Demo width:80% height:60vh
+https://example.com
+::
+
+---
+
+# Two`;
+
+  const deck = parseSource(source);
+  assert.equal(deck.slides.length, 2);
+});
+
 test("parseSource allows all three :: sections on one slide", () => {
   const source = `# Slide
 

@@ -30,6 +30,7 @@
 
 - Always run `npm install` before validating changes, even though it is currently a no-op.
 - Always run `npm test` before finishing a change.
+- If you touch the directive grammar or generate deck content, run `npm run validate:deck -- <file>` on a sample deck and confirm every example deck still validates cleanly.
 - If you touch presentation behavior, also run the local static server and manually verify:
   - `/` editor
   - `/present/` audience view
@@ -48,10 +49,13 @@
   - `TODO.md`: future roadmap ideas, especially `whisper-slides`, W3C accessibility patterns, and optional AI/Whisper support
   - `package.json`: minimal scripts for testing, local serving, and optional Whisper helpers
 - Documentation:
+  - `AI_AUTHORING.md`: compact authoring contract for external AI systems generating decks — the strict syntax rules, the complete directive reference, and validating decks
   - `docs/accessibility-checklist.md`: required accessibility targets for slide structure, links, media, motion, keyboard support, and validation
   - `docs/editor-vision.md`: longer-term product direction for the editor and runtime
   - `docs/manual-a11y-testing.md`: Sa11y-assisted and manual accessibility workflow
   - `docs/resources.md`: project reference position on Intopia, Inklusiv, WCAG, and APG usage
+- Example decks:
+  - `examples/government-policy.md`, `examples/technical-talk.md`, `examples/evidence-report.md`, `examples/keynote.md`: canonical, validator-clean decks exercising the directive grammar
 - App entry:
   - `src/main.js`: loads stored source, resolves route, and mounts editor, audience, or presenter views
 - Routes (three distinct surfaces sharing the `compileSource` pipeline in `src/modules/views/shared.js`):
@@ -59,9 +63,11 @@
   - `/present/` audience view (`src/modules/views/presentation-view.js`): clean presentation shell; keeps navigation state as `(activeSlideIndex, revealStep)`, renders `class="next"` (reveal on advance) and `class="next-reverse"` (hide on advance) via `applyRevealState`, and deep-links positions as `#4` / `#4.1`
   - `/presenter/` presenter view (`src/modules/views/presenter-view.js`): current/next slide, notes, timer, captions, and shared text-zoom controls; owns `publishState()` so presenter navigation drives the audience window
 - Core modules:
-  - `src/modules/parser.js`: front matter parsing, slide splitting on `---`, speaker note extraction using `Note:`, and source-offset mapping so the editor preview can follow the cursor position in Markdown source
+  - `src/modules/directives.js`: single source of truth for the `::directive` grammar (regex, supported directives, modifier validation) shared by the parser, renderer, validator, and AI prompt generation
+  - `src/modules/parser.js`: front matter parsing, directive-aware slide splitting on `---`, speaker note extraction using `Note:`, `::notes`/`::resources`/`::script` section handling, and source-offset mapping so the editor preview can follow the cursor position in Markdown source
   - `src/modules/markdown.js`: lightweight Markdown-to-HTML renderer
   - `src/modules/render.js`: applies Markdown rendering to each parsed slide
+  - `src/modules/validate.js`: `validateDeck` — line-backed structural validation of the authoring grammar (unclosed/unknown directives, misplaced `---`, internal-section counts)
   - `src/modules/a11y.js`: current deck linting for H1 count, heading skips, generic links, missing alt text, note presence, and slide-density assessment
   - `src/modules/ai-prompt.js`: generates structured AI briefing prompts from deck content
   - `src/modules/captions.js`: caption-source capability detection, transcript parsing, and transcript polling helpers
@@ -84,6 +90,7 @@
   - `tests/export.test.js`: bundle and export format coverage
   - `tests/a11y.test.js`: density and lint-threshold coverage
   - `tests/ai-prompt.test.js`: AI prompt generation coverage
+  - `tests/validate.test.js`: grammar validation coverage across directive nesting, internal `---` sections, and example decks
   - `tests/slide-layout.test.js`: slide-dimension and fitting coverage
   - `tests/presenter-layout.test.js`: presenter panel sizing, collapse, and order coverage
   - `tests/presenter-timer.test.js`: presenter countdown and warning-state coverage
@@ -94,7 +101,10 @@
 
 - There is no build step, no transpiler, no linter, and no GitHub Actions workflow yet.
 - There is no lint command and no `stylelint` (or other CSS) config, so CSS changes in `styles/app.css` have no automated checks. Verify visually in all three routes plus the one-page/print views when touching styles.
-- There is no external Markdown library yet; the current Markdown renderer is intentionally small and only supports the syntax implemented in `src/modules/markdown.js`.
+- There is no external Markdown library yet; the current Markdown renderer is intentionally small and only supports the syntax implemented in `src/modules/markdown.js` and declared in `src/modules/directives.js`.
+- `src/modules/directives.js` is the authoritative directive grammar. Keep the renderer (`markdown.js`), parser (`parser.js`), validator (`validate.js`), AI prompt generator (`ai-prompt.js`), and `AI_AUTHORING.md` in lock-step with it — do not let a `::directive` exist in one surface and not the others.
+- An unclosed layout directive (`::name` without its own `::` close) swallows every following slide. The validator reports this; the parser still honours the swallow to stay consistent with rendering.
+- Speaker-support sections (`::notes`/`::resources`/`::script`) may be left unclosed; they end at the next `---`.
 - The current runtime is an in-repo placeholder. Planned `whisper-slides` alignment is tracked in `TODO.md`.
 - Whisper or other AI features must remain optional and should only surface in the UI when an actual AI capability is available.
 - Do not show speech-to-text status, buttons, transcript placeholders, or related help text when the transcript source is unavailable.
@@ -119,6 +129,7 @@
   - `Note:` for speaker notes
   - `Resources:` for slide-linked references
   - `Script:` for fuller speaker script content
+- When asked to generate presentation content, read `AI_AUTHORING.md` first, follow its syntax rules exactly (every layout directive closes with `::`, `---` is only a boundary at directive depth zero), stay within the directive set in `src/modules/directives.js`, and validate the result with `npm run validate:deck -- <file>` before returning it.
 - Optional caption settings should live in front matter, for example `captionsProvider` and `captionsSource`, and must degrade cleanly when the source is unavailable.
 - Preserve and extend local browser caching carefully. Changes to persistence or cached assets should degrade gracefully for returning users instead of wiping or bypassing local state.
 - Keep the audience route clean. Presentation controls belong in presenter view, not audience view.
@@ -140,6 +151,7 @@
 - `npm test`
 - `npm run test:unit` — run Node built-in unit tests only
 - `npm run test:bdd` — run Cucumber.js BDD scenarios only
+- `npm run validate:deck -- examples/government-policy.md` (or `< deck.md` via stdin) — exits 0 and prints `"valid": true` only when every directive and slide boundary is unambiguous; run on any generated deck
 - `python3 -m http.server 4173`
 - `npm run dev:whisper`
 - `npm run dev:transcript -- --src ./path/to/transcript.txt`

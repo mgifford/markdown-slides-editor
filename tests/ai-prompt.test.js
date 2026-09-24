@@ -61,3 +61,13 @@ test("buildAiAuthoringPrompt includes selected requirements and schema", () => {
   assert.equal(prompt.includes("Do not return a generic outline format with headings like `Key Points` or `The Script`."), true);
   assert.equal(prompt.includes("Carry the provided references forward into meaningful `Resources:` sections"), true);
 });
+
+test("buildAiAuthoringPrompt embeds the strict authoring grammar rules", () => {
+  const prompt = buildAiAuthoringPrompt({ title: "Accessible AI", durationMinutes: "30" });
+  assert.equal(prompt.includes("## Syntax rules that must not be broken"), true);
+  assert.equal(prompt.includes("Every layout directive opened with `::name` MUST be closed with its own `::` line."), true);
+  assert.equal(prompt.includes("`---` separates slides ONLY at directive depth 0."), true);
+  assert.equal(prompt.includes("Supported layout directives:"), true);
+  assert.equal(prompt.includes("::image-hero"), true);
+  assert.equal(prompt.includes("::media-left"), true);
+});

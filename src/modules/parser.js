@@ -1,3 +1,9 @@
+import {
+  parseDirectiveLine,
+  canonicalDirectiveName,
+  isSectionDirective,
+} from "./directives.js";
+
 function parseYamlValue(value) {
   const trimmed = value.trim();
   if (trimmed === "true") return true;
@@ -196,90 +202,23 @@ function createClosingSlide(metadata) {
   };
 }
 
-// Matches an opening :: directive line, e.g. `::image-hero text-bottom-left`.
-const DIRECTIVE_OPEN_RE = /^::[a-z0-9%\u00ad\u2010-\u2015\u2212-]+(?:\s+[\w.\u00ad\u2010-\u2015\u2212-]+)*\s*$/i;
-
 /**
- * Split deck content into individual slide strings on `\n---\n` boundaries,
- * but skip any `---` line that appears inside a `:: ... ::` directive block.
- * This prevents image-hero and other directives that use `---` as an internal
- * section separator from being accidentally split into separate slides.
+ * Walk deck content and record the `---` lines that are true slide boundaries.
+ *
+ * A `---` is a slide separator only when the directive stack is empty or the
+ * stack consists entirely of speaker-support *sections* (notes/resources/
+ * script). Section directives may be left unclosed, so an unclosed `::notes`
+ * ends at the next slide boundary instead of silently swallowing it. A `---`
+ * inside an open layout directive (image-hero, media-left, …) is an internal
+ * section separator and is ignored here.
+ *
+ * The rule mirrors `src/modules/markdown.js`'s directive grammar (shared via
+ * `src/modules/directives.js`) so parsing and rendering always agree.
  */
-function splitSlideContent(content) {
+function analyzeSlideBoundaries(content) {
   const lines = content.split("\n");
-  const slides = [];
-  let current = [];
-  let depth = 0;
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    // Opening directive: ::name [modifiers]
-    if (DIRECTIVE_OPEN_RE.test(trimmed)) {
-      depth += 1;
-      current.push(line);
-      continue;
-    }
-
-    // Closing directive: ::
-    if (trimmed === "::") {
-      depth = Math.max(0, depth - 1);
-      current.push(line);
-      continue;
-    }
-
-    // Slide separator — only honoured at depth 0
-    if (depth === 0 && trimmed === "---") {
-      slides.push(current.join("\n").trim());
-      current = [];
-      continue;
-    }
-
-    current.push(line);
-  }
-
-  slides.push(current.join("\n").trim());
-  return slides;
-}
-
-/**
- * Count the number of slide separators (`---` at directive depth 0) in `content`
- * that appear strictly before `relativeOffset` characters, and also return the
- * total count across the entire string.  Used by getSlideIndexForSourceOffset.
- */
-function countSlideSeparatorsUpTo(content, relativeOffset) {
-  const lines = content.split("\n");
-  let depth = 0;
-  let charPos = 0;
-  let beforeOffset = 0;
-  let total = 0;
-
-  for (let i = 0; i < lines.length; i += 1) {
-    const line = lines[i];
-    const trimmed = line.trim();
-    const lineLen = line.length + (i < lines.length - 1 ? 1 : 0); // +1 for \n
-
-    if (DIRECTIVE_OPEN_RE.test(trimmed)) {
-      depth += 1;
-    } else if (trimmed === "::") {
-      depth = Math.max(0, depth - 1);
-    } else if (depth === 0 && trimmed === "---") {
-      total += 1;
-      if (charPos < relativeOffset) {
-        beforeOffset += 1;
-      }
-    }
-
-    charPos += lineLen;
-  }
-
-  return { beforeOffset, total };
-}
-
-function getContentSlideStarts(content) {
-  const lines = content.split("\n");
-  const starts = [0];
-  let depth = 0;
+  const separators = [];
+  const stack = [];
   let charPos = 0;
 
   for (let i = 0; i < lines.length; i += 1) {
@@ -287,20 +226,74 @@ function getContentSlideStarts(content) {
     const trimmed = line.trim();
     const lineLen = line.length + (i < lines.length - 1 ? 1 : 0);
 
-    if (DIRECTIVE_OPEN_RE.test(trimmed)) {
-      depth += 1;
+    const opening = parseDirectiveLine(trimmed);
+    if (opening) {
+      stack.push(opening.name);
     } else if (trimmed === "::") {
-      depth = Math.max(0, depth - 1);
-    } else if (depth === 0 && trimmed === "---") {
-      starts.push(charPos + lineLen);
+      stack.pop();
+    } else if (trimmed === "---" && stack.every(isSectionDirective)) {
+      separators.push({ line: i, start: charPos, end: charPos + lineLen });
+      stack.length = 0;
     }
 
     charPos += lineLen;
   }
 
-  return starts;
+  return { lines, separators };
 }
 
+/**
+ * Split deck content into individual slide strings on `---` slide-boundary
+ * lines, skipping any `---` that appears inside a `:: ... ::` directive block.
+ * This prevents image-hero and other directives that use `---` as an internal
+ * section separator from being accidentally split into separate slides, while
+ * still ending unclosed speaker sections at the next slide boundary.
+ */
+function splitSlideContent(content) {
+  const { lines, separators } = analyzeSlideBoundaries(content);
+  const slides = [];
+  let start = 0;
+
+  for (const separator of separators) {
+    slides.push(lines.slice(start, separator.line).join("\n").trim());
+    start = separator.line + 1;
+  }
+
+  slides.push(lines.slice(start).join("\n").trim());
+  return slides;
+}
+
+/**
+ * Count the number of slide separators (`---` at a true boundary) in `content`
+ * that appear strictly before `relativeOffset` characters, and also return the
+ * total count across the entire string. Used by getSlideIndexForSourceOffset.
+ */
+function countSlideSeparatorsUpTo(content, relativeOffset) {
+  const { separators } = analyzeSlideBoundaries(content);
+  return {
+    beforeOffset: separators.filter((separator) => separator.start < relativeOffset).length,
+    total: separators.length,
+  };
+}
+
+function getContentSlideStarts(content) {
+  const { separators } = analyzeSlideBoundaries(content);
+  return [0, ...separators.map((separator) => separator.end)];
+}
+
+
+// Speaker-support sections (::notes/::resources/::script and their aliases)
+// map onto the four-part slide model, so the closing `::` is optional.
+const SECTION_TARGET = {
+  note: "notes",
+  notes: "notes",
+  resource: "resources",
+  resources: "resources",
+  reference: "resources",
+  references: "resources",
+  script: "script",
+  scripts: "script",
+};
 
 export function parseSource(source) {
   const { metadata, content } = extractMetadataAndContent(source);
@@ -346,18 +339,9 @@ export function parseSource(source) {
       }
 
       // Double-colon section directives (new syntax).
-      if (/^::notes?\s*$/i.test(trimmed)) {
-        activeSection = "notes";
-        sectionDirectiveDepth = 1;
-        continue;
-      }
-      if (/^::(resources?|references?)\s*$/i.test(trimmed)) {
-        activeSection = "resources";
-        sectionDirectiveDepth = 1;
-        continue;
-      }
-      if (/^::scripts?\s*$/i.test(trimmed)) {
-        activeSection = "script";
+      const directiveLine = parseDirectiveLine(trimmed);
+      if (directiveLine && isSectionDirective(canonicalDirectiveName(directiveLine.name))) {
+        activeSection = SECTION_TARGET[canonicalDirectiveName(directiveLine.name)];
         sectionDirectiveDepth = 1;
         continue;
       }
@@ -365,7 +349,7 @@ export function parseSource(source) {
       // When inside a :: section directive, track nested directives so that a
       // closing :: on an inner block does not prematurely exit the section.
       if (sectionDirectiveDepth > 0) {
-        if (DIRECTIVE_OPEN_RE.test(trimmed)) {
+        if (directiveLine) {
           sectionDirectiveDepth += 1;
         } else if (trimmed === "::") {
           sectionDirectiveDepth -= 1;

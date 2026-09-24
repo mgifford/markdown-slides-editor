@@ -2,6 +2,8 @@
 
 This project can work well with an LLM, but the editor should remain the place where a deck is reviewed, refined, and prepared for presentation.
 
+The strict, machine-readable syntax contract for LLM-generated decks lives in [`AI_AUTHORING.md`](../AI_AUTHORING.md) — point any LLM at it and validate its output with `npm run validate:deck -- <file>` before pasting into the editor.
+
 The goal is not to hand control to AI. The goal is to use AI to speed up research, structure, drafting, and script development while keeping the author in charge of quality, accuracy, accessibility, and tone.
 
 ## Purpose

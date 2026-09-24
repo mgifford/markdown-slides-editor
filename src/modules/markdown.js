@@ -373,23 +373,18 @@ function renderInline(text, state) {
   return restoreProtectedTokens(result, tokens);
 }
 
-const DIRECTIVE_OPEN_RE = /^::([a-z0-9%\u00ad\u2010-\u2015\u2212-]+)(?:\s+(.+?))?\s*$/i;
-const DIRECTIVE_DASH_RE = /[\u00ad\u2010-\u2015\u2212]/g;
-
-function normalizeDirectiveModifier(modifier) {
-  return String(modifier).trim().toLowerCase().replace(DIRECTIVE_DASH_RE, "-");
-}
+import {
+  parseDirectiveLine,
+} from "./directives.js";
 
 function parseDirectiveOpenLine(line) {
-  const directiveMatch = DIRECTIVE_OPEN_RE.exec(String(line).trim());
-  if (!directiveMatch) {
+  const parsed = parseDirectiveLine(line);
+  if (!parsed) {
     return null;
   }
   return {
-    directive: normalizeDirectiveModifier(directiveMatch[1]),
-    modifiers: directiveMatch[2]
-      ? directiveMatch[2].trim().split(/\s+/).filter(Boolean).map(normalizeDirectiveModifier)
-      : [],
+    directive: parsed.name,
+    modifiers: parsed.modifiers,
   };
 }
 

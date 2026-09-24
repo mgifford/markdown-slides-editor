@@ -10,6 +10,7 @@
     "test:semantics": "node ./scripts/check-semantic-output.js",
     "test:math": "node ./scripts/check-math-render.js",
     "test:bdd": "cucumber-js",
+    "validate:deck": "node ./scripts/validate-deck.js",
     "serve": "python3 -m http.server 4173",
     "dev:whisper": "node ./scripts/run-whisper.js",
     "dev:transcript": "node ./scripts/whisper-transcript-watch.js"
