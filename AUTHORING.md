@@ -198,7 +198,7 @@ https://example.com/demo
 
 ## Layout directives
 
-The editor supports layout directives for more complex slide arrangements. See [`docs/layout-syntax.md`](docs/layout-syntax.md) for the full reference with examples.
+The editor supports layout directives for more complex slide arrangements. See [`docs/layout-syntax.md`](docs/layout-syntax.md) for the full reference with examples. External AI tools generating decks should follow the strict syntax contract in [`AI_AUTHORING.md`](AI_AUTHORING.md) and validate output with `npm run validate:deck -- <file>`.
 
 Quick reference:
 

@@ -2,7 +2,7 @@
 // the old cache on activate and re-fetch the updated app (e.g. new renderer
 // features such as LaTeX math). Stale caches were serving an older markdown.js
 // that did not recognise native `\( \)` / `\[ \]` math delimiters.
-const CACHE_NAME = "markdown-slides-editor-v5";
+const CACHE_NAME = "markdown-slides-editor-v6";
 const APP_SHELL_ASSETS = [
   "./",
   "./index.html",
@@ -15,6 +15,7 @@ const APP_SHELL_ASSETS = [
   "./src/modules/ai-prompt.js",
   "./src/modules/captions.js",
   "./src/modules/color-mode.js",
+  "./src/modules/directives.js",
   "./src/modules/export.js",
   "./src/modules/local-data.js",
   "./src/modules/markdown.js",
@@ -35,6 +36,7 @@ const APP_SHELL_ASSETS = [
   "./src/modules/theme.js",
   "./src/modules/transcript-export.js",
   "./src/modules/utils.js",
+  "./src/modules/validate.js",
   "./src/modules/views/editor-view.js",
   "./src/modules/views/presentation-view.js",
   "./src/modules/views/presenter-view.js",

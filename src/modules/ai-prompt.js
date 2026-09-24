@@ -1,3 +1,5 @@
+import { buildAuthoringRules } from "./directives.js";
+
 function normalizeLines(value) {
   return String(value || "")
     .replaceAll("\r\n", "\n")
@@ -148,6 +150,10 @@ ${requirementLines.join("\n")}
 \`\`\`md
 ${buildSchemaExample(options)}
 \`\`\`
+
+## Syntax rules that must not be broken
+
+${buildAuthoringRules()}
 
 ## Response expectations
 

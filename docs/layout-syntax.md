@@ -2,7 +2,7 @@
 
 Markdown remains the base authoring format in this project, but the editor also supports a small set of layout directives for common presentation patterns.
 
-These directives are meant to cover frequent slide-layout needs without requiring arbitrary HTML.
+These directives are meant to cover frequent slide-layout needs without requiring arbitrary HTML. Every directive opened with `::name` must be closed with its own `::` line — an unclosed directive swallows following slides. External AI tools generating decks should follow [`AI_AUTHORING.md`](../AI_AUTHORING.md) and validate output with `npm run validate:deck -- <file>`. The authoritative directive set lives in `src/modules/directives.js`.
 
 ## Principles
 
